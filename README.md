@@ -52,7 +52,7 @@ print(report)
 plot_climniche_diagram(fit)
 plot_climniche_showcase(fit)
 plot_climniche_class_summary(fit)
-plot_variable_contribution(fit)
+plot_climniche_variable_contribution(fit)
 ```
 
 `climniche_diagram_data()` returns the data behind the 2D niche climate
@@ -86,7 +86,12 @@ plot_climniche_classes(fit, occupied = occupied_raster)
 ```
 
 For `terra::SpatRaster` workflows, use `fit_climniche_terra()` with the same
-arguments.
+arguments. The map functions accept both `raster::RasterLayer` and one-layer
+`terra::SpatRaster` outputs. When `occupied_only = TRUE`, supply the same
+`occupied_threshold` used for fitting.
+
+For matrix workflows with extracted SDM values, pass `occupied` as a logical
+vector or as the continuous suitability vector and set `occupied_threshold`.
 
 ## Report outputs
 
@@ -94,3 +99,9 @@ For report based workflows, `climniche_report()` and
 `write_climniche_report()` provide a readable summary of settings, class
 proportions, metrics and variable contributions. The full cell level table is
 available with `climniche_table()`.
+
+## Interpretation boundaries
+
+The package measures exposure relative to current niche conditions. It does not
+estimate persistence, abundance change, dispersal limitation, adaptation or
+conservation priority by itself.

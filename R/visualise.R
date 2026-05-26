@@ -20,6 +20,30 @@
   }
 }
 
+.need_terra <- function() {
+  if (!requireNamespace("terra", quietly = TRUE)) {
+    stop("terra is required for terra raster plotting.", call. = FALSE)
+  }
+}
+
+.is_raster <- function(x) {
+  methods::is(x, "Raster")
+}
+
+.is_spatraster <- function(x) {
+  inherits(x, "SpatRaster")
+}
+
+.spatial_df <- function(x, value = "value") {
+  if (.is_raster(x)) {
+    return(.raster_df(x, value = value))
+  }
+  if (.is_spatraster(x)) {
+    return(.terra_df(x, value = value))
+  }
+  stop("x must be a RasterLayer or terra SpatRaster.", call. = FALSE)
+}
+
 .raster_df <- function(x, value = "value") {
   .need_raster()
   pts <- raster::rasterToPoints(x)
@@ -28,12 +52,73 @@
   pts
 }
 
-.occupied_df <- function(occupied) {
+.terra_df <- function(x, value = "value") {
+  .need_terra()
+  if (terra::nlyr(x) != 1L) {
+    stop("Only one-layer SpatRaster objects can be plotted.", call. = FALSE)
+  }
+  pts <- terra::as.data.frame(x, xy = TRUE, na.rm = FALSE)
+  names(pts)[seq_len(3L)] <- c("x", "y", value)
+  pts <- pts[!is.na(pts[[value]]), c("x", "y", value), drop = FALSE]
+  pts
+}
+
+.spatial_res <- function(x) {
+  if (.is_raster(x)) {
+    .need_raster()
+    return(raster::res(x))
+  }
+  if (.is_spatraster(x)) {
+    .need_terra()
+    return(terra::res(x))
+  }
+  stop("x must be a RasterLayer or terra SpatRaster.", call. = FALSE)
+}
+
+.mask_to_occupied <- function(x, occupied, occupied_threshold = 0) {
+  if (.is_raster(x)) {
+    .need_raster()
+    if (!.is_raster(occupied)) {
+      stop("occupied must be a RasterLayer when x is a RasterLayer.",
+           call. = FALSE)
+    }
+    if (!raster::compareRaster(x, occupied, stopiffalse = FALSE)) {
+      stop("occupied raster must match x geometry.", call. = FALSE)
+    }
+    mask <- raster::raster(occupied)
+    values <- raster::getValues(occupied)
+    raster::values(mask) <- ifelse(!is.na(values) & values > occupied_threshold,
+                                   1, NA_real_)
+    return(raster::mask(x, mask))
+  }
+  if (.is_spatraster(x)) {
+    .need_terra()
+    if (!.is_spatraster(occupied)) {
+      stop("occupied must be a SpatRaster when x is a SpatRaster.",
+           call. = FALSE)
+    }
+    if (terra::nlyr(occupied) != 1L) {
+      stop("occupied must have one layer.", call. = FALSE)
+    }
+    if (!terra::compareGeom(x, occupied, stopOnError = FALSE)) {
+      stop("occupied raster must match x geometry.", call. = FALSE)
+    }
+    mask <- occupied
+    values <- terra::values(mask)[, 1]
+    terra::values(mask) <- ifelse(!is.na(values) & values > occupied_threshold,
+                                  1, NA_real_)
+    return(terra::mask(x, mask))
+  }
+  stop("x must be a RasterLayer or terra SpatRaster.", call. = FALSE)
+}
+
+.occupied_df <- function(occupied, occupied_threshold = 0) {
   if (is.null(occupied)) {
     return(NULL)
   }
-  pts <- .raster_df(occupied, value = "occupied")
-  pts[!is.na(pts$occupied) & pts$occupied > 0, , drop = FALSE]
+  pts <- .spatial_df(occupied, value = "occupied")
+  pts[!is.na(pts$occupied) & pts$occupied > occupied_threshold, ,
+      drop = FALSE]
 }
 
 .crop_df <- function(dat, pad = 0.02) {
@@ -111,11 +196,14 @@
 
 #' Plot a climniche raster metric
 #'
-#' @param x A `climniche_fit` object with raster outputs, or a RasterLayer.
+#' @param x A `climniche_fit` object with raster outputs, a RasterLayer or a
+#'   one-layer terra SpatRaster.
 #' @param metric Metric to plot when `x` is a `climniche_fit` object.
-#' @param occupied Optional current occurrence/range RasterLayer to overlay.
+#' @param occupied Optional current occurrence, range or SDM raster to overlay.
 #' @param occupied_only If TRUE, mask the plotted raster to current occurrence
 #'   cells.
+#' @param occupied_threshold Threshold used when `occupied` contains binary or
+#'   continuous values.
 #' @param title Optional plot title. Use `FALSE` to suppress it.
 #' @param midpoint Midpoint for the niche distance change colour scale.
 #'
@@ -128,10 +216,10 @@
                                            "change_alignment"),
                                 occupied = NULL,
                                 occupied_only = FALSE,
+                                occupied_threshold = 0,
                                 title = NULL,
                                 midpoint = 0) {
   .need_ggplot2()
-  .need_raster()
   metric <- match.arg(metric)
 
   if (inherits(x, "climniche_fit")) {
@@ -142,8 +230,8 @@
   } else {
     r <- x
   }
-  if (!methods::is(r, "Raster")) {
-    stop("x must be a climniche object with rasters, or a RasterLayer.",
+  if (!.is_raster(r) && !.is_spatraster(r)) {
+    stop("x must be a climniche object with raster outputs, a RasterLayer or a SpatRaster.",
          call. = FALSE)
   }
   if (occupied_only) {
@@ -151,19 +239,21 @@
       stop("occupied must be supplied when occupied_only = TRUE.",
            call. = FALSE)
     }
-    r <- raster::mask(r, occupied)
+    r <- .mask_to_occupied(r, occupied,
+                           occupied_threshold = occupied_threshold)
   }
 
-  dat <- .raster_df(r, value = "value")
-  occ <- .occupied_df(occupied)
+  dat <- .spatial_df(r, value = "value")
+  occ <- .occupied_df(occupied, occupied_threshold = occupied_threshold)
   lim <- .crop_df(dat)
   ttl <- .plot_title(title, .metric_label(metric))
-  cell_size <- raster::res(r)
+  cell_size <- .spatial_res(r)
 
   p <- ggplot2::ggplot(dat, ggplot2::aes(x = x, y = y, fill = value)) +
     ggplot2::geom_tile(width = cell_size[1], height = cell_size[2]) +
     ggplot2::coord_equal(xlim = lim$xlim, ylim = lim$ylim, expand = FALSE) +
-    ggplot2::labs(x = NULL, y = NULL, fill = NULL, title = ttl) +
+    ggplot2::labs(x = NULL, y = NULL, fill = .metric_label(metric),
+                  title = ttl) +
     .map_theme()
 
   if (identical(metric, "niche_distance_change")) {
@@ -331,15 +421,17 @@
 #' Plot projected climate change classes
 #'
 #' @param x A `climniche_fit` object with raster outputs.
-#' @param occupied Optional occupied-cell RasterLayer to overlay.
+#' @param occupied Optional occupied-cell RasterLayer or SpatRaster to overlay.
 #' @param occupied_only If TRUE, mask the plotted classes to occupied cells.
+#' @param occupied_threshold Threshold used when `occupied` contains binary or
+#'   continuous values.
 #' @param title Optional plot title. Use `FALSE` to suppress it.
 #'
 #' @return A ggplot object.
 .plot_climniche_classes <- function(x, occupied = NULL, occupied_only = FALSE,
+                                    occupied_threshold = 0,
                                     title = NULL) {
   .need_ggplot2()
-  .need_raster()
   if (!inherits(x, "climniche_fit") || is.null(x$rasters$classification)) {
     stop("x must be a climniche object with a classification raster.",
          call. = FALSE)
@@ -350,15 +442,16 @@
       stop("occupied must be supplied when occupied_only = TRUE.",
            call. = FALSE)
     }
-    r <- raster::mask(r, occupied)
+    r <- .mask_to_occupied(r, occupied,
+                           occupied_threshold = occupied_threshold)
   }
-  dat <- .raster_df(r, value = "class_id")
+  dat <- .spatial_df(r, value = "class_id")
   lookup <- x$class_lookup
   dat$class <- lookup$class[match(dat$class_id, lookup$id)]
   dat$class <- factor(dat$class, levels = lookup$class)
-  occ <- .occupied_df(occupied)
+  occ <- .occupied_df(occupied, occupied_threshold = occupied_threshold)
   lim <- .crop_df(dat)
-  cell_size <- raster::res(r)
+  cell_size <- .spatial_res(r)
 
   p <- ggplot2::ggplot(dat, ggplot2::aes(x = x, y = y, fill = class)) +
     ggplot2::geom_tile(width = cell_size[1], height = cell_size[2]) +
@@ -367,7 +460,7 @@
       values = .class_colours(),
       na.value = NA
     ) +
-    ggplot2::labs(x = NULL, y = NULL, fill = NULL,
+    ggplot2::labs(x = NULL, y = NULL, fill = "Exposure class",
                   title = .plot_title(title, "Climate niche change classes")) +
     .map_theme() +
     ggplot2::theme(legend.key.height = grid::unit(4.6, "mm"))
@@ -389,18 +482,28 @@
 #'
 #' @param x A `climniche_fit` object.
 #' @param occupied_only If TRUE, summarize occupied cells only.
+#' @param variable_labels Optional named vector replacing variable labels.
+#' @param title Optional plot title. Use `FALSE` to suppress it.
 #'
 #' @return A ggplot object.
 #' @export
-plot_variable_contribution <- function(x, occupied_only = TRUE) {
+plot_climniche_variable_contribution <- function(x, occupied_only = TRUE,
+                                                 variable_labels = NULL,
+                                                 title = NULL) {
   .need_ggplot2()
   if (!inherits(x, "climniche_fit")) {
     stop("x must be a climniche object.", call. = FALSE)
   }
   idx <- if (occupied_only) x$occupied else seq_len(nrow(x$variable_contribution))
   vals <- colMeans(x$variable_contribution[idx, , drop = FALSE])
+  variables <- names(vals)
+  if (!is.null(variable_labels)) {
+    replace <- match(variables, names(variable_labels))
+    hit <- !is.na(replace)
+    variables[hit] <- unname(variable_labels[replace[hit]])
+  }
   dat <- data.frame(
-    variable = factor(names(vals), levels = names(vals)),
+    variable = factor(variables, levels = variables),
     contribution = as.numeric(vals)
   )
 
@@ -410,7 +513,8 @@ plot_variable_contribution <- function(x, occupied_only = TRUE) {
     ggplot2::geom_hline(yintercept = 0, linewidth = 0.3, colour = "grey35") +
     ggplot2::scale_fill_manual(values = c("TRUE" = "#c65d57",
                                           "FALSE" = "#4c78a8")) +
-    ggplot2::labs(x = NULL, y = "Mean contribution") +
+    ggplot2::labs(x = NULL, y = "Mean contribution",
+                  title = .plot_title(title, "Variable contribution")) +
     ggplot2::theme_classic(base_size = 8.5) +
     ggplot2::theme(
       legend.position = "none",
@@ -420,4 +524,17 @@ plot_variable_contribution <- function(x, occupied_only = TRUE) {
       axis.line = ggplot2::element_line(linewidth = 0.2),
       axis.ticks = ggplot2::element_line(linewidth = 0.2)
     )
+}
+
+#' @rdname plot_climniche_variable_contribution
+#' @export
+plot_variable_contribution <- function(x, occupied_only = TRUE,
+                                       variable_labels = NULL,
+                                       title = NULL) {
+  plot_climniche_variable_contribution(
+    x = x,
+    occupied_only = occupied_only,
+    variable_labels = variable_labels,
+    title = title
+  )
 }

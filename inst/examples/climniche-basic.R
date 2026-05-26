@@ -17,7 +17,7 @@ print(report)
 if (requireNamespace("ggplot2", quietly = TRUE)) {
   plot_climniche_exposure(fit)
   plot_climniche_class_summary(fit)
-  plot_variable_contribution(fit)
+  plot_climniche_variable_contribution(fit)
 }
 
 # write_climniche_report(report, "climniche_report.md")

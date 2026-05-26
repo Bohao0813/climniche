@@ -20,7 +20,17 @@ away <- fit_climniche(
   sensitivity = sim$sensitivity
 )
 
+away_numeric_occupied <- fit_climniche(
+  current = sim$current,
+  future = sim$future_away,
+  occupied = as.numeric(sim$occupied),
+  occupied_threshold = 0.5,
+  center = sim$center,
+  sensitivity = sim$sensitivity
+)
+
 stopifnot(inherits(toward, "climniche_fit"))
+stopifnot(identical(away$occupied, away_numeric_occupied$occupied))
 stopifnot(length(toward$climate_change_amount) == nrow(sim$current))
 stopifnot(length(toward$composition_change) == nrow(sim$current))
 stopifnot(length(toward$change_alignment) == nrow(sim$current))
@@ -96,6 +106,18 @@ if (requireNamespace("raster", quietly = TRUE)) {
                                     domain = domain)
   stopifnot(length(rf_domain$climate_change_amount) == 12)
   stopifnot(length(rf_domain$occupied) == 8)
+
+  if (requireNamespace("ggplot2", quietly = TRUE)) {
+    p_map <- plot_climniche_map(rf, occupied = occ, occupied_only = TRUE,
+                                occupied_threshold = 0.5)
+    p_cls <- plot_climniche_classes(rf, occupied = occ, occupied_only = TRUE,
+                                    occupied_threshold = 0.5)
+    stopifnot(inherits(p_map, "ggplot"))
+    stopifnot(inherits(p_cls, "ggplot"))
+    stopifnot(nrow(p_map$data) == 8)
+    stopifnot(nrow(p_cls$data) == 8)
+    stopifnot(inherits(plot_climniche_variable_contribution(away), "ggplot"))
+  }
 }
 
 if (requireNamespace("terra", quietly = TRUE)) {
@@ -120,4 +142,15 @@ if (requireNamespace("terra", quietly = TRUE)) {
                                    domain = domain)
   stopifnot(length(tf_domain$climate_change_amount) == 12)
   stopifnot(length(tf_domain$occupied) == 8)
+
+  if (requireNamespace("ggplot2", quietly = TRUE)) {
+    p_map <- plot_climniche_map(tf, occupied = occ, occupied_only = TRUE,
+                                occupied_threshold = 0.5)
+    p_cls <- plot_climniche_classes(tf, occupied = occ, occupied_only = TRUE,
+                                    occupied_threshold = 0.5)
+    stopifnot(inherits(p_map, "ggplot"))
+    stopifnot(inherits(p_cls, "ggplot"))
+    stopifnot(nrow(p_map$data) == 8)
+    stopifnot(nrow(p_cls$data) == 8)
+  }
 }

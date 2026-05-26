@@ -11,7 +11,7 @@
   x
 }
 
-.occupied_index <- function(occupied, n) {
+.occupied_index <- function(occupied, n, threshold = 0) {
   if (is.null(occupied)) {
     return(seq_len(n))
   }
@@ -22,6 +22,14 @@
     return(which(occupied))
   }
   if (is.numeric(occupied)) {
+    if (length(occupied) == n) {
+      idx <- which(!is.na(occupied) & occupied > threshold)
+      if (!length(idx)) {
+        stop("No occupied rows found after applying occupied_threshold.",
+             call. = FALSE)
+      }
+      return(idx)
+    }
     occupied <- as.integer(occupied)
     if (any(occupied < 1L | occupied > n)) {
       stop("occupied indices must be between 1 and nrow(current).", call. = FALSE)

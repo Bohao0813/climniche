@@ -3,9 +3,11 @@
 #' @param current Numeric matrix or data frame of current climate values.
 #' @param future Numeric matrix or data frame of future climate values, with the
 #'   same dimensions and variables as `current`.
-#' @param occupied NULL, logical vector, or row indices identifying current
-#'   occurrence locations used to estimate the realised climatic niche centre
-#'   and boundary.
+#' @param occupied NULL, logical vector, row indices, or a numeric vector with
+#'   one value per row. Numeric vectors of length `nrow(current)` are treated as
+#'   binary or continuous occurrence, range, or SDM suitability values.
+#' @param occupied_threshold Threshold used when `occupied` is a numeric vector
+#'   with one value per row.
 #' @param cnfa Optional CENFA `cnfa` object. When supplied, its `mf` and `sf`
 #'   slots are used unless `center`, `sensitivity`, or `A` are provided.
 #' @param center Optional realised niche centre in standardized climate space.
@@ -22,6 +24,7 @@
 #'
 #' @return An object of class `climniche_fit`.
 .fit_climniche_matrix <- function(current, future, occupied = NULL,
+                                  occupied_threshold = 0,
                                   cnfa = NULL, center = NULL,
                                   sensitivity = NULL, A = NULL,
                                   metric = c("diag", "factor"),
@@ -38,7 +41,8 @@
     stop("boundary must be between 0 and 1.", call. = FALSE)
   }
 
-  occ <- .occupied_index(occupied, nrow(current))
+  occ <- .occupied_index(occupied, nrow(current),
+                         threshold = occupied_threshold)
   scaled <- .standardize_pair(current, future, scale, global_mean, global_sd)
   x0 <- scaled$current
   x1 <- scaled$future

@@ -111,7 +111,7 @@ Variable contributions indicate which climate variables make future climate
 less similar or more similar to current niche conditions.
 
 ```{r, fig.width = 5.6, fig.height = 3.4}
-plot_variable_contribution(divergence)
+plot_climniche_variable_contribution(divergence)
 ```
 
 ## 4. Raster workflow

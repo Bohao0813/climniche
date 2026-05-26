@@ -24,6 +24,7 @@
 \alias{niche_percentile}
 \alias{variable_contribution}
 \alias{simulate_climniche}
+\alias{plot_climniche_variable_contribution}
 \alias{plot_variable_contribution}
 \alias{summary.climniche_fit}
 \alias{plot.climniche_fit}
@@ -35,7 +36,8 @@ framework separates climate change amount, niche distance change, composition
 change and niche boundary exceedance.
 }
 \usage{
-fit_climniche(current, future, occupied = NULL, cnfa = NULL,
+fit_climniche(current, future, occupied = NULL,
+  occupied_threshold = 0, cnfa = NULL,
   center = NULL, sensitivity = NULL, A = NULL,
   metric = c("diag", "factor"), boundary = 0.95, scale = TRUE,
   global_mean = NULL, global_sd = NULL, conflict_ratio = 0.25)
@@ -60,10 +62,10 @@ write_climniche_report(report, file)
 plot_climniche_map(x, metric = c("niche_distance_change",
   "outside_niche_exceedance", "climate_change_amount", "composition_change",
   "change_alignment"), occupied = NULL, occupied_only = FALSE,
-  title = NULL, midpoint = 0)
+  occupied_threshold = 0, title = NULL, midpoint = 0)
 
 plot_climniche_classes(x, occupied = NULL, occupied_only = FALSE,
-  title = NULL)
+  occupied_threshold = 0, title = NULL)
 
 plot_climniche_exposure(x, scope = c("current", "all"),
   max_points = 6000, seed = 1, title = NULL)
@@ -113,7 +115,11 @@ variable_contribution(current, future, center, A)
 simulate_climniche(n = 2000, p = 2, seed = 1, rho = 0,
   prevalence = 0.30, shift = 0.40)
 
-plot_variable_contribution(x, occupied_only = TRUE)
+plot_climniche_variable_contribution(x, occupied_only = TRUE,
+  variable_labels = NULL, title = NULL)
+
+plot_variable_contribution(x, occupied_only = TRUE,
+  variable_labels = NULL, title = NULL)
 
 \method{summary}{climniche_fit}(object, ...)
 
@@ -124,9 +130,10 @@ plot_variable_contribution(x, occupied_only = TRUE)
 \item{current}{Numeric matrix or data frame of current environmental values.}
 \item{future}{Numeric matrix or data frame of future environmental values, with
 the same dimensions and variables as \code{current}.}
-\item{occupied}{NULL, logical vector, row indices, or a one layer raster
-identifying current occurrence, range, or thresholded SDM cells. If NULL, all
-analysed cells are used as the reference set.}
+\item{occupied}{NULL, logical vector, row indices, a numeric vector with one
+value per row, or a one layer raster identifying current occurrence, range, or
+thresholded SDM cells. Numeric vectors or rasters can be binary or continuous.
+If NULL, all analysed cells are used as the reference set.}
 \item{cnfa}{Optional CENFA model object or compatible list.}
 \item{center}{Optional realised niche centre in standardised climate space.}
 \item{sensitivity}{Optional environmental sensitivity weights.}
@@ -141,9 +148,9 @@ scale for \code{boundary_exceedance()}.}
 \item{global_sd}{Optional standard deviations used for standardisation.}
 \item{conflict_ratio}{Minimum minority sign contribution share used to mark
 mixed variable response as a diagnostic flag. Set to NULL to disable this flag.}
-\item{occupied_threshold}{Threshold used for raster \code{occupied} layers.
-Continuous suitability rasters are thresholded; values greater than this
-threshold are treated as current occurrence cells.}
+\item{occupied_threshold}{Threshold used when \code{occupied} contains binary
+or continuous values. Values greater than this threshold are treated as current
+occurrence cells.}
 \item{domain}{Optional one layer raster limiting the cells where exposure is
 analysed, for example a marine region, accessible area, management unit or
 suitable area predicted by an SDM.}

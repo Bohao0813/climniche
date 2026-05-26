@@ -2,8 +2,11 @@
 #'
 #' @param current Numeric matrix or data frame of current environmental values.
 #' @param future Numeric matrix or data frame of future environmental values.
-#' @param occupied NULL, logical vector, or row indices identifying current
-#'   occurrence, range, or thresholded SDM cells.
+#' @param occupied NULL, logical vector, row indices, or a numeric vector with
+#'   one value per row identifying current occurrence, range, or thresholded SDM
+#'   cells.
+#' @param occupied_threshold Threshold used when `occupied` contains binary or
+#'   continuous values.
 #' @param cnfa Optional CENFA model object.
 #' @param center Optional realised niche centre in standardised climate space.
 #' @param sensitivity Optional environmental sensitivity weights.
@@ -18,7 +21,8 @@
 #'
 #' @return An object of class `climniche_fit`.
 #' @export
-fit_climniche <- function(current, future, occupied = NULL, cnfa = NULL,
+fit_climniche <- function(current, future, occupied = NULL,
+                          occupied_threshold = 0, cnfa = NULL,
                           center = NULL, sensitivity = NULL, A = NULL,
                           metric = c("diag", "factor"),
                           boundary = 0.95, scale = TRUE,
@@ -28,6 +32,7 @@ fit_climniche <- function(current, future, occupied = NULL, cnfa = NULL,
     current = current,
     future = future,
     occupied = occupied,
+    occupied_threshold = occupied_threshold,
     cnfa = cnfa,
     center = center,
     sensitivity = sensitivity,
@@ -97,6 +102,8 @@ fit_climniche_terra <- function(current, future, occupied = NULL,
 #' @param occupied Optional current occurrence/range RasterLayer to overlay.
 #' @param occupied_only If TRUE, mask the plotted raster to current occurrence
 #'   cells.
+#' @param occupied_threshold Threshold used when `occupied` contains binary or
+#'   continuous values.
 #' @param title Optional plot title. Use `FALSE` to suppress it.
 #' @param midpoint Midpoint for the niche distance change colour scale.
 #'
@@ -110,11 +117,14 @@ plot_climniche_map <- function(x,
                                           "change_alignment"),
                                occupied = NULL,
                                occupied_only = FALSE,
+                               occupied_threshold = 0,
                                title = NULL,
                                midpoint = 0) {
   metric <- match.arg(metric)
   .plot_climniche_map(x = x, metric = metric, occupied = occupied,
-                      occupied_only = occupied_only, title = title,
+                      occupied_only = occupied_only,
+                      occupied_threshold = occupied_threshold,
+                      title = title,
                       midpoint = midpoint)
 }
 
@@ -124,14 +134,19 @@ plot_climniche_map <- function(x,
 #' @param occupied Optional current occurrence/range RasterLayer to overlay.
 #' @param occupied_only If TRUE, mask the plotted classes to current occurrence
 #'   cells.
+#' @param occupied_threshold Threshold used when `occupied` contains binary or
+#'   continuous values.
 #' @param title Optional plot title. Use `FALSE` to suppress it.
 #'
 #' @return A ggplot object.
 #' @export
 plot_climniche_classes <- function(x, occupied = NULL, occupied_only = FALSE,
+                                   occupied_threshold = 0,
                                    title = NULL) {
   .plot_climniche_classes(x = x, occupied = occupied,
-                          occupied_only = occupied_only, title = title)
+                          occupied_only = occupied_only,
+                          occupied_threshold = occupied_threshold,
+                          title = title)
 }
 
 #' Plot the climniche exposure plane
