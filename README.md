@@ -1,4 +1,4 @@
-<p align="center">
+<p align="center" style="margin-top: 28px; margin-bottom: 24px;">
   <img src="man/figures/climniche-hex.svg" width="190" alt="climniche logo" />
 </p>
 
@@ -66,22 +66,3 @@ For spatial data, use `fit_climniche_raster()` or `fit_climniche_terra()`.
 Both functions accept binary and continuous occupied rasters. `domain` can be
 used to restrict the calculation to a study area such as a marine region or a
 modelled accessible area.
-
-## Mediterranean example
-
-The pkgdown Examples page uses a Mediterranean anchovy case study. It combines
-current and projected sea-surface temperature layers with an SDM-derived current
-reference area in the Mediterranean Sea, then maps exposure classes and the
-underlying niche-space calculations.
-
-In that case study, 61.6% of current reference cells move farther from the
-current realised niche, 16.4% exceed the empirical niche boundary, and 12.0%
-move closer to current niche conditions. The example is included to show how the
-same fitted object supports maps, summary tables, variable contributions, and
-the 2D niche climate diagram.
-
-## Interpretation
-
-Niche climate exposure is not a persistence forecast. It describes where and how
-future climate departs from the current realised niche, leaving demographic,
-dispersal, adaptive, and management questions to be tested with additional data.
