@@ -1,0 +1,33 @@
+if (getRversion() >= "2.15.1") {
+  utils::globalVariables(c(
+    "class",
+    "class_id",
+    "cell_weight",
+    "climate_change_amount",
+    "contribution",
+    "current",
+    "current_axis1",
+    "current_axis2",
+    "boundary_quantile",
+    "future",
+    "future_axis1",
+    "future_axis2",
+    "label",
+    "metric",
+    "mean_contribution",
+    "niche_distance_change",
+    "prop",
+    "prop_exceeded",
+    "proportion",
+    "value",
+    "variable",
+    "x",
+    "axis1",
+    "axis2",
+    "x_mid",
+    "x_value",
+    "y",
+    "y_mid",
+    "y_value"
+  ))
+}

@@ -1,0 +1,14 @@
+^\.github$
+^\.Rproj\.user$
+^.*\.Rproj$
+^cran-comments\.md$
+^README\.Rmd$
+^pkgdown$
+^docs$
+^Meta$
+^doc$
+^.*\.Rhistory$
+^.*\.RData$
+^.*\.Rcheck$
+^.*\.tar\.gz$
+^climniche-Ex\.R$

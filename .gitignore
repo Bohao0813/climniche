@@ -1,0 +1,9 @@
+.Rproj.user
+.Rhistory
+.RData
+.Rcheck/
+*.Rcheck/
+*.tar.gz
+Meta/
+doc/
+climniche-Ex.R
