@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 360" role="img" aria-label="Niche climate exposure concept">
+  <rect width="720" height="360" fill="#fbfcfb"/>
+  <rect x="54" y="34" width="300" height="270" fill="#ffffff" stroke="#d2d8d5"/>
+  <rect x="394" y="34" width="272" height="270" fill="#ffffff" stroke="#d2d8d5"/>
+  <path d="M92 209c31-76 83-117 156-123 34-3 60 5 83 21" fill="none" stroke="#8fb7af" stroke-width="18" stroke-linecap="round" opacity="0.35"/>
+  <path d="M98 232c52-48 111-55 177-20" fill="none" stroke="#e9b45c" stroke-width="10" stroke-linecap="round"/>
+  <path d="M121 205c42-42 88-66 143-76" fill="none" stroke="#365f5b" stroke-width="7" stroke-linecap="round"/>
+  <path d="M264 129l18-7-8 18" fill="none" stroke="#365f5b" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="173" cy="179" r="10" fill="#365f5b"/>
+  <circle cx="244" cy="154" r="10" fill="#c8665d"/>
+  <text x="70" y="322" font-family="Arial, Helvetica, sans-serif" font-size="15" fill="#2d3a38">Climate change is interpreted relative to the current realised niche.</text>
+  <line x1="432" y1="247" x2="630" y2="247" stroke="#88918e" stroke-width="2"/>
+  <line x1="432" y1="247" x2="432" y2="74" stroke="#88918e" stroke-width="2"/>
+  <path d="M443 210 495 178" stroke="#4c78a8" stroke-width="8" stroke-linecap="round"/>
+  <path d="M495 178l16-2-9 13" fill="none" stroke="#4c78a8" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M450 171 544 116" stroke="#c65d57" stroke-width="8" stroke-linecap="round"/>
+  <path d="M544 116l16-2-9 13" fill="none" stroke="#c65d57" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M455 236 584 235" stroke="#5f9e8f" stroke-width="8" stroke-linecap="round"/>
+  <path d="M584 235l14-8-1 16" fill="none" stroke="#5f9e8f" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="432" y="277" font-family="Arial, Helvetica, sans-serif" font-size="15" fill="#2d3a38">climate change amount</text>
+  <text transform="translate(412 239) rotate(-90)" font-family="Arial, Helvetica, sans-serif" font-size="15" fill="#2d3a38">niche distance change</text>
+  <text x="446" y="53" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700" fill="#2d3a38">niche climate exposure</text>
+</svg>

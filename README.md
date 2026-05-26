@@ -1,4 +1,18 @@
+<img src="man/figures/logo.svg" align="right" height="155" alt="climniche hex logo" />
+
 # climniche
+
+[![R-CMD-check](https://github.com/Bohao0813/climniche/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/Bohao0813/climniche/actions/workflows/R-CMD-check.yaml)
+[![pkgdown](https://github.com/Bohao0813/climniche/actions/workflows/pkgdown.yaml/badge.svg)](https://github.com/Bohao0813/climniche/actions/workflows/pkgdown.yaml)
+
+Website: <https://bohao0813.github.io/climniche/>
+
+Pages: [Get started](https://bohao0813.github.io/climniche/articles/climniche-workflow.html) ·
+[Examples](https://bohao0813.github.io/climniche/articles/climniche-examples.html) ·
+[Reference](https://bohao0813.github.io/climniche/reference/index.html) ·
+[News](https://bohao0813.github.io/climniche/news/index.html)
+
+![Niche climate exposure concept](man/figures/README-plot.svg)
 
 `climniche` assesses niche climate exposure: projected climate change
 interpreted relative to the climate conditions a species currently occupies.
@@ -61,8 +75,8 @@ niche boundary and class labels.
 
 ## Raster workflow
 
-For CENFA compatible examples, use `fit_climniche_raster()` with current and
-future `Raster*` climate layers and a presence/range `RasterLayer`. The `occupied`
+For spatial workflows, use `fit_climniche_raster()` with current and future
+`Raster*` climate layers and a presence/range `RasterLayer`. The `occupied`
 layer can be binary or continuous. Continuous rasters are thresholded: values
 greater than `occupied_threshold` define the current distribution used to
 estimate the realised niche. The optional `domain` layer limits where exposure

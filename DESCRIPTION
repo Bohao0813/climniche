@@ -12,7 +12,8 @@ Description: Assesses niche climate exposure by interpreting projected climate
     climate change amount, change in distance to the current niche centre,
     composition change and exceedance beyond an empirical niche boundary.
 License: GPL (>= 3)
-URL: https://github.com/Bohao0813/climniche
+URL: https://github.com/Bohao0813/climniche,
+    https://bohao0813.github.io/climniche/
 BugReports: https://github.com/Bohao0813/climniche/issues
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)

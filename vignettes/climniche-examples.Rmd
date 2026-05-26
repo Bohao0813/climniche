@@ -1,0 +1,183 @@
+---
+title: "Examples"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Examples}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.align = "center")
+```
+
+This vignette gives short examples for the main data forms accepted by
+`climniche`: matrices, binary range rasters and continuous suitability rasters.
+The examples use simulated data so that the workflow can run without downloads.
+In an applied study, the same objects would usually come from occurrence
+records, an SDM, a range polygon, or environmental rasters.
+
+```{r}
+library(climniche)
+```
+
+## Matrix data
+
+Use the matrix interface when current and future climate values have already
+been extracted for the same sites or grid cells. `occupied` can be a logical
+vector, row indices, or a numeric vector such as a thresholded SDM prediction.
+
+```{r}
+sim <- simulate_climniche(n = 1200, p = 3, rho = 0.45, shift = 0.55)
+
+sdm_score <- as.numeric(sim$occupied)
+sdm_score[sdm_score == 1] <- runif(sum(sim$occupied), 0.55, 1.00)
+sdm_score[sdm_score == 0] <- runif(sum(!sim$occupied), 0.00, 0.45)
+
+fit_matrix <- fit_climniche(
+  current = sim$current,
+  future = sim$future_away,
+  occupied = sdm_score,
+  occupied_threshold = 0.5,
+  center = sim$center,
+  sensitivity = sim$sensitivity,
+  scale = FALSE
+)
+
+climniche_summary(fit_matrix)
+```
+
+```{r, fig.width = 6.2, fig.height = 4.2}
+plot_climniche_exposure(fit_matrix)
+```
+
+## Niche climate diagram
+
+The diagram is intended for method explanation and manuscript figures. It
+summarises where the current niche lies in climate space and how future climate
+moves relative to that niche.
+
+```{r, fig.width = 6.2, fig.height = 4.8}
+plot_climniche_diagram(fit_matrix)
+```
+
+The same plot can expose the source data when a reviewer or collaborator wants
+to inspect the spread of cell-level changes.
+
+```{r, fig.width = 6.2, fig.height = 4.8}
+plot_climniche_diagram(fit_matrix, type = "sample", max_arrows = 120)
+```
+
+## Compact report figure
+
+`plot_climniche_showcase()` combines four views of the same fit: the exposure
+plane, class proportions, variable contributions and metric distributions.
+
+```{r, fig.width = 7.2, fig.height = 5.2}
+plot_climniche_showcase(fit_matrix)
+```
+
+## Raster data
+
+Raster workflows use the same calculation, but preserve raster outputs for map
+making. The example below builds a small artificial climate grid. The
+`occupied` raster is continuous, like an SDM suitability map, and cells above
+`occupied_threshold` define the current reference niche.
+
+```{r, eval = requireNamespace("raster", quietly = TRUE)}
+library(raster)
+
+r1 <- raster(nrows = 30, ncols = 45, xmn = -10, xmx = 35,
+             ymn = 30, ymx = 46, crs = "+proj=longlat +datum=WGS84")
+xy <- rasterToPoints(r1)[, 1:2]
+
+temp_current <- r1
+sal_current <- r1
+temp_future <- r1
+sal_future <- r1
+suitability <- r1
+
+values(temp_current) <- 18 + 0.18 * xy[, 1] - 0.25 * xy[, 2] +
+  sin(xy[, 1] / 4)
+values(sal_current) <- 37.5 + 0.02 * xy[, 1] + cos(xy[, 2] / 5)
+values(temp_future) <- values(temp_current) + 0.8 + 0.04 * xy[, 1]
+values(sal_future) <- values(sal_current) + 0.15 * sin(xy[, 1] / 5)
+
+score <- exp(-((xy[, 1] - 15)^2 / 130 + (xy[, 2] - 38)^2 / 24))
+values(suitability) <- score
+
+current_stack <- stack(temp_current, sal_current)
+future_stack <- stack(temp_future, sal_future)
+names(current_stack) <- names(future_stack) <- c("temperature", "salinity")
+
+fit_raster <- fit_climniche_raster(
+  current = current_stack,
+  future = future_stack,
+  occupied = suitability,
+  occupied_threshold = 0.35,
+  sensitivity = c(temperature = 1.4, salinity = 0.8),
+  boundary = 0.95
+)
+```
+
+```{r, fig.width = 6.4, fig.height = 3.8, eval = requireNamespace("raster", quietly = TRUE)}
+plot_climniche_map(
+  fit_raster,
+  metric = "niche_distance_change",
+  occupied = suitability,
+  occupied_only = TRUE,
+  occupied_threshold = 0.35
+)
+```
+
+```{r, fig.width = 6.4, fig.height = 3.8, eval = requireNamespace("raster", quietly = TRUE)}
+plot_climniche_classes(
+  fit_raster,
+  occupied = suitability,
+  occupied_only = TRUE,
+  occupied_threshold = 0.35
+)
+```
+
+## Terra data
+
+The `terra` interface follows the same argument names. It is useful for larger
+rasters and modern spatial workflows.
+
+```{r, eval = requireNamespace("terra", quietly = TRUE)}
+library(terra)
+
+current_terra <- rast(current_stack)
+future_terra <- rast(future_stack)
+suitability_terra <- rast(suitability)
+
+fit_terra <- fit_climniche_terra(
+  current = current_terra,
+  future = future_terra,
+  occupied = suitability_terra,
+  occupied_threshold = 0.35,
+  sensitivity = c(temperature = 1.4, salinity = 0.8)
+)
+
+climniche_summary(fit_terra)
+```
+
+```{r, fig.width = 6.4, fig.height = 3.8, eval = requireNamespace("terra", quietly = TRUE)}
+plot_climniche_map(
+  fit_terra,
+  metric = "outside_niche_exceedance",
+  occupied = suitability_terra,
+  occupied_only = TRUE,
+  occupied_threshold = 0.35
+)
+```
+
+## Report output
+
+Reports are plain Markdown objects that can be printed, written to disk or
+combined with a manuscript workflow.
+
+```{r}
+report <- climniche_report(fit_matrix, species = "example taxon")
+report
+```

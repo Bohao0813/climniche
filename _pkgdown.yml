@@ -1,0 +1,85 @@
+url: https://bohao0813.github.io/climniche/
+template:
+  bootstrap: 5
+  bootswatch: flatly
+  bslib:
+    primary: "#3f6f68"
+    base_font:
+      google: Source Sans 3
+    heading_font:
+      google: Source Sans 3
+    code_font:
+      google: Source Code Pro
+  includes:
+    in_header: |
+      <link rel="icon" type="image/svg+xml" href="/climniche/reference/figures/logo.svg">
+navbar:
+  structure:
+    left: [intro, examples, reference, news]
+    right: [search, github]
+  components:
+    intro:
+      text: Get started
+      href: articles/climniche-workflow.html
+    examples:
+      text: Examples
+      href: articles/climniche-examples.html
+    reference:
+      text: Reference
+      href: reference/index.html
+    news:
+      text: News
+      href: news/index.html
+    github:
+      icon: fab fa-github
+      href: https://github.com/Bohao0813/climniche
+      aria-label: GitHub
+home:
+  title: climniche
+  description: Niche climate exposure for ecological climate change assessment.
+authors:
+  Bohao He:
+    href: https://github.com/Bohao0813
+development:
+  mode: auto
+reference:
+  - title: Fit niche climate exposure
+    contents:
+      - fit_climniche
+      - fit_climniche_raster
+      - fit_climniche_terra
+  - title: Report and summaries
+    contents:
+      - climniche_report
+      - climniche_summary
+      - climniche_table
+      - write_climniche_report
+  - title: Visualisation
+    contents:
+      - plot_climniche_diagram
+      - climniche_diagram_data
+      - plot_climniche_showcase
+      - climniche_showcase_data
+      - plot_climniche_map
+      - plot_climniche_classes
+      - plot_climniche_exposure
+      - plot_climniche_class_summary
+      - plot_climniche_distribution
+      - plot_climniche_variable_contribution
+  - title: Metrics
+    contents:
+      - niche_metric
+      - niche_potential
+      - niche_radius
+      - boundary_exceedance
+      - niche_percentile
+      - variable_contribution
+  - title: Example data
+    contents:
+      - simulate_climniche
+articles:
+  - title: Workflows
+    navbar: ~
+    contents:
+      - climniche-workflow
+      - climniche-examples
