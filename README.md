@@ -1,4 +1,6 @@
-<img src="man/figures/climniche-hex.svg" align="right" width="125" alt="climniche hex logo" />
+<p align="center">
+  <img src="man/figures/climniche-hex.svg" width="190" alt="climniche logo" />
+</p>
 
 # climniche
 
