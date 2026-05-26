@@ -203,7 +203,7 @@ plot_climniche_distribution <- function(x,
                                title = title)
 }
 
-#' Plot a compact climniche report figure
+#' Plot a climniche report figure
 #'
 #' @param x A fitted climniche object.
 #' @param scope `"current"` for current occurrence/range cells or `"all"` for

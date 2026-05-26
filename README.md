@@ -1,4 +1,4 @@
-<img src="man/figures/logo.svg" align="right" height="155" alt="climniche hex logo" />
+<img src="man/figures/climniche-hex.svg" align="right" width="125" alt="climniche hex logo" />
 
 # climniche
 
@@ -7,45 +7,40 @@
 
 Website: <https://bohao0813.github.io/climniche/>
 
-Pages: [Get started](https://bohao0813.github.io/climniche/articles/climniche-workflow.html) ·
-[Examples](https://bohao0813.github.io/climniche/articles/climniche-examples.html) ·
-[Reference](https://bohao0813.github.io/climniche/reference/index.html) ·
+Pages: [Examples](https://bohao0813.github.io/climniche/articles/climniche-examples.html) |
+[Reference](https://bohao0813.github.io/climniche/reference/index.html) |
 [News](https://bohao0813.github.io/climniche/news/index.html)
 
-![Niche climate exposure concept](man/figures/README-plot.svg)
+![Niche climate exposure concept](man/figures/niche-climate-exposure.svg)
 
-`climniche` assesses niche climate exposure: projected climate change
-interpreted relative to the climate conditions a species currently occupies.
-The package can use climate niche factor analysis outputs, but it also works
-directly with current and future environmental matrices extracted from
-terrestrial or marine rasters.
+`climniche` quantifies niche climate exposure: the amount and direction of
+projected climate change at cells currently associated with a taxon, measured
+relative to its realised climatic niche.
 
-## Core idea
+`climniche` separates four quantities in exposure maps:
 
-When climate changes within a species' current distribution, ecologists often
-need to know more than whether exposure is large. `climniche` asks whether future
-climate at current occurrence locations becomes more similar to, less similar
-to, or outside the climate conditions currently associated with the species.
+- `climate_change_amount`: how far climate moves between the current and future
+  period;
+- `niche_distance_change`: whether future climate becomes closer to or farther
+  from the realised niche centre;
+- `composition_change`: change in climate composition that does not mainly
+  alter distance from the niche centre;
+- `outside_niche_exceedance`: how far future climate lies beyond an empirical
+  boundary of current niche conditions.
 
-The package compares current and future climate in climate space weighted by
-species sensitivity and returns four primary outputs:
+Together, these quantities distinguish local environmental change from change
+that moves current occurrence, range, or SDM cells outside the realised niche.
 
-- climate change amount: how much local climate changes;
-- niche convergence or divergence: whether future climate becomes closer to or
-  farther from the species' current realised climatic niche;
-- composition change: how much climate changes around the current niche centre
-  without changing the overall niche distance;
-- niche boundary exceedance: whether future climate exceeds an empirical
-  boundary of the species' current climate conditions.
+## Inputs and outputs
 
-The package also reports a mixed variable response flag when climate variables
-contribute in opposite directions.
+`climniche` accepts extracted environmental matrices and aligned `raster` or
+`terra` layers. The current reference cells can be supplied as occurrences,
+a range raster, or a continuous SDM suitability raster with a chosen threshold.
 
-The package returns maps, cell-level classes, summary tables and report text
-that can be used directly or combined with demographic, connectivity or
-conservation workflows.
+The outputs are cell-level tables, maps, exposure classes, variable
+contributions, report text, and figure data.
 
-## Minimal example
+## Basic use
 
 ```r
 library(climniche)
@@ -60,62 +55,31 @@ fit <- fit_climniche(
   sensitivity = sim$sensitivity
 )
 
-report <- climniche_report(fit, species = "example species")
-print(report)
-
+climniche_summary(fit)
+climniche_report(fit, species = "example species")
 plot_climniche_diagram(fit)
-plot_climniche_showcase(fit)
-plot_climniche_class_summary(fit)
-plot_climniche_variable_contribution(fit)
 ```
 
-`climniche_diagram_data()` returns the data behind the 2D niche climate
-diagram: current and future coordinates, class mean arrows, the empirical
-niche boundary and class labels.
+For spatial data, use `fit_climniche_raster()` or `fit_climniche_terra()`.
+Both functions accept binary and continuous occupied rasters. `domain` can be
+used to restrict the calculation to a study area such as a marine region or a
+modelled accessible area.
 
-## Raster workflow
+## Mediterranean example
 
-For spatial workflows, use `fit_climniche_raster()` with current and future
-`Raster*` climate layers and a presence/range `RasterLayer`. The `occupied`
-layer can be binary or continuous. Continuous rasters are thresholded: values
-greater than `occupied_threshold` define the current distribution used to
-estimate the realised niche. The optional `domain` layer limits where exposure
-is evaluated, for example to a marine region, accessible area, management unit
-or suitable area predicted by an SDM.
+The pkgdown Examples page uses a Mediterranean anchovy case study. It combines
+current and projected sea-surface temperature layers with an SDM-derived current
+reference area in the Mediterranean Sea, then maps exposure classes and the
+underlying niche-space calculations.
 
-```r
-fit <- fit_climniche_raster(
-  current = clim_current,
-  future = clim_future,
-  occupied = occupied_raster,
-  domain = analysis_domain_raster,
-  center = niche_center,
-  sensitivity = variable_sensitivity,
-  boundary = 0.95
-)
+In that case study, 61.6% of current reference cells move farther from the
+current realised niche, 16.4% exceed the empirical niche boundary, and 12.0%
+move closer to current niche conditions. The example is included to show how the
+same fitted object supports maps, summary tables, variable contributions, and
+the 2D niche climate diagram.
 
-plot_climniche_map(fit, metric = "niche_distance_change", occupied = occupied_raster)
-plot_climniche_map(fit, metric = "outside_niche_exceedance", occupied = occupied_raster)
-plot_climniche_classes(fit, occupied = occupied_raster)
-```
+## Interpretation
 
-For `terra::SpatRaster` workflows, use `fit_climniche_terra()` with the same
-arguments. The map functions accept both `raster::RasterLayer` and one-layer
-`terra::SpatRaster` outputs. When `occupied_only = TRUE`, supply the same
-`occupied_threshold` used for fitting.
-
-For matrix workflows with extracted SDM values, pass `occupied` as a logical
-vector or as the continuous suitability vector and set `occupied_threshold`.
-
-## Report outputs
-
-For report based workflows, `climniche_report()` and
-`write_climniche_report()` provide a readable summary of settings, class
-proportions, metrics and variable contributions. The full cell level table is
-available with `climniche_table()`.
-
-## Interpretation boundaries
-
-The package measures exposure relative to current niche conditions. It does not
-estimate persistence, abundance change, dispersal limitation, adaptation or
-conservation priority by itself.
+Niche climate exposure is not a persistence forecast. It describes where and how
+future climate departs from the current realised niche, leaving demographic,
+dispersal, adaptive, and management questions to be tested with additional data.

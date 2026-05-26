@@ -79,7 +79,7 @@ climniche_summary <- function(x, scope = c("current", "all")) {
   )
 }
 
-#' Build an ecologist readable climniche report
+#' Build a climniche report
 #'
 #' @param x A fitted `climniche_fit` object.
 #' @param species Optional species name used in printed reports.

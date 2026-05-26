@@ -87,7 +87,7 @@
   out
 }
 
-#' Build data for a publication style climniche figure
+#' Build data for the climniche showcase figure
 #'
 #' @param x A fitted climniche object.
 #' @param scope `"current"` for current occurrence, range or thresholded SDM
@@ -189,7 +189,7 @@ climniche_showcase_data <- function(x, scope = c("current", "all"),
   out
 }
 
-#' Plot a publication style climniche figure
+#' Plot the climniche showcase figure
 #'
 #' @param x A fitted climniche object or data returned by
 #'   `climniche_showcase_data()`.

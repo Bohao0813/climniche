@@ -6,6 +6,7 @@
 ^README\.Rmd$
 ^pkgdown$
 ^docs$
+^output$
 ^Meta$
 ^doc$
 ^.*\.Rhistory$

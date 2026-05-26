@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="580" viewBox="0 0 1200 580" role="img" aria-label="Niche climate exposure schematic">
+  <defs>
+    <marker id="axisArrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#2f3d40"/>
+    </marker>
+    <marker id="changeArrow" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="5.5" markerHeight="5.5" orient="auto">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#c65d57"/>
+    </marker>
+    <marker id="nearArrow" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="5.5" markerHeight="5.5" orient="auto">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#4c78a8"/>
+    </marker>
+    <marker id="compArrow" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="5.5" markerHeight="5.5" orient="auto">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#5f9e8f"/>
+    </marker>
+  </defs>
+  <rect x="0" y="0" width="1200" height="580" fill="#ffffff"/>
+  <text x="60" y="48" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="700" fill="#1d2528">Niche climate exposure</text>
+  <text x="60" y="78" font-family="Arial, Helvetica, sans-serif" font-size="17" fill="#505a5d">Projected climate change is interpreted against the current realised climatic niche.</text>
+
+  <rect x="60" y="118" width="480" height="370" fill="#f7faf9" stroke="#d4dcda" stroke-width="1.5"/>
+  <text x="84" y="150" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700" fill="#1d2528">(a) Current analysed cells</text>
+  <rect x="92" y="180" width="415" height="245" fill="#dcefeb" stroke="#b7cac6" stroke-width="1"/>
+  <path d="M92 252 L148 226 L216 224 L276 240 L338 232 L410 196 L507 184 L507 180 L92 180 Z" fill="#eff2ed" stroke="#c9d1cb" stroke-width="1"/>
+  <path d="M92 425 L92 381 L158 356 L223 363 L286 350 L366 365 L439 342 L507 352 L507 425 Z" fill="#eff2ed" stroke="#c9d1cb" stroke-width="1"/>
+  <ellipse cx="295" cy="300" rx="154" ry="42" fill="none" stroke="#174a44" stroke-width="4"/>
+  <g fill="#174a44" opacity="0.85">
+    <circle cx="198" cy="292" r="4"/>
+    <circle cx="224" cy="311" r="4"/>
+    <circle cx="254" cy="286" r="4"/>
+    <circle cx="284" cy="305" r="4"/>
+    <circle cx="316" cy="292" r="4"/>
+    <circle cx="348" cy="313" r="4"/>
+    <circle cx="382" cy="298" r="4"/>
+    <circle cx="420" cy="305" r="4"/>
+  </g>
+  <rect x="118" y="446" width="18" height="10" fill="#174a44" opacity="0.85"/>
+  <text x="144" y="456" font-family="Arial, Helvetica, sans-serif" font-size="14" fill="#374245">cells defining the current niche</text>
+  <text x="92" y="476" font-family="Arial, Helvetica, sans-serif" font-size="13" fill="#505a5d">Input can be occurrences, a range map, or thresholded SDM suitability cells.</text>
+
+  <rect x="660" y="118" width="480" height="370" fill="#f7faf9" stroke="#d4dcda" stroke-width="1.5"/>
+  <text x="684" y="150" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700" fill="#1d2528">(b) Change measured in niche space</text>
+  <line x1="725" y1="410" x2="1062" y2="410" stroke="#2f3d40" stroke-width="2" marker-end="url(#axisArrow)"/>
+  <line x1="725" y1="410" x2="725" y2="197" stroke="#2f3d40" stroke-width="2" marker-end="url(#axisArrow)"/>
+  <text x="902" y="446" font-family="Arial, Helvetica, sans-serif" font-size="16" text-anchor="middle" fill="#2f3d40">climate variable 1</text>
+  <text x="698" y="304" transform="rotate(-90 698 304)" font-family="Arial, Helvetica, sans-serif" font-size="16" text-anchor="middle" fill="#2f3d40">climate variable 2</text>
+  <ellipse cx="875" cy="310" rx="116" ry="63" fill="#dfe9e6" stroke="#174a44" stroke-width="3"/>
+  <ellipse cx="875" cy="310" rx="162" ry="94" fill="none" stroke="#174a44" stroke-width="2.5" stroke-dasharray="8 7" opacity="0.75"/>
+  <circle cx="875" cy="310" r="6" fill="#174a44"/>
+  <text x="890" y="303" font-family="Arial, Helvetica, sans-serif" font-size="14" fill="#174a44">niche centre</text>
+  <line x1="875" y1="310" x2="1018" y2="247" stroke="#c65d57" stroke-width="4.6" stroke-linecap="round" marker-end="url(#changeArrow)"/>
+  <line x1="875" y1="310" x2="807" y2="340" stroke="#4c78a8" stroke-width="4.6" stroke-linecap="round" marker-end="url(#nearArrow)"/>
+  <line x1="875" y1="310" x2="973" y2="338" stroke="#5f9e8f" stroke-width="4.6" stroke-linecap="round" marker-end="url(#compArrow)"/>
+  <line x1="875" y1="310" x2="1018" y2="247" stroke="#c65d57" stroke-width="1.5" stroke-dasharray="5 5" opacity="0.75"/>
+  <path d="M1018 247 L1034 223" fill="none" stroke="#c65d57" stroke-width="2"/>
+  <text x="1038" y="220" font-family="Arial, Helvetica, sans-serif" font-size="14" fill="#c65d57">outside boundary</text>
+  <text x="1015" y="259" font-family="Arial, Helvetica, sans-serif" font-size="13" fill="#c65d57">farther</text>
+  <text x="766" y="354" font-family="Arial, Helvetica, sans-serif" font-size="13" fill="#4c78a8">closer</text>
+  <text x="958" y="358" font-family="Arial, Helvetica, sans-serif" font-size="13" fill="#5f9e8f">composition</text>
+  <rect x="684" y="452" width="13" height="13" fill="#dfe9e6" stroke="#174a44"/>
+  <text x="704" y="464" font-family="Arial, Helvetica, sans-serif" font-size="13" fill="#374245">current realised niche</text>
+  <line x1="846" y1="458" x2="878" y2="458" stroke="#174a44" stroke-width="2.2" stroke-dasharray="6 5"/>
+  <text x="884" y="464" font-family="Arial, Helvetica, sans-serif" font-size="13" fill="#374245">empirical boundary</text>
+</svg>

@@ -208,6 +208,7 @@
 #' @param midpoint Midpoint for the niche distance change colour scale.
 #'
 #' @return A ggplot object.
+#' @noRd
 .plot_climniche_map <- function(x,
                                 metric = c("niche_distance_change",
                                            "outside_niche_exceedance",
@@ -306,6 +307,7 @@
 #' @param title Optional plot title.
 #'
 #' @return A ggplot object.
+#' @noRd
 .plot_climniche_exposure <- function(x, scope = c("current", "all"),
                                      max_points = 6000, seed = 1,
                                      title = NULL) {
@@ -345,6 +347,7 @@
 #' @param title Optional plot title.
 #'
 #' @return A ggplot object.
+#' @noRd
 .plot_climniche_class_summary <- function(x, scope = c("current", "all"),
                                           title = NULL) {
   .need_ggplot2()
@@ -380,6 +383,7 @@
 #' @param title Optional plot title.
 #'
 #' @return A ggplot object.
+#' @noRd
 .plot_climniche_distribution <- function(x,
                                          metric = c("niche_distance_change",
                                                     "climate_change_amount",
@@ -405,7 +409,7 @@
     ggplot2::theme(legend.position = "none")
 }
 
-#' Plot a compact climniche report figure
+#' Plot a climniche report figure
 #'
 #' @param x A fitted `climniche_fit` object.
 #' @param scope `"current"` for current occurrence/range cells or `"all"` for
@@ -413,6 +417,7 @@
 #'
 #' @return A patchwork object when `patchwork` is installed, otherwise a named
 #'   list of ggplot objects.
+#' @noRd
 .plot_climniche_report <- function(x, scope = c("current", "all")) {
   scope <- match.arg(scope)
   plot_climniche_showcase(x, scope = scope)
@@ -428,6 +433,7 @@
 #' @param title Optional plot title. Use `FALSE` to suppress it.
 #'
 #' @return A ggplot object.
+#' @noRd
 .plot_climniche_classes <- function(x, occupied = NULL, occupied_only = FALSE,
                                     occupied_threshold = 0,
                                     title = NULL) {
@@ -526,7 +532,14 @@ plot_climniche_variable_contribution <- function(x, occupied_only = TRUE,
     )
 }
 
-#' @rdname plot_climniche_variable_contribution
+#' Plot mean variable contribution
+#'
+#' @param x A `climniche_fit` object.
+#' @param occupied_only If TRUE, summarize occupied cells only.
+#' @param variable_labels Optional named vector replacing variable labels.
+#' @param title Optional plot title. Use `FALSE` to suppress it.
+#'
+#' @return A ggplot object.
 #' @export
 plot_variable_contribution <- function(x, occupied_only = TRUE,
                                        variable_labels = NULL,

@@ -23,6 +23,7 @@
 #'   to mark mixed variable responses. Set to NULL to disable this flag.
 #'
 #' @return An object of class `climniche_fit`.
+#' @noRd
 .fit_climniche_matrix <- function(current, future, occupied = NULL,
                                   occupied_threshold = 0,
                                   cnfa = NULL, center = NULL,

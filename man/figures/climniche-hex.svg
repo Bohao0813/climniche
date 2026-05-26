@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 270" role="img" aria-label="climniche logo">
+  <defs>
+    <linearGradient id="bg" x1="35" y1="30" x2="205" y2="235" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#d9eee8"/>
+      <stop offset="0.55" stop-color="#83b9ae"/>
+      <stop offset="1" stop-color="#315d57"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="5" stdDeviation="5" flood-color="#133a35" flood-opacity="0.18"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#164944"/>
+    </marker>
+    <clipPath id="hexClip">
+      <polygon points="120,25 203,73 203,194 120,242 37,194 37,73"/>
+    </clipPath>
+  </defs>
+  <polygon points="120,12 218,69 218,201 120,258 22,201 22,69" fill="url(#bg)" stroke="#174a44" stroke-width="9" filter="url(#shadow)" stroke-linejoin="round"/>
+  <g clip-path="url(#hexClip)">
+    <path d="M48 179 C78 130 118 89 178 56" fill="none" stroke="#f7faf8" stroke-width="13" stroke-linecap="round" opacity="0.95"/>
+    <ellipse cx="122" cy="130" rx="61" ry="38" transform="rotate(-23 122 130)" fill="none" stroke="#174a44" stroke-width="6" opacity="0.88"/>
+    <path d="M52 184 C86 164 122 158 184 181" fill="none" stroke="#e9b54f" stroke-width="10" stroke-linecap="round"/>
+    <line x1="118" y1="136" x2="154" y2="108" stroke="#164944" stroke-width="6" stroke-linecap="round" marker-end="url(#arrow)"/>
+    <circle cx="112" cy="140" r="17" fill="#f7faf8" stroke="#164944" stroke-width="7"/>
+    <circle cx="112" cy="140" r="5.5" fill="#164944"/>
+    <path d="M126 74 C145 75 166 85 179 106" fill="none" stroke="#164944" stroke-width="5" stroke-linecap="round"/>
+    <path d="M176 72 C168 95 155 111 135 123" fill="none" stroke="#164944" stroke-width="5" stroke-linecap="round" opacity="0.75"/>
+  </g>
+</svg>

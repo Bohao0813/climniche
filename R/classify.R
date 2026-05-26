@@ -12,6 +12,7 @@
 #' @param conflict_ratio Retained for compatibility with the fitting workflow.
 #'
 #' @return Factor of climniche classes.
+#' @noRd
 classify_exposure <- function(climate_change_amount, niche_distance_change,
                               outside_niche_exceedance,
                               composition_change = NULL,

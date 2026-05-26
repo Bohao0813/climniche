@@ -15,6 +15,7 @@
 #'
 #' @return A `climniche_fit` object with an additional `rasters` element containing
 #'   RasterLayer outputs.
+#' @noRd
 .fit_climniche_raster <- function(current, future, occupied = NULL,
                                   occupied_threshold = 0, domain = NULL,
                                   domain_threshold = 0, ...) {
@@ -129,6 +130,7 @@
 #'
 #' @return A `climniche_fit` object with an additional `rasters` element containing
 #'   SpatRaster outputs.
+#' @noRd
 .fit_climniche_terra <- function(current, future, occupied = NULL,
                                  occupied_threshold = 0, domain = NULL,
                                  domain_threshold = 0, ...) {
