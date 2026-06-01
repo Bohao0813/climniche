@@ -5,6 +5,7 @@
 # climniche
 
 [![R-CMD-check](https://github.com/Bohao0813/climniche/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/Bohao0813/climniche/actions/workflows/R-CMD-check.yaml)
+[![CRAN status](https://www.r-pkg.org/badges/version/climniche)](https://CRAN.R-project.org/package=climniche)
 [![pkgdown](https://github.com/Bohao0813/climniche/actions/workflows/pkgdown.yaml/badge.svg)](https://github.com/Bohao0813/climniche/actions/workflows/pkgdown.yaml)
 
 Website: <https://bohao0813.github.io/climniche/>
@@ -36,8 +37,8 @@ remotes::install_github("Bohao0813/climniche")
 
 ## Metrics
 
-`climniche` separates four quantities. Field names in fitted R objects use
-snake_case, but figures and reports use the metric names below.
+`climniche` separates four cell-level metrics. Field names in fitted R objects
+use snake_case; figures and reports use the metric names below.
 
 - Climatic Displacement (`climate_change_amount`): total sensitivity weighted
   climatic displacement.
@@ -50,32 +51,13 @@ snake_case, but figures and reports use the metric names below.
   future niche distance beyond the empirical boundary of the current realised
   climatic niche.
 
-Let current and future climatic conditions at cell `i` be represented by
-vectors `c_i` and `f_i` in a standardised, sensitivity weighted climatic space.
-Let `mu` denote the centre of the current realised climatic niche, and let
-`d_A(x, y)` denote the sensitivity weighted distance between two climatic
-vectors under weighting matrix `A`.
-
-Climatic Displacement is `D_i = d_A(f_i, c_i)`.
-
-Niche Distance Shift is `R_i = d_A(f_i, mu) - d_A(c_i, mu)`. Negative values
-indicate movement toward the realised niche centre; positive values indicate
-movement away from it.
-
-Climatic Reconfiguration is `C_i = sqrt(max(0, D_i^2 - R_i^2))`. It describes
-changes in the relative balance of climatic conditions that are not explained
-by Niche Distance Shift.
-
-Niche Boundary Exceedance is `E_i = max(0, d_A(f_i, mu) - B_q)`, where `B_q`
-is the `q`-th weighted quantile of current reference cell distances from the
-realised niche centre.
-
 ## Inputs and outputs
 
 `climniche` accepts extracted environmental matrices and aligned `raster` or
 `terra` layers. The current reference cells can be supplied as occurrences,
-a range raster, or a continuous SDM suitability raster. Continuous suitability
-values are used as reference weights; `occupied_threshold` only removes low
+a range raster, a binary SDM raster, or a continuous SDM suitability raster.
+Binary rasters are used as 0/1 reference weights. Continuous suitability values
+are used as continuous reference weights; `occupied_threshold` only removes low
 values and does not convert higher values to 1.
 
 The outputs are cell-level tables, maps, exposure classes, variable
@@ -116,3 +98,8 @@ modelled accessible area. Classification thresholds can be set directly through
 arguments such as `tolerance`, `stable_climate_change`,
 `stable_reconfiguration`, `boundary_exceedance_tolerance`, and
 `conflict_ratio`.
+
+## Contributor
+
+We are welcome any helps! Please make a pull request or reach out to
+bohao.he@polimi.it if you want to make any contribution.
