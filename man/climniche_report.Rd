@@ -16,8 +16,8 @@ climniche_report(
 
 \item{species}{Optional species name used in printed reports.}
 
-\item{scope}{\code{"current"} for current occurrence/range cells or \code{"all"} for
-all evaluated cells.}
+\item{scope}{\code{"current"} for current reference cells or \code{"all"} for all
+evaluated cells. Current-scope summaries use reference weights.}
 
 \item{top_variables}{Number of variable contributions to show.}
 }

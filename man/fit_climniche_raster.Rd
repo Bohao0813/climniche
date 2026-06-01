@@ -8,7 +8,7 @@ fit_climniche_raster(
   current,
   future,
   occupied = NULL,
-  occupied_threshold = 0,
+  occupied_threshold = NULL,
   domain = NULL,
   domain_threshold = 0,
   ...
@@ -22,8 +22,8 @@ fit_climniche_raster(
 \item{occupied}{Optional RasterLayer with binary or continuous occurrence,
 range, or SDM suitability values.}
 
-\item{occupied_threshold}{Values greater than this threshold are treated as
-current occurrence cells.}
+\item{occupied_threshold}{Values at or below this threshold receive zero
+reference weight. Values above it keep their original value.}
 
 \item{domain}{Optional RasterLayer limiting cells where exposure is analysed.}
 

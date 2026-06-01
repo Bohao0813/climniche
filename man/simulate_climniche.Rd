@@ -25,7 +25,7 @@ simulate_climniche(
 \item{prevalence}{Proportion of background cells treated as true current
 occurrence locations under the virtual niche.}
 
-\item{shift}{Climate change amount imposed in the closer to niche and
+\item{shift}{Climatic Displacement imposed in the closer to niche and
 farther from niche scenarios.}
 }
 \value{

@@ -6,11 +6,12 @@
 \usage{
 plot_climniche_map(
   x,
-  metric = c("niche_distance_change", "outside_niche_exceedance",
-    "climate_change_amount", "composition_change", "change_alignment"),
+  metric = c("niche_distance_change", "niche_boundary_exceedance",
+    "climate_change_amount", "climate_reconfiguration", "change_alignment",
+    "outside_niche_exceedance", "composition_change"),
   occupied = NULL,
   occupied_only = FALSE,
-  occupied_threshold = 0,
+  occupied_threshold = NULL,
   title = NULL,
   midpoint = 0
 )
@@ -20,17 +21,18 @@ plot_climniche_map(
 
 \item{metric}{Metric to plot.}
 
-\item{occupied}{Optional current occurrence/range RasterLayer to overlay.}
+\item{occupied}{Optional current reference RasterLayer to overlay.}
 
 \item{occupied_only}{If TRUE, mask the plotted raster to current occurrence
 cells.}
 
 \item{occupied_threshold}{Threshold used when \code{occupied} contains binary or
-continuous values.}
+continuous values. Values above the threshold keep their original value
+when used as an overlay or mask.}
 
 \item{title}{Optional plot title. Use \code{FALSE} to suppress it.}
 
-\item{midpoint}{Midpoint for the niche distance change colour scale.}
+\item{midpoint}{Midpoint for the Niche Distance Shift colour scale.}
 }
 \value{
 A ggplot object.

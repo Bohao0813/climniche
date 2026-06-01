@@ -11,12 +11,14 @@
   list(current = current, future = future, transform = transform)
 }
 
-.niche_diagram_rotation <- function(coords, idx) {
+.niche_diagram_rotation <- function(coords, weights) {
+  idx <- .positive_reference_indices(weights)
   ref <- coords[idx, , drop = FALSE]
+  weights <- weights[idx]
   if (ncol(ref) == 1L) {
     return(matrix(c(1, 0), nrow = 1))
   }
-  S <- crossprod(ref) / max(1, nrow(ref))
+  S <- crossprod(ref * sqrt(weights / sum(weights)))
   ev <- eigen(S, symmetric = TRUE)
   rot <- ev$vectors[, seq_len(min(2L, ncol(ev$vectors))), drop = FALSE]
   if (ncol(rot) == 1L) {
@@ -45,8 +47,8 @@
 #' Build data for a niche climate exposure diagram
 #'
 #' @param x A fitted climniche object.
-#' @param scope `"current"` for current occurrence, range or thresholded SDM
-#'   cells; `"all"` for all evaluated cells.
+#' @param scope `"current"` for current reference cells; `"all"` for all
+#'   evaluated cells.
 #' @param max_arrows Maximum number of current to future arrows to keep.
 #' @param seed Random seed used when subsampling arrows.
 #'
@@ -59,7 +61,12 @@ climniche_diagram_data <- function(x, scope = c("current", "all"),
   }
   scope <- match.arg(scope)
   coords <- .weighted_niche_coordinates(x)
-  rot <- .niche_diagram_rotation(coords$current, x$occupied)
+  weights_all <- if (!is.null(x$occupied_weight)) {
+    x$occupied_weight
+  } else {
+    replace(rep(0, nrow(x$current)), x$occupied, 1)
+  }
+  rot <- .niche_diagram_rotation(coords$current, weights_all)
   current2 <- coords$current %*% rot
   future2 <- coords$future %*% rot
   colnames(current2) <- colnames(future2) <- c("axis1", "axis2")
@@ -74,29 +81,58 @@ climniche_diagram_data <- function(x, scope = c("current", "all"),
     future_axis2 = future2[idx, 2],
     climate_change_amount = tab$climate_change_amount,
     niche_distance_change = tab$niche_distance_change,
-    composition_change = tab$composition_change,
-    niche_boundary_exceedance = tab$outside_niche_exceedance,
+    climate_reconfiguration = tab$climate_reconfiguration,
+    composition_change = tab$climate_reconfiguration,
+    niche_boundary_exceedance = tab$niche_boundary_exceedance,
+    outside_niche_exceedance = tab$niche_boundary_exceedance,
+    occupied_weight = tab$occupied_weight,
     class = tab$class,
     mixed_variable_response = tab$mixed_variable_response,
     stringsAsFactors = FALSE
   )
-  cells$class <- factor(cells$class, levels = levels(x$classification))
-  class_summary <- stats::aggregate(
-    cells[, c("current_axis1", "current_axis2", "future_axis1",
-              "future_axis2", "climate_change_amount",
-              "niche_distance_change", "composition_change",
-              "niche_boundary_exceedance")],
-    by = list(class = cells$class),
-    FUN = mean,
-    na.rm = TRUE
-  )
+  cells$class <- .normalise_class(cells$class)
+  class_summary <- do.call(rbind, lapply(levels(cells$class), function(cls) {
+    rows <- cells$class == cls
+    rows[is.na(rows)] <- FALSE
+    if (!any(rows)) {
+      return(NULL)
+    }
+    w <- if (scope == "current") cells$occupied_weight[rows] else rep(1, sum(rows))
+    data.frame(
+      class = cls,
+      current_axis1 = .weighted_mean_vector(cells$current_axis1[rows], w),
+      current_axis2 = .weighted_mean_vector(cells$current_axis2[rows], w),
+      future_axis1 = .weighted_mean_vector(cells$future_axis1[rows], w),
+      future_axis2 = .weighted_mean_vector(cells$future_axis2[rows], w),
+      climate_change_amount =
+        .weighted_mean_vector(cells$climate_change_amount[rows], w),
+      niche_distance_change =
+        .weighted_mean_vector(cells$niche_distance_change[rows], w),
+      climate_reconfiguration =
+        .weighted_mean_vector(cells$climate_reconfiguration[rows], w),
+      composition_change =
+        .weighted_mean_vector(cells$climate_reconfiguration[rows], w),
+      niche_boundary_exceedance =
+        .weighted_mean_vector(cells$niche_boundary_exceedance[rows], w),
+      outside_niche_exceedance =
+        .weighted_mean_vector(cells$niche_boundary_exceedance[rows], w),
+      stringsAsFactors = FALSE
+    )
+  }))
   class_counts <- as.data.frame(table(cells$class), stringsAsFactors = FALSE)
   names(class_counts) <- c("class", "count")
   class_summary <- merge(class_summary, class_counts, by = "class",
                          all.x = TRUE, sort = FALSE)
-  class_summary$proportion <- class_summary$count / nrow(cells)
-  class_summary$class <- factor(class_summary$class,
-                                levels = levels(x$classification))
+  class_weights <- tapply(
+    if (scope == "current") cells$occupied_weight else rep(1, nrow(cells)),
+    cells$class,
+    sum
+  )
+  class_summary$proportion <- as.numeric(
+    class_weights[as.character(class_summary$class)] /
+      sum(class_weights, na.rm = TRUE)
+  )
+  class_summary$class <- .normalise_class(class_summary$class)
 
   arrows <- cells
   if (nrow(arrows) > max_arrows) {
@@ -107,19 +143,7 @@ climniche_diagram_data <- function(x, scope = c("current", "all"),
   reference <- data.frame(axis1 = current2[, 1], axis2 = current2[, 2])
   current_ref <- data.frame(axis1 = current2[x$occupied, 1],
                             axis2 = current2[x$occupied, 2])
-  current_radius <- sqrt(rowSums(coords$current[x$occupied, , drop = FALSE]^2))
-  current_core <- current_ref[current_radius <= x$boundary_radius, , drop = FALSE]
-  if (nrow(current_core) >= 3L) {
-    current_ref <- current_core
-  }
   future_ref <- data.frame(axis1 = future2[idx, 1], axis2 = future2[idx, 2])
-  future_radius <- sqrt(rowSums(coords$future[idx, , drop = FALSE]^2))
-  future_cut <- stats::quantile(future_radius, probs = 0.95, na.rm = TRUE,
-                                names = FALSE, type = 8)
-  future_core <- future_ref[future_radius <= future_cut, , drop = FALSE]
-  if (nrow(future_core) >= 3L) {
-    future_ref <- future_core
-  }
 
   basis <- diag(ncol(x$current)) %*% coords$transform %*% rot
   if (is.null(colnames(x$current))) {
@@ -142,6 +166,11 @@ climniche_diagram_data <- function(x, scope = c("current", "all"),
     stringsAsFactors = FALSE
   )
 
+  settings <- x$classification_settings
+  if (is.null(settings)) {
+    settings <- list()
+  }
+
   out <- list(
     cells = cells,
     arrows = arrows,
@@ -156,6 +185,13 @@ climniche_diagram_data <- function(x, scope = c("current", "all"),
       scope = scope,
       boundary_quantile = x$boundary_quantile,
       boundary_radius = x$boundary_radius,
+      tolerance = settings$tolerance %||% NA_real_,
+      stable_climate_change =
+        settings$stable_climate_change %||% NA_real_,
+      stable_reconfiguration =
+        settings$stable_reconfiguration %||% NA_real_,
+      boundary_exceedance_tolerance =
+        settings$boundary_exceedance_tolerance %||% NA_real_,
       n_cells = nrow(cells),
       n_arrows = nrow(arrows)
     )
@@ -166,23 +202,189 @@ climniche_diagram_data <- function(x, scope = c("current", "all"),
 
 #' Plot a niche climate exposure diagram
 #'
+#' @noRd
+.plot_climniche_metric_diagram <- function(x, show_reference = FALSE,
+                                           show_hulls = TRUE,
+                                           boundary_shape = c("hull", "circle", "none"),
+                                           show_boundary_label = TRUE,
+                                           show_center = TRUE,
+                                           title = NULL,
+                                           max_points = 6000L,
+                                           seed = 1L) {
+  boundary_shape <- match.arg(boundary_shape)
+  cell_cols <- .class_colours()
+
+  cells <- x$cells
+  if (nrow(cells) > max_points) {
+    set.seed(seed)
+    cells <- cells[sample(seq_len(nrow(cells)), max_points), , drop = FALSE]
+  }
+
+  p_space <- ggplot2::ggplot()
+  if (show_reference && nrow(x$reference_hull) > 2L) {
+    p_space <- p_space + ggplot2::geom_polygon(
+      data = x$reference_hull,
+      ggplot2::aes(x = axis1, y = axis2),
+      fill = "#f5f5f5", colour = "#8a8a8a", linewidth = 0.30
+    )
+  }
+  if (identical(boundary_shape, "circle")) {
+    p_space <- p_space + ggplot2::geom_path(
+      data = x$niche_boundary,
+      ggplot2::aes(x = axis1, y = axis2,
+                   linetype = "Fitted radial boundary"),
+      colour = "#333333", linewidth = 0.35
+    )
+  } else if (identical(boundary_shape, "hull") && nrow(x$current_hull) > 2L) {
+    p_space <- p_space + ggplot2::geom_polygon(
+      data = x$current_hull,
+      ggplot2::aes(x = axis1, y = axis2,
+                   linetype = "Current reference climate envelope"),
+      fill = "#d8d8d8", colour = "#333333", alpha = 0.72,
+      linewidth = 0.30
+    )
+  }
+  if (show_hulls) {
+    if (!identical(boundary_shape, "hull") && nrow(x$current_hull) > 2L) {
+      p_space <- p_space + ggplot2::geom_polygon(
+        data = x$current_hull,
+        ggplot2::aes(x = axis1, y = axis2,
+                     linetype = "Current reference climate envelope"),
+        fill = "#d8d8d8", colour = "#333333", alpha = 0.72,
+        linewidth = 0.30
+      )
+    }
+    p_space <- p_space + ggplot2::geom_polygon(
+      data = x$future_hull,
+      ggplot2::aes(x = axis1, y = axis2,
+                   linetype = "Future climate projection of analysed cells"),
+      fill = NA, colour = "#1b6f6a", linewidth = 0.40
+    )
+  }
+  if (show_center) {
+    p_space <- p_space + ggplot2::geom_point(
+      data = x$center,
+      ggplot2::aes(x = axis1, y = axis2),
+      shape = 21, colour = "black", fill = "white", size = 2.4,
+      stroke = 0.55
+    )
+  }
+  p_space <- p_space +
+    ggplot2::scale_linetype_manual(
+      values = c(
+        "Current reference climate envelope" = "solid",
+        "Fitted radial boundary" = "dashed",
+        "Future climate projection of analysed cells" = "solid"
+      ),
+      breaks = c(
+        "Current reference climate envelope",
+        "Fitted radial boundary",
+        "Future climate projection of analysed cells"
+      ),
+      name = "Climate-space envelopes"
+    ) +
+    ggplot2::guides(
+      linetype = if (show_boundary_label) {
+        ggplot2::guide_legend(order = 2)
+      } else {
+        "none"
+      }
+    ) +
+    ggplot2::coord_equal() +
+    ggplot2::labs(
+      title = "(a) Reduced climate-space projection",
+      x = "Reduced niche climate axis 1",
+      y = "Reduced niche climate axis 2"
+    ) +
+    .climniche_theme(base_size = 8.2) +
+    ggplot2::theme(
+      legend.position = "none",
+      panel.grid.major = ggplot2::element_line(colour = "#e1e1e1",
+                                               linewidth = 0.15)
+    )
+
+  p_radial <- ggplot2::ggplot(
+    cells,
+    ggplot2::aes(x = climate_change_amount,
+                 y = niche_distance_change,
+                 colour = class)
+  ) +
+    ggplot2::geom_hline(yintercept = 0, linewidth = 0.25,
+                        linetype = 2, colour = "#8a8a8a") +
+    ggplot2::geom_point(size = 0.48, alpha = 0.22) +
+    ggplot2::scale_colour_manual(
+      values = cell_cols,
+      labels = .class_labels(),
+      drop = TRUE
+    ) +
+    ggplot2::labs(
+      title = "(b) Displacement and distance shift",
+      x = "Climatic Displacement",
+      y = "Niche Distance Shift",
+      colour = "Derived exposure class"
+    ) +
+    .climniche_theme(base_size = 8.2)
+
+  p_boundary <- ggplot2::ggplot(
+    cells,
+    ggplot2::aes(x = climate_reconfiguration,
+                 y = niche_boundary_exceedance,
+                 colour = class)
+  ) +
+    ggplot2::geom_hline(yintercept = 0, linewidth = 0.25,
+                        linetype = 2, colour = "#8a8a8a") +
+    ggplot2::geom_point(size = 0.48, alpha = 0.22) +
+    ggplot2::scale_colour_manual(
+      values = cell_cols,
+      labels = .class_labels(),
+      drop = TRUE
+    ) +
+    ggplot2::labs(
+      title = "(c) Reconfiguration and boundary exceedance",
+      x = "Climatic Reconfiguration",
+      y = "Niche Boundary Exceedance",
+      colour = "Derived exposure class"
+    ) +
+    .climniche_theme(base_size = 8.2) +
+    ggplot2::theme(legend.position = "none")
+
+  if (requireNamespace("patchwork", quietly = TRUE)) {
+    out <- p_space | (p_radial / p_boundary)
+    out <- out + patchwork::plot_layout(widths = c(1.05, 1.10))
+    if (!is.null(title)) {
+      out <- out + patchwork::plot_annotation(title = title)
+    }
+    return(out)
+  }
+  list(projection = p_space, displacement = p_radial,
+       reconfiguration = p_boundary)
+}
+
+#' Plot a niche climate exposure diagram
+#'
 #' @param x A fitted climniche object or data returned by
 #'   `climniche_diagram_data()`.
-#' @param scope `"current"` for current occurrence, range or thresholded SDM
-#'   cells; `"all"` for all evaluated cells.
-#' @param type `"summary"` draws class mean arrows; `"sample"` draws sampled
-#'   cell arrows and future points.
+#' @param scope `"current"` for current reference cells; `"all"` for all
+#'   evaluated cells.
+#' @param type `"summary"` draws mean current-to-future displacements for
+#'   exposure classes; `"sample"` draws sampled cell displacements and future
+#'   points.
+#' @param summary_layout Layout used when `type = "summary"`. `"metrics"`
+#'   draws the climate-space projection and two metric planes; `"ordination"`
+#'   draws class mean arrows on the climate-space projection.
 #' @param max_arrows Maximum number of current to future arrows to draw when
 #'   `type = "sample"`.
 #' @param seed Random seed used when subsampling arrows.
-#' @param show_reference Logical; draw the full analysed environmental domain.
-#' @param show_hulls Logical; draw current and future niche hulls.
-#' @param boundary_shape Boundary display. `"hull"` draws the empirical
-#'   occupied niche polygon, `"circle"` draws a constant niche distance boundary,
-#'   and `"none"` suppresses the boundary.
-#' @param show_boundary_label Logical; add reference-area explanations below
-#'   the exposure-class legend.
+#' @param show_reference Logical; draw the full analysed climate-space domain.
+#' @param show_hulls Logical; draw current and future climate-space envelopes.
+#' @param boundary_shape Boundary display. `"hull"` draws the current reference
+#'   climate envelope, `"circle"` draws a constant niche-distance boundary, and
+#'   `"none"` suppresses the boundary.
+#' @param show_boundary_label Logical; add envelope explanations below the
+#'   exposure-class legend.
 #' @param show_points Logical; draw future points when `type = "sample"`.
+#' @param show_startpoints Logical; draw class mean current positions when
+#'   `type = "summary"`.
 #' @param show_endpoints Logical; draw class mean future positions when
 #'   `type = "summary"`.
 #' @param show_center Logical; mark the realised niche centre.
@@ -194,19 +396,22 @@ climniche_diagram_data <- function(x, scope = c("current", "all"),
 #' @export
 plot_climniche_diagram <- function(x, scope = c("current", "all"),
                                    type = c("summary", "sample"),
+                                   summary_layout = c("metrics", "ordination"),
                                    max_arrows = 350L, seed = 1L,
                                    show_reference = FALSE,
                                    show_hulls = TRUE,
                                    boundary_shape = c("hull", "circle", "none"),
                                    show_boundary_label = TRUE,
                                    show_points = NULL,
+                                   show_startpoints = FALSE,
                                    show_endpoints = FALSE,
-                                   show_center = FALSE,
+                                   show_center = TRUE,
                                    show_variables = FALSE,
                                    variable_labels = NULL,
                                    title = NULL) {
   .need_ggplot2()
   type <- match.arg(type)
+  summary_layout <- match.arg(summary_layout)
   boundary_shape <- match.arg(boundary_shape)
   if (!inherits(x, "climniche_diagram_data")) {
     x <- climniche_diagram_data(x, scope = scope, max_arrows = max_arrows,
@@ -219,6 +424,19 @@ plot_climniche_diagram <- function(x, scope = c("current", "all"),
     idx <- match(x$variables$variable, names(variable_labels))
     replace <- !is.na(idx)
     x$variables$variable[replace] <- unname(variable_labels[idx[replace]])
+  }
+  if (identical(type, "summary") && identical(summary_layout, "metrics")) {
+    return(.plot_climniche_metric_diagram(
+      x = x,
+      show_reference = show_reference,
+      show_hulls = show_hulls,
+      boundary_shape = boundary_shape,
+      show_boundary_label = show_boundary_label,
+      show_center = show_center,
+      title = title,
+      max_points = max_arrows * 20L,
+      seed = seed
+    ))
   }
   cell_cols <- .class_colours()
   p <- ggplot2::ggplot()
@@ -233,14 +451,14 @@ plot_climniche_diagram <- function(x, scope = c("current", "all"),
     p <- p + ggplot2::geom_path(
       data = x$niche_boundary,
       ggplot2::aes(x = axis1, y = axis2,
-                   linetype = "95% current niche distance"),
+                   linetype = "Fitted radial boundary"),
       colour = "#333333", linewidth = 0.35
     )
   } else if (identical(boundary_shape, "hull") && nrow(x$current_hull) > 2L) {
     p <- p + ggplot2::geom_polygon(
       data = x$current_hull,
       ggplot2::aes(x = axis1, y = axis2,
-                   linetype = "95% current niche area"),
+                   linetype = "Current reference climate envelope"),
       fill = "#9a9a9a", colour = "#333333", alpha = 0.34,
       linewidth = 0.30
     )
@@ -250,7 +468,7 @@ plot_climniche_diagram <- function(x, scope = c("current", "all"),
       p <- p + ggplot2::geom_polygon(
         data = x$current_hull,
         ggplot2::aes(x = axis1, y = axis2,
-                     linetype = "current niche area"),
+                     linetype = "Current reference climate envelope"),
         fill = "#8f8f8f", colour = "#333333", alpha = 0.45,
         linewidth = 0.30
       )
@@ -258,7 +476,7 @@ plot_climniche_diagram <- function(x, scope = c("current", "all"),
     p <- p + ggplot2::geom_polygon(
       data = x$future_hull,
       ggplot2::aes(x = axis1, y = axis2,
-                   linetype = "future climate area"),
+                   linetype = "Future climate projection of analysed cells"),
       fill = NA, colour = "#1b6f6a", linewidth = 0.35
     )
   }
@@ -266,27 +484,56 @@ plot_climniche_diagram <- function(x, scope = c("current", "all"),
     p <- p + ggplot2::geom_segment(
         data = x$arrows,
         ggplot2::aes(x = current_axis1, y = current_axis2,
-                     xend = future_axis1, yend = future_axis2,
-                     colour = class),
-        linewidth = 0.22, alpha = 0.32,
+                     xend = future_axis1, yend = future_axis2),
+        colour = "#4a4a4a", linewidth = 0.22, alpha = 0.32,
         arrow = grid::arrow(length = grid::unit(1.0, "mm"), type = "closed")
       )
   } else {
-    p <- p +
-      ggplot2::geom_segment(
-        data = x$class_summary,
+    curve_values <- c(
+      "Limited climate niche change" = -0.35,
+      "Closer to current niche" = -0.18,
+      "Farther from current niche" = 0.18,
+      "Outside current niche boundary" = 0.35,
+      "Climatic Reconfiguration with limited Niche Distance Shift" = 0.05
+    )
+    for (class_name in names(curve_values)) {
+      row <- x$class_summary[as.character(x$class_summary$class) == class_name,
+                             , drop = FALSE]
+      if (!nrow(row)) {
+        next
+      }
+      p <- p + ggplot2::geom_curve(
+        data = row,
         ggplot2::aes(x = current_axis1, y = current_axis2,
                      xend = future_axis1, yend = future_axis2,
                      colour = class),
-        linewidth = 0.75, alpha = 0.95,
+        linewidth = 0.76, alpha = 0.96,
+        curvature = unname(curve_values[[class_name]]),
+        angle = 90,
+        ncp = 8,
         arrow = grid::arrow(length = grid::unit(2.0, "mm"), type = "closed")
       )
+    }
+    if (show_startpoints) {
+      p <- p +
+        ggplot2::geom_point(
+          data = x$class_summary,
+          ggplot2::aes(x = current_axis1, y = current_axis2,
+                       shape = "Current class mean"),
+          colour = "black",
+          fill = "white",
+          size = 1.8,
+          stroke = 0.42
+        )
+    }
     if (show_endpoints) {
       p <- p +
         ggplot2::geom_point(
           data = x$class_summary,
-          ggplot2::aes(x = future_axis1, y = future_axis2, colour = class),
-          size = 1.8,
+          ggplot2::aes(x = future_axis1, y = future_axis2,
+                       colour = class,
+                       shape = "Future class mean"),
+          size = 2.0,
           alpha = 0.9
         )
     }
@@ -302,25 +549,24 @@ plot_climniche_diagram <- function(x, scope = c("current", "all"),
     p <- p + ggplot2::geom_point(
       data = x$center,
       ggplot2::aes(x = axis1, y = axis2),
-      shape = 3, colour = "black", size = 2.5, stroke = 0.45
+      shape = 21, colour = "black", fill = "white", size = 2.4,
+      stroke = 0.55
     )
   }
   p <- p +
     ggplot2::scale_colour_manual(values = cell_cols, drop = TRUE) +
     ggplot2::scale_linetype_manual(
       values = c(
-        "95% current niche area" = "solid",
-        "95% current niche distance" = "dashed",
-        "current niche area" = "solid",
-        "future climate area" = "solid"
+        "Current reference climate envelope" = "solid",
+        "Fitted radial boundary" = "dashed",
+        "Future climate projection of analysed cells" = "solid"
       ),
       breaks = c(
-        "95% current niche area",
-        "95% current niche distance",
-        "current niche area",
-        "future climate area"
+        "Current reference climate envelope",
+        "Fitted radial boundary",
+        "Future climate projection of analysed cells"
       ),
-      name = "Reference areas"
+      name = "Climate-space envelopes"
     ) +
     ggplot2::guides(
       colour = ggplot2::guide_legend(
@@ -331,9 +577,9 @@ plot_climniche_diagram <- function(x, scope = c("current", "all"),
     ) +
     ggplot2::coord_equal() +
     ggplot2::labs(
-      x = "Niche climate axis 1",
-      y = "Niche climate axis 2",
-      colour = "Exposure class",
+      x = "Reduced niche climate axis 1",
+      y = "Reduced niche climate axis 2",
+      colour = "Class mean current-to-future\ndisplacement",
       title = title
     ) +
     .climniche_theme(base_size = 8.5) +
@@ -342,6 +588,16 @@ plot_climniche_diagram <- function(x, scope = c("current", "all"),
                                                linewidth = 0.15),
       legend.key.height = grid::unit(4.6, "mm")
     )
+
+  if (show_startpoints || show_endpoints) {
+    p <- p +
+      ggplot2::scale_shape_manual(
+        values = c("Current class mean" = 21,
+                   "Future class mean" = 16),
+        name = "Mean positions"
+      ) +
+      ggplot2::guides(shape = ggplot2::guide_legend(order = 3))
+  }
 
   if (show_variables && nrow(x$variables) > 0L) {
     p <- p +

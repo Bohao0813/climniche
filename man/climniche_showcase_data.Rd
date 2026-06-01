@@ -2,7 +2,7 @@
 % Please edit documentation in R/showcase.R
 \name{climniche_showcase_data}
 \alias{climniche_showcase_data}
-\title{Build data for the climniche showcase figure}
+\title{Build data for the climniche summary figure}
 \usage{
 climniche_showcase_data(
   x,
@@ -17,8 +17,8 @@ climniche_showcase_data(
 \arguments{
 \item{x}{A fitted climniche object.}
 
-\item{scope}{\code{"current"} for current occurrence, range or thresholded SDM
-cells; \code{"all"} for all evaluated cells.}
+\item{scope}{\code{"current"} for current reference cells; \code{"all"} for all
+evaluated cells.}
 
 \item{max_points}{Maximum number of cells to keep for the exposure plane.}
 
@@ -34,5 +34,5 @@ cells; \code{"all"} for all evaluated cells.}
 A list of data frames used by \code{plot_climniche_showcase()}.
 }
 \description{
-Build data for the climniche showcase figure
+Build data for the climniche summary figure
 }

@@ -44,8 +44,12 @@ nrow(records)
 ## Mediterranean maps
 
 The map panel shows the data structure used for interpretation: current
-suitability, climate change amount, niche distance change, composition change,
-niche boundary exceedance, change alignment, and exposure class.
+suitability, Climatic Displacement, Niche Distance Shift, Climatic
+Reconfiguration, Niche Boundary Exceedance, change alignment, and exposure
+class.
+The four metrics are continuous quantities. The exposure classes are derived
+after fitting by applying the classification thresholds to those metrics; they
+are not a one-to-one set of four metric categories.
 
 ```{r, echo = FALSE, out.width = "100%"}
 knitr::include_graphics("figures/anchovy-mediterranean-maps.png")
@@ -55,33 +59,21 @@ The map is limited to the Mediterranean analysis domain. The current reference
 cells are taken from the SDM suitability layer; exposure is evaluated at those
 cells and interpreted against the realised niche estimated from the same
 reference set.
-
-## Niche climate diagram
-
-The same result can be shown in climate space. The filled polygon is the current
-realised niche envelope, the boundary line is the empirical niche boundary, and
-arrows show the mean movement of exposure classes.
-
-```{r, echo = FALSE, out.width = "80%"}
-knitr::include_graphics("figures/anchovy-climniche-diagram.png")
-```
-
-This diagram is useful when a map alone is ambiguous. It separates cells that
-experience large climate change from cells whose future climate is specifically
-farther from, closer to, or outside the current realised niche.
+Continuous suitability values are used as reference weights in the fitted
+niche centre, empirical niche boundary and current-scope summaries.
 
 ## Summary figure
 
 `plot_climniche_showcase()` combines the binned exposure plane, exposure class
-proportions, variable contributions, and metric distributions.
+proportions, variable contributions, and distributions of the four metrics.
 
 ```{r, echo = FALSE, out.width = "95%"}
 knitr::include_graphics("figures/anchovy-climniche-showcase.png")
 ```
 
 The Mediterranean case identifies sea-surface temperature minima, maxima, and
-mean conditions as the variables contributing most to the increase in niche
-distance. The class table gives the same result numerically.
+mean conditions as the variables with the largest positive contributions to
+niche potential change. The class table gives the exposure classes numerically.
 
 ```{r}
 class_tab[, c("class", "proportion")]
@@ -92,7 +84,8 @@ variable_tab[, c("variable", "mean_contribution", "interpretation")]
 
 For a raster workflow, current and future environmental layers must have the
 same geometry. The occupied layer can be binary or continuous. With a continuous
-SDM layer, cells above `occupied_threshold` define the current reference niche.
+SDM layer, `occupied_threshold` removes low suitability values. Values above the
+threshold remain continuous reference weights.
 
 ```r
 fit <- fit_climniche_raster(
@@ -102,7 +95,12 @@ fit <- fit_climniche_raster(
   occupied_threshold = 0.40,
   domain = mediterranean_domain,
   sensitivity = c(sst_min = 1, sst_mean = 1, sst_max = 1),
-  boundary = 0.95
+  boundary = 0.95,
+  tolerance_quantile = 0.10,
+  stable_quantile = 0.25,
+  stable_reconfiguration_quantile = 0.25,
+  boundary_exceedance_tolerance = 0,
+  conflict_ratio = 0.25
 )
 
 climniche_summary(fit)
@@ -113,13 +111,12 @@ plot_climniche_map(fit, metric = "niche_distance_change",
 plot_climniche_classes(fit, occupied = anchovy_sdm_suitability,
                        occupied_only = TRUE,
                        occupied_threshold = 0.40)
-plot_climniche_diagram(fit)
 plot_climniche_showcase(fit)
 ```
 
 For a matrix workflow, extract current and future environmental values first and
-pass the current reference cells as a logical vector, row indices, or continuous
-suitability vector.
+pass the current reference cells as a logical vector, row indices, or a
+continuous suitability vector.
 
 ```r
 fit <- fit_climniche(

@@ -19,28 +19,75 @@ Pages: [Examples](https://bohao0813.github.io/climniche/articles/climniche-examp
 projected climate change at cells currently associated with a taxon, measured
 relative to its realised climatic niche.
 
-`climniche` separates four quantities in exposure maps:
+## Installation
 
-- `climate_change_amount`: how far climate moves between the current and future
-  period;
-- `niche_distance_change`: whether future climate becomes closer to or farther
-  from the realised niche centre;
-- `composition_change`: change in climate composition that does not mainly
-  alter distance from the niche centre;
-- `outside_niche_exceedance`: how far future climate lies beyond an empirical
-  boundary of current niche conditions.
+Install the CRAN release:
 
-Together, these quantities distinguish local environmental change from change
-that moves current occurrence, range, or SDM cells outside the realised niche.
+```r
+install.packages("climniche")
+```
+
+Install the development version from GitHub:
+
+```r
+install.packages("remotes")
+remotes::install_github("Bohao0813/climniche")
+```
+
+## Metrics
+
+`climniche` separates four quantities. Field names in fitted R objects use
+snake_case, but figures and reports use the metric names below.
+
+- Climatic Displacement (`climate_change_amount`): total sensitivity weighted
+  climatic displacement.
+- Niche Distance Shift (`niche_distance_change`): signed change in distance
+  from the current realised climatic niche centre.
+- Climatic Reconfiguration (`climate_reconfiguration`): non radial component
+  of climatic displacement not captured by change in distance to the niche
+  centre.
+- Niche Boundary Exceedance (`niche_boundary_exceedance`): positive excess of
+  future niche distance beyond the empirical boundary of the current realised
+  climatic niche.
+
+Let current and future climatic conditions at cell `i` be represented by
+vectors `c_i` and `f_i` in a standardised, sensitivity weighted climatic space.
+Let `mu` denote the centre of the current realised climatic niche, and let
+`d_A(x, y)` denote the sensitivity weighted distance between two climatic
+vectors under weighting matrix `A`.
+
+Climatic Displacement is `D_i = d_A(f_i, c_i)`.
+
+Niche Distance Shift is `R_i = d_A(f_i, mu) - d_A(c_i, mu)`. Negative values
+indicate movement toward the realised niche centre; positive values indicate
+movement away from it.
+
+Climatic Reconfiguration is `C_i = sqrt(max(0, D_i^2 - R_i^2))`. It describes
+changes in the relative balance of climatic conditions that are not explained
+by Niche Distance Shift.
+
+Niche Boundary Exceedance is `E_i = max(0, d_A(f_i, mu) - B_q)`, where `B_q`
+is the `q`-th weighted quantile of current reference cell distances from the
+realised niche centre.
 
 ## Inputs and outputs
 
 `climniche` accepts extracted environmental matrices and aligned `raster` or
 `terra` layers. The current reference cells can be supplied as occurrences,
-a range raster, or a continuous SDM suitability raster with a chosen threshold.
+a range raster, or a continuous SDM suitability raster. Continuous suitability
+values are used as reference weights; `occupied_threshold` only removes low
+values and does not convert higher values to 1.
 
 The outputs are cell-level tables, maps, exposure classes, variable
 contributions, report text, and figure data.
+
+The exposure classes are derived from the four continuous metrics. They are not
+one class per metric. Niche Distance Shift is signed, so it separates movement
+toward and away from the realised niche centre. A separate low-change class
+identifies cells with limited Climatic Displacement, limited Climatic
+Reconfiguration and little Niche Distance Shift. Niche Boundary Exceedance is
+treated as an overriding class when future conditions exceed the empirical
+boundary.
 
 ## Basic use
 
@@ -59,10 +106,13 @@ fit <- fit_climniche(
 
 climniche_summary(fit)
 climniche_report(fit, species = "example species")
-plot_climniche_diagram(fit)
+plot_climniche_showcase(fit)
 ```
 
 For spatial data, use `fit_climniche_raster()` or `fit_climniche_terra()`.
-Both functions accept binary and continuous occupied rasters. `domain` can be
+Both functions accept binary and continuous reference rasters. `domain` can be
 used to restrict the calculation to a study area such as a marine region or a
-modelled accessible area.
+modelled accessible area. Classification thresholds can be set directly through
+arguments such as `tolerance`, `stable_climate_change`,
+`stable_reconfiguration`, `boundary_exceedance_tolerance`, and
+`conflict_ratio`.

@@ -14,7 +14,7 @@
   seq(rng[1], rng[2], length.out = bins + 1L)
 }
 
-.dominant_exposure_bins <- function(tab, bins = 45L) {
+.dominant_exposure_bins <- function(tab, bins = 45L, weights = NULL) {
   bins <- max(8L, as.integer(bins)[1])
   x_breaks <- .showcase_breaks(tab$climate_change_amount, bins)
   y_breaks <- .showcase_breaks(tab$niche_distance_change, bins)
@@ -29,12 +29,20 @@
     x_id = x_id[ok],
     y_id = y_id[ok],
     class = as.character(tab$class[ok]),
+    occupied_weight = if (!is.null(weights)) {
+      weights[ok]
+    } else if ("occupied_weight" %in% names(tab)) {
+      tab$occupied_weight[ok]
+    } else {
+      rep(1, sum(ok))
+    },
     stringsAsFactors = FALSE
   )
   if (!nrow(dat)) {
     return(data.frame(
       x_mid = numeric(), y_mid = numeric(), class = factor(),
       class_count = integer(), total_count = integer(),
+      class_weight = numeric(), total_weight = numeric(),
       proportion_in_bin = numeric(), cell_weight = numeric(),
       stringsAsFactors = FALSE
     ))
@@ -45,7 +53,14 @@
     by = list(x_id = dat$x_id, y_id = dat$y_id, class = dat$class),
     FUN = sum
   )
-  counts <- counts[order(counts$x_id, counts$y_id, -counts$class_count,
+  class_weight <- stats::aggregate(
+    list(class_weight = dat$occupied_weight),
+    by = list(x_id = dat$x_id, y_id = dat$y_id, class = dat$class),
+    FUN = sum
+  )
+  counts <- merge(counts, class_weight,
+                  by = c("x_id", "y_id", "class"), sort = FALSE)
+  counts <- counts[order(counts$x_id, counts$y_id, -counts$class_weight,
                          counts$class), , drop = FALSE]
   bin_key <- paste(counts$x_id, counts$y_id, sep = ":")
   total <- stats::aggregate(
@@ -53,27 +68,34 @@
     by = list(x_id = counts$x_id, y_id = counts$y_id),
     FUN = sum
   )
+  total_weight <- stats::aggregate(
+    list(total_weight = counts$class_weight),
+    by = list(x_id = counts$x_id, y_id = counts$y_id),
+    FUN = sum
+  )
   total_key <- paste(total$x_id, total$y_id, sep = ":")
   out <- counts[!duplicated(bin_key), , drop = FALSE]
   out_key <- paste(out$x_id, out$y_id, sep = ":")
   out$total_count <- total$total_count[match(out_key, total_key)]
-  out$proportion_in_bin <- out$class_count / out$total_count
+  out$total_weight <- total_weight$total_weight[match(out_key, total_key)]
+  out$proportion_in_bin <- out$class_weight / out$total_weight
   out$x_mid <- (x_breaks[out$x_id] + x_breaks[out$x_id + 1L]) / 2
   out$y_mid <- (y_breaks[out$y_id] + y_breaks[out$y_id + 1L]) / 2
   out$x_width <- diff(x_breaks)[out$x_id]
   out$y_height <- diff(y_breaks)[out$y_id]
-  out$cell_weight <- sqrt(out$total_count / max(out$total_count, na.rm = TRUE))
+  out$cell_weight <- sqrt(out$total_weight / max(out$total_weight, na.rm = TRUE))
   out$class <- factor(out$class, levels = names(.class_colours()))
   out[, c("x_mid", "y_mid", "class", "class_count", "total_count",
-          "proportion_in_bin", "cell_weight", "x_width", "y_height")]
+          "class_weight", "total_weight", "proportion_in_bin",
+          "cell_weight", "x_width", "y_height")]
 }
 
 .showcase_metric_distribution <- function(tab) {
   metrics <- c(
-    climate_change_amount = "Climate change\namount",
-    niche_distance_change = "Niche distance\nchange",
-    composition_change = "Composition\nchange",
-    outside_niche_exceedance = "Niche boundary\nexceedance"
+    climate_change_amount = "Climatic\nDisplacement",
+    niche_distance_change = "Niche Distance\nShift",
+    climate_reconfiguration = "Climatic\nReconfiguration",
+    niche_boundary_exceedance = "Niche Boundary\nExceedance"
   )
   out <- do.call(rbind, lapply(names(metrics), function(nm) {
     data.frame(
@@ -87,11 +109,11 @@
   out
 }
 
-#' Build data for the climniche showcase figure
+#' Build data for the climniche summary figure
 #'
 #' @param x A fitted climniche object.
-#' @param scope `"current"` for current occurrence, range or thresholded SDM
-#'   cells; `"all"` for all evaluated cells.
+#' @param scope `"current"` for current reference cells; `"all"` for all
+#'   evaluated cells.
 #' @param max_points Maximum number of cells to keep for the exposure plane.
 #' @param seed Random seed used when subsampling cells.
 #' @param plane_bins Number of fixed bins used to summarize the exposure plane.
@@ -110,7 +132,8 @@ climniche_showcase_data <- function(x, scope = c("current", "all"),
   }
   scope <- match.arg(scope)
   tab <- climniche_table(x, scope = scope)
-  tab$class <- factor(as.character(tab$class), levels = names(.class_colours()))
+  tab$class <- .normalise_class(tab$class)
+  tab_weight <- if (scope == "current") tab$occupied_weight else rep(1, nrow(tab))
 
   plane <- tab
   if (nrow(plane) > max_points) {
@@ -120,7 +143,10 @@ climniche_showcase_data <- function(x, scope = c("current", "all"),
 
   class_counts <- as.data.frame(table(tab$class), stringsAsFactors = FALSE)
   names(class_counts) <- c("class", "count")
-  class_counts$proportion <- class_counts$count / nrow(tab)
+  class_weight <- tapply(tab_weight, tab$class, sum)
+  class_counts$weight <- as.numeric(class_weight[as.character(class_counts$class)])
+  class_counts$weight[is.na(class_counts$weight)] <- 0
+  class_counts$proportion <- class_counts$weight / sum(tab_weight)
   class_counts <- class_counts[class_counts$count > 0, , drop = FALSE]
   class_counts$class <- factor(class_counts$class,
                                levels = rev(as.character(class_counts$class)))
@@ -131,15 +157,21 @@ climniche_showcase_data <- function(x, scope = c("current", "all"),
   )
 
   idx <- if (scope == "current") x$occupied else seq_len(nrow(x$current))
-  vals <- colMeans(x$variable_contribution[idx, , drop = FALSE],
-                   na.rm = TRUE)
+  reference_weights <- .fit_reference_weights(x)
+  weights <- if (scope == "current") {
+    reference_weights[idx]
+  } else {
+    rep(1, length(idx))
+  }
+  vals <- .weighted_col_means(x$variable_contribution[idx, , drop = FALSE],
+                              weights)
   variables <- data.frame(
     variable = names(vals),
     mean_contribution = as.numeric(vals),
     abs_mean_contribution = abs(as.numeric(vals)),
     direction = ifelse(vals >= 0,
-                       "less similar to current niche",
-                       "more similar to current niche"),
+                       "positive niche potential contribution",
+                       "negative niche potential contribution"),
     stringsAsFactors = FALSE
   )
   variables <- variables[order(variables$abs_mean_contribution,
@@ -152,26 +184,29 @@ climniche_showcase_data <- function(x, scope = c("current", "all"),
   boundary_probs <- boundary_probs[is.finite(boundary_probs) &
                                      boundary_probs > 0 & boundary_probs < 1]
   boundary <- do.call(rbind, lapply(boundary_probs, function(q) {
-    b_potential <- as.numeric(stats::quantile(
-      x$psi_current[x$occupied],
+    b_potential <- as.numeric(.weighted_quantile(
+      x$psi_current,
+      weights = reference_weights,
       probs = q,
-      names = FALSE,
-      na.rm = TRUE,
-      type = 8
+      names = FALSE
     ))
     b_radius <- sqrt(pmax(0, b_potential))
     exceed <- pmax(0, x$niche_radius_future[idx] - b_radius)
     data.frame(
       boundary_quantile = q,
       boundary_distance = b_radius,
-      prop_exceeded = mean(exceed > 0, na.rm = TRUE),
-      mean_exceedance = mean(exceed, na.rm = TRUE)
+      prop_exceeded = .weighted_prop(
+        exceed > x$classification_settings$boundary_exceedance_tolerance,
+        weights
+      ),
+      mean_exceedance = .weighted_mean_vector(exceed, weights)
     )
   }))
 
   out <- list(
     plane = plane,
-    plane_bins = .dominant_exposure_bins(tab, bins = plane_bins),
+    plane_bins = .dominant_exposure_bins(tab, bins = plane_bins,
+                                         weights = tab_weight),
     classes = class_counts,
     variables = variables,
     boundary = boundary,
@@ -189,12 +224,12 @@ climniche_showcase_data <- function(x, scope = c("current", "all"),
   out
 }
 
-#' Plot the climniche showcase figure
+#' Plot the climniche summary figure
 #'
 #' @param x A fitted climniche object or data returned by
 #'   `climniche_showcase_data()`.
-#' @param scope `"current"` for current occurrence, range or thresholded SDM
-#'   cells; `"all"` for all evaluated cells.
+#' @param scope `"current"` for current reference cells; `"all"` for all
+#'   evaluated cells.
 #' @param max_points Maximum number of cells to draw in the exposure plane.
 #' @param seed Random seed used when subsampling cells.
 #' @param plane_bins Number of fixed bins used to summarize the exposure plane.
@@ -236,11 +271,12 @@ plot_climniche_showcase <- function(x, scope = c("current", "all"),
 
   class_cols <- .class_colours()
   class_labs <- c(
-    "little climate niche change" = "little climate\nniche change",
-    "closer to current niche" = "closer to\ncurrent niche",
-    "farther from current niche" = "farther from\ncurrent niche",
-    "outside current niche boundary" = "outside current\nniche boundary",
-    "changed composition, similar distance" = "changed composition,\nsimilar distance"
+    "Limited climate niche change" = "Limited climate\nniche change",
+    "Closer to current niche" = "Closer to\ncurrent niche",
+    "Farther from current niche" = "Farther from\ncurrent niche",
+    "Outside current niche boundary" = "Outside current\nniche boundary",
+    "Climatic Reconfiguration with limited Niche Distance Shift" =
+      "Climatic Reconfiguration\nwith limited Niche Distance Shift"
   )
   tile_width <- if (nrow(x$plane_bins)) x$plane_bins$x_width[1] else 1
   tile_height <- if (nrow(x$plane_bins)) x$plane_bins$y_height[1] else 1
@@ -263,8 +299,8 @@ plot_climniche_showcase <- function(x, scope = c("current", "all"),
     ggplot2::labs(
       title = "(a) Binned exposure plane",
       subtitle = "Squares are fixed bins; colours follow panel (b)",
-      x = "Climate change amount",
-      y = "Niche distance change",
+      x = "Climatic Displacement",
+      y = "Niche Distance Shift",
       fill = "Dominant exposure class"
     ) +
     .climniche_theme(base_size = 8.2) +
@@ -285,8 +321,9 @@ plot_climniche_showcase <- function(x, scope = c("current", "all"),
       expand = ggplot2::expansion(mult = c(0, 0.02))
     ) +
     ggplot2::scale_fill_manual(values = class_cols, drop = TRUE) +
+    ggplot2::scale_y_discrete(labels = class_labs) +
     ggplot2::labs(
-      title = "(b) Exposure classes",
+      title = "(b) Derived exposure classes",
       x = "Proportion of analysed cells",
       y = NULL
     ) +
@@ -303,11 +340,11 @@ plot_climniche_showcase <- function(x, scope = c("current", "all"),
                         colour = "grey45") +
     ggplot2::scale_fill_manual(
       values = c("TRUE" = "#c65d57", "FALSE" = "#4c78a8"),
-      labels = c("TRUE" = "less similar", "FALSE" = "more similar")
+      labels = c("TRUE" = "positive", "FALSE" = "negative")
     ) +
     ggplot2::labs(
       title = "(c) Variable contributions",
-      x = "Mean contribution to niche distance change",
+      x = "Mean contribution to niche potential change",
       y = NULL,
       fill = NULL
     ) +

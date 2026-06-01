@@ -9,8 +9,8 @@ plot_climniche_class_summary(x, scope = c("current", "all"), title = NULL)
 \arguments{
 \item{x}{A fitted climniche object.}
 
-\item{scope}{\code{"current"} for current occurrence/range cells or \code{"all"} for
-all evaluated cells.}
+\item{scope}{\code{"current"} for current reference cells or \code{"all"} for all
+evaluated cells.}
 
 \item{title}{Optional plot title.}
 }

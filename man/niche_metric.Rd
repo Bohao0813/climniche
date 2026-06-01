@@ -2,12 +2,12 @@
 % Please edit documentation in R/metric.R
 \name{niche_metric}
 \alias{niche_metric}
-\title{Build a sensitivity-weighted niche metric}
+\title{Build a sensitivity weighted niche metric}
 \usage{
 niche_metric(sensitivity = NULL, cnfa = NULL, type = c("diag", "factor"))
 }
 \arguments{
-\item{sensitivity}{Numeric vector of climate-variable sensitivity weights.}
+\item{sensitivity}{Numeric vector of climate variable sensitivity weights.}
 
 \item{cnfa}{Optional CENFA \code{cnfa} object or list with \code{sf}, \code{co}, and \code{eig}.}
 
@@ -18,5 +18,5 @@ niche_metric(sensitivity = NULL, cnfa = NULL, type = c("diag", "factor"))
 A positive semi-definite matrix.
 }
 \description{
-Build a sensitivity-weighted niche metric
+Build a sensitivity weighted niche metric
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/core.R
 \name{boundary_exceedance}
 \alias{boundary_exceedance}
-\title{Niche boundary exceedance}
+\title{Niche Boundary Exceedance}
 \usage{
 boundary_exceedance(
   psi_future,
@@ -13,7 +13,8 @@ boundary_exceedance(
 \arguments{
 \item{psi_future}{Future niche potential.}
 
-\item{boundary_value}{Empirical occupied-niche boundary in potential units.}
+\item{boundary_value}{Empirical boundary of the current realised niche in
+potential units.}
 
 \item{scale}{\code{"radial"} returns exceedance beyond the niche boundary distance;
 \code{"potential"} returns exceedance beyond squared niche potential.}
@@ -22,5 +23,5 @@ boundary_exceedance(
 Numeric vector.
 }
 \description{
-Niche boundary exceedance
+Niche Boundary Exceedance
 }

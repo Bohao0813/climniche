@@ -8,7 +8,7 @@ fit_climniche(
   current,
   future,
   occupied = NULL,
-  occupied_threshold = 0,
+  occupied_threshold = NULL,
   cnfa = NULL,
   center = NULL,
   sensitivity = NULL,
@@ -18,6 +18,13 @@ fit_climniche(
   scale = TRUE,
   global_mean = NULL,
   global_sd = NULL,
+  tolerance = NULL,
+  tolerance_quantile = 0.1,
+  stable_climate_change = NULL,
+  stable_quantile = 0.25,
+  stable_reconfiguration = NULL,
+  stable_reconfiguration_quantile = 0.25,
+  boundary_exceedance_tolerance = 0,
   conflict_ratio = 0.25
 )
 }
@@ -27,11 +34,12 @@ fit_climniche(
 \item{future}{Numeric matrix or data frame of future environmental values.}
 
 \item{occupied}{NULL, logical vector, row indices, or a numeric vector with
-one value per row identifying current occurrence, range, or thresholded SDM
-cells.}
+one value per row identifying current occurrence, range, or continuous SDM
+suitability weights.}
 
 \item{occupied_threshold}{Threshold used when \code{occupied} contains binary or
-continuous values.}
+continuous values. Values at or below the threshold receive zero reference
+weight; values above it keep their original value.}
 
 \item{cnfa}{Optional CENFA model object.}
 
@@ -51,6 +59,26 @@ continuous values.}
 
 \item{global_sd}{Optional standard deviations used for standardisation.}
 
+\item{tolerance}{Optional Niche Distance Shift tolerance.}
+
+\item{tolerance_quantile}{Quantile of absolute Niche Distance Shift used
+when \code{tolerance = NULL}.}
+
+\item{stable_climate_change}{Optional threshold for limited climate niche
+change.}
+
+\item{stable_quantile}{Quantile of Climatic Displacement used when
+\code{stable_climate_change = NULL}.}
+
+\item{stable_reconfiguration}{Optional threshold for low Climatic
+Reconfiguration.}
+
+\item{stable_reconfiguration_quantile}{Quantile of Climatic Reconfiguration
+used when \code{stable_reconfiguration = NULL}.}
+
+\item{boundary_exceedance_tolerance}{Tolerance for deciding whether future
+climate exceeds the empirical niche boundary.}
+
 \item{conflict_ratio}{Minimum minority sign contribution share used to mark
 mixed variable responses. Set to NULL to disable this flag.}
 }
@@ -59,4 +87,19 @@ An object of class \code{climniche_fit}.
 }
 \description{
 Fit niche climate exposure
+}
+\details{
+The fitted object stores four primary metrics as snake_case fields:
+Climatic Displacement (\code{climate_change_amount}), Niche Distance Shift
+(\code{niche_distance_change}), Climatic Reconfiguration
+(\code{climate_reconfiguration}) and Niche Boundary Exceedance
+(\code{niche_boundary_exceedance}). Let current and future climatic conditions at
+cell \code{i} be \code{c_i} and \code{f_i}, let \code{mu} be the centre of the current realised
+climatic niche, and let \code{d_A(x, y)} be the sensitivity weighted distance
+under weighting matrix \code{A}. Climatic Displacement is \code{d_A(f_i, c_i)}. Niche
+Distance Shift is \code{d_A(f_i, mu) - d_A(c_i, mu)}. Climatic Reconfiguration is
+\code{sqrt(max(0, D_i^2 - R_i^2))}, where \code{D_i} is Climatic Displacement and
+\code{R_i} is Niche Distance Shift. Niche Boundary Exceedance is
+\code{max(0, d_A(f_i, mu) - B_q)}, where \code{B_q} is the \code{q}-th weighted quantile of
+current reference cell distances from the realised niche centre.
 }

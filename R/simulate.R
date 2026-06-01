@@ -6,7 +6,7 @@
 #' @param rho Pairwise correlation among simulated climate variables.
 #' @param prevalence Proportion of background cells treated as true current
 #'   occurrence locations under the virtual niche.
-#' @param shift Climate change amount imposed in the closer to niche and
+#' @param shift Climatic Displacement imposed in the closer to niche and
 #'   farther from niche scenarios.
 #'
 #' @return A list with current, future_toward, future_away, occupied, center,

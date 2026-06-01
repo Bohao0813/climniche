@@ -4,15 +4,17 @@
 
 ## R CMD check results
 
-0 errors | 0 warnings | 2 notes
+0 errors | 0 warnings | 1 note
 
-* This is a new submission.
-* The local Windows check skipped HTML validation because HTML Tidy is not
-  installed. Installation, examples, tests, vignettes and the PDF manual pass.
-* The local check also reports the GitHub URLs as unreachable because the remote
-  repository has not yet been created from this environment. This note should be
-  resolved before CRAN submission by creating `https://github.com/Bohao0813/climniche`.
+* Non-staged installation was used for the local Windows check because the
+  sandboxed filesystem prevented R from renaming the staged installation
+  directory. The package installed, loaded, ran its tests and rebuilt its
+  vignettes successfully under this check.
+
+This update follows the initial CRAN release. It revises terminology used in
+user-facing output, adds user-set classification thresholds and treats
+continuous SDM suitability as reference weights.
 
 ## Downstream dependencies
 
-This is a new submission, so there are no downstream dependencies.
+There are no known downstream dependencies.

@@ -9,8 +9,8 @@ plot_climniche_report(x, scope = c("current", "all"))
 \arguments{
 \item{x}{A fitted climniche object.}
 
-\item{scope}{\code{"current"} for current occurrence/range cells or \code{"all"} for
-all evaluated cells.}
+\item{scope}{\code{"current"} for current reference cells or \code{"all"} for all
+evaluated cells.}
 }
 \value{
 A patchwork object when \code{patchwork} is installed, otherwise a named

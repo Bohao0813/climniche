@@ -2,7 +2,7 @@
 % Please edit documentation in R/showcase.R
 \name{plot_climniche_showcase}
 \alias{plot_climniche_showcase}
-\title{Plot the climniche showcase figure}
+\title{Plot the climniche summary figure}
 \usage{
 plot_climniche_showcase(
   x,
@@ -20,8 +20,8 @@ plot_climniche_showcase(
 \item{x}{A fitted climniche object or data returned by
 \code{climniche_showcase_data()}.}
 
-\item{scope}{\code{"current"} for current occurrence, range or thresholded SDM
-cells; \code{"all"} for all evaluated cells.}
+\item{scope}{\code{"current"} for current reference cells; \code{"all"} for all
+evaluated cells.}
 
 \item{max_points}{Maximum number of cells to draw in the exposure plane.}
 
@@ -42,5 +42,5 @@ A patchwork object when \code{patchwork} is installed, otherwise a named
 list of ggplot objects.
 }
 \description{
-Plot the climniche showcase figure
+Plot the climniche summary figure
 }

@@ -1,6 +1,6 @@
-#' Build a sensitivity-weighted niche metric
+#' Build a sensitivity weighted niche metric
 #'
-#' @param sensitivity Numeric vector of climate-variable sensitivity weights.
+#' @param sensitivity Numeric vector of climate variable sensitivity weights.
 #' @param cnfa Optional CENFA `cnfa` object or list with `sf`, `co`, and `eig`.
 #' @param type Metric type. `"diag"` uses variable-level sensitivity weights.
 #'   `"factor"` uses a factor metric when CNFA factor coordinates are available.

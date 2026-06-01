@@ -7,7 +7,8 @@
 plot_climniche_distribution(
   x,
   metric = c("niche_distance_change", "climate_change_amount",
-    "outside_niche_exceedance", "composition_change"),
+    "niche_boundary_exceedance", "climate_reconfiguration", "outside_niche_exceedance",
+    "composition_change"),
   scope = c("current", "all"),
   title = NULL
 )
@@ -17,8 +18,8 @@ plot_climniche_distribution(
 
 \item{metric}{Metric to plot.}
 
-\item{scope}{\code{"current"} for current occurrence/range cells or \code{"all"} for
-all evaluated cells.}
+\item{scope}{\code{"current"} for current reference cells or \code{"all"} for all
+evaluated cells.}
 
 \item{title}{Optional plot title.}
 }

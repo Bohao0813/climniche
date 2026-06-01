@@ -9,11 +9,12 @@ climniche_summary(x, scope = c("current", "all"))
 \arguments{
 \item{x}{A fitted \code{climniche_fit} object.}
 
-\item{scope}{\code{"current"} for current occurrence/range cells or \code{"all"} for
-all evaluated cells.}
+\item{scope}{\code{"current"} for current reference cells or \code{"all"} for all
+evaluated cells. Current-scope summaries use reference weights.}
 }
 \value{
-A one-row data frame with key report metrics.
+A one-row data frame with metric summaries and the effective
+classification settings.
 }
 \description{
 Summarise climniche results

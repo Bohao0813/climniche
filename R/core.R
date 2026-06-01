@@ -5,7 +5,7 @@
 #'   same dimensions and variables as `current`.
 #' @param occupied NULL, logical vector, row indices, or a numeric vector with
 #'   one value per row. Numeric vectors of length `nrow(current)` are treated as
-#'   binary or continuous occurrence, range, or SDM suitability values.
+#'   continuous reference weights, including SDM suitability values.
 #' @param occupied_threshold Threshold used when `occupied` is a numeric vector
 #'   with one value per row.
 #' @param cnfa Optional CENFA `cnfa` object. When supplied, its `mf` and `sf`
@@ -19,18 +19,38 @@
 #'   means and standard deviations of current values.
 #' @param global_mean Optional means used for standardization.
 #' @param global_sd Optional standard deviations used for standardization.
+#' @param tolerance Optional Niche Distance Shift tolerance.
+#' @param tolerance_quantile Quantile of absolute Niche Distance Shift used
+#'   when `tolerance = NULL`.
+#' @param stable_climate_change Optional threshold for limited climate niche
+#'   change.
+#' @param stable_quantile Quantile of Climatic Displacement used when
+#'   `stable_climate_change = NULL`.
+#' @param stable_reconfiguration Optional threshold for low Climatic
+#'   Reconfiguration.
+#' @param stable_reconfiguration_quantile Quantile of Climatic Reconfiguration
+#'   used when `stable_reconfiguration = NULL`.
+#' @param boundary_exceedance_tolerance Tolerance for deciding whether future
+#'   climate exceeds the empirical niche boundary.
 #' @param conflict_ratio Minimum minority-sign variable-contribution share used
 #'   to mark mixed variable responses. Set to NULL to disable this flag.
 #'
 #' @return An object of class `climniche_fit`.
 #' @noRd
 .fit_climniche_matrix <- function(current, future, occupied = NULL,
-                                  occupied_threshold = 0,
+                                  occupied_threshold = NULL,
                                   cnfa = NULL, center = NULL,
                                   sensitivity = NULL, A = NULL,
                                   metric = c("diag", "factor"),
                                   boundary = 0.95, scale = TRUE,
                                   global_mean = NULL, global_sd = NULL,
+                                  tolerance = NULL,
+                                  tolerance_quantile = 0.10,
+                                  stable_climate_change = NULL,
+                                  stable_quantile = 0.25,
+                                  stable_reconfiguration = NULL,
+                                  stable_reconfiguration_quantile = 0.25,
+                                  boundary_exceedance_tolerance = 0,
                                   conflict_ratio = 0.25) {
   metric <- match.arg(metric)
   current <- .as_numeric_matrix(current, "current")
@@ -42,8 +62,9 @@
     stop("boundary must be between 0 and 1.", call. = FALSE)
   }
 
-  occ <- .occupied_index(occupied, nrow(current),
-                         threshold = occupied_threshold)
+  occupied_weight <- .reference_weights(occupied, nrow(current),
+                                        threshold = occupied_threshold)
+  occ <- .positive_reference_indices(occupied_weight)
   scaled <- .standardize_pair(current, future, scale, global_mean, global_sd)
   x0 <- scaled$current
   x1 <- scaled$future
@@ -52,7 +73,7 @@
     center <- .extract_slot(cnfa, "mf")
   }
   if (is.null(center)) {
-    center <- colMeans(x0[occ, , drop = FALSE])
+    center <- .weighted_mean(x0, occupied_weight)
   }
   center <- as.numeric(center)
   if (length(center) != ncol(current)) {
@@ -76,35 +97,50 @@
   radius1 <- niche_radius(psi1)
   amount <- .climate_change_amount(x0, x1, A = A)
   distance_change <- .niche_distance_change(psi0, psi1)
-  composition <- .composition_change(amount, distance_change)
+  reconfiguration <- .climate_reconfiguration(amount, distance_change)
   alignment <- .change_alignment(amount, distance_change)
-  b_potential <- as.numeric(stats::quantile(psi0[occ], probs = boundary,
-                                            names = FALSE, na.rm = TRUE,
-                                            type = 8))
+  b_potential <- as.numeric(.weighted_quantile(
+    psi0,
+    weights = occupied_weight,
+    probs = boundary,
+    names = FALSE
+  ))
   b_radius <- sqrt(pmax(0, b_potential))
   exceed <- boundary_exceedance(psi1, boundary_value = b_potential,
                                 scale = "radial")
-  perc <- niche_percentile(psi0, psi1, occupied = occ)
+  perc <- niche_percentile(psi0, psi1, occupied = occupied_weight)
   contrib <- variable_contribution(x0, x1, center = center, A = A)
   mixed <- mixed_variable_response(
     contribution = contrib,
-    outside_niche_exceedance = exceed,
+    niche_boundary_exceedance = exceed,
+    boundary_exceedance_tolerance = boundary_exceedance_tolerance,
     conflict_ratio = conflict_ratio
   )
   class <- classify_exposure(
     climate_change_amount = amount,
     niche_distance_change = distance_change,
-    outside_niche_exceedance = exceed,
-    composition_change = composition,
+    niche_boundary_exceedance = exceed,
+    climate_reconfiguration = reconfiguration,
     contribution = contrib,
+    tolerance = tolerance,
+    tolerance_quantile = tolerance_quantile,
+    stable_climate_change = stable_climate_change,
+    stable_quantile = stable_quantile,
+    stable_reconfiguration = stable_reconfiguration,
+    stable_reconfiguration_quantile = stable_reconfiguration_quantile,
+    boundary_exceedance_tolerance = boundary_exceedance_tolerance,
     conflict_ratio = conflict_ratio
   )
+  classification_settings <- attr(class, "classification_settings")
+  attr(class, "classification_settings") <- NULL
 
   out <- list(
     call = match.call(),
     current = x0,
     future = x1,
     occupied = occ,
+    occupied_weight = occupied_weight,
+    reference_weight = occupied_weight,
     center = center,
     A = A,
     psi_current = psi0,
@@ -113,8 +149,10 @@
     niche_radius_future = radius1,
     climate_change_amount = amount,
     niche_distance_change = distance_change,
-    composition_change = composition,
+    climate_reconfiguration = reconfiguration,
+    composition_change = reconfiguration,
     change_alignment = alignment,
+    niche_boundary_exceedance = exceed,
     outside_niche_exceedance = exceed,
     boundary_quantile = boundary,
     boundary_value = b_radius,
@@ -124,6 +162,7 @@
     variable_contribution = contrib,
     mixed_variable_response = mixed,
     classification = class,
+    classification_settings = classification_settings,
     standardization = list(center = scaled$center, scale = scaled$scale)
   )
   class(out) <- "climniche_fit"
@@ -132,8 +171,8 @@
 
 #' Niche potential
 #'
-#' @param x Standardized climate matrix.
-#' @param center Realized niche center.
+#' @param x Standardised climate matrix.
+#' @param center Realised niche centre.
 #' @param A Niche metric matrix.
 #'
 #' @return Numeric vector of quadratic niche displacement values.
@@ -148,7 +187,7 @@ niche_potential <- function(x, center, A) {
 #'
 #' @param psi Numeric niche-potential values.
 #'
-#' @return Numeric vector in sensitivity-weighted climate-distance units.
+#' @return Numeric vector in sensitivity weighted climate distance units.
 #' @export
 niche_radius <- function(psi) {
   sqrt(pmax(0, psi))
@@ -160,9 +199,12 @@ niche_radius <- function(psi) {
   sqrt(pmax(0, .quad_form_rows(future - current, A)))
 }
 
-.composition_change <- function(climate_change_amount, niche_distance_change) {
+.climate_reconfiguration <- function(climate_change_amount,
+                                     niche_distance_change) {
   sqrt(pmax(0, climate_change_amount^2 - niche_distance_change^2))
 }
+
+.composition_change <- .climate_reconfiguration
 
 .change_alignment <- function(climate_change_amount, niche_distance_change) {
   out <- rep(NA_real_, length(climate_change_amount))
@@ -176,10 +218,11 @@ niche_radius <- function(psi) {
   niche_radius(psi_future) - niche_radius(psi_current)
 }
 
-#' Niche boundary exceedance
+#' Niche Boundary Exceedance
 #'
 #' @param psi_future Future niche potential.
-#' @param boundary_value Empirical occupied-niche boundary in potential units.
+#' @param boundary_value Empirical boundary of the current realised niche in
+#'   potential units.
 #' @param scale `"radial"` returns exceedance beyond the niche boundary distance;
 #'   `"potential"` returns exceedance beyond squared niche potential.
 #'
@@ -198,14 +241,15 @@ boundary_exceedance <- function(psi_future, boundary_value,
 #'
 #' @param psi_current Current niche potential for all cells.
 #' @param psi_future Future niche potential for all cells.
-#' @param occupied Current occurrence indices used to define the reference CDF.
+#' @param occupied Current reference weights or indices used to define the
+#'   reference CDF.
 #'
 #' @return Data frame with current, future, and delta percentiles.
 #' @export
 niche_percentile <- function(psi_current, psi_future, occupied) {
-  f <- stats::ecdf(psi_current[occupied])
-  current <- f(psi_current)
-  future <- f(psi_future)
+  weights <- .reference_weights(occupied, length(psi_current), threshold = NULL)
+  current <- .weighted_ecdf_values(psi_current, psi_current, weights)
+  future <- .weighted_ecdf_values(psi_current, psi_future, weights)
   data.frame(current = current, future = future, delta = future - current)
 }
 

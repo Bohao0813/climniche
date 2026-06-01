@@ -8,6 +8,7 @@ plot_climniche_diagram(
   x,
   scope = c("current", "all"),
   type = c("summary", "sample"),
+  summary_layout = c("metrics", "ordination"),
   max_arrows = 350L,
   seed = 1L,
   show_reference = FALSE,
@@ -15,8 +16,9 @@ plot_climniche_diagram(
   boundary_shape = c("hull", "circle", "none"),
   show_boundary_label = TRUE,
   show_points = NULL,
+  show_startpoints = FALSE,
   show_endpoints = FALSE,
-  show_center = FALSE,
+  show_center = TRUE,
   show_variables = FALSE,
   variable_labels = NULL,
   title = NULL
@@ -26,29 +28,37 @@ plot_climniche_diagram(
 \item{x}{A fitted climniche object or data returned by
 \code{climniche_diagram_data()}.}
 
-\item{scope}{\code{"current"} for current occurrence, range or thresholded SDM
-cells; \code{"all"} for all evaluated cells.}
+\item{scope}{\code{"current"} for current reference cells; \code{"all"} for all
+evaluated cells.}
 
-\item{type}{\code{"summary"} draws class mean arrows; \code{"sample"} draws sampled
-cell arrows and future points.}
+\item{type}{\code{"summary"} draws mean current-to-future displacements for
+exposure classes; \code{"sample"} draws sampled cell displacements and future
+points.}
+
+\item{summary_layout}{Layout used when \code{type = "summary"}. \code{"metrics"}
+draws the climate-space projection and two metric planes; \code{"ordination"}
+draws class mean arrows on the climate-space projection.}
 
 \item{max_arrows}{Maximum number of current to future arrows to draw when
 \code{type = "sample"}.}
 
 \item{seed}{Random seed used when subsampling arrows.}
 
-\item{show_reference}{Logical; draw the full analysed environmental domain.}
+\item{show_reference}{Logical; draw the full analysed climate-space domain.}
 
-\item{show_hulls}{Logical; draw current and future niche hulls.}
+\item{show_hulls}{Logical; draw current and future climate-space envelopes.}
 
-\item{boundary_shape}{Boundary display. \code{"hull"} draws the empirical
-occupied niche polygon, \code{"circle"} draws a constant niche distance boundary,
-and \code{"none"} suppresses the boundary.}
+\item{boundary_shape}{Boundary display. \code{"hull"} draws the current reference
+climate envelope, \code{"circle"} draws a constant niche-distance boundary, and
+\code{"none"} suppresses the boundary.}
 
-\item{show_boundary_label}{Logical; add reference-area explanations below
-the exposure-class legend.}
+\item{show_boundary_label}{Logical; add envelope explanations below the
+exposure-class legend.}
 
 \item{show_points}{Logical; draw future points when \code{type = "sample"}.}
+
+\item{show_startpoints}{Logical; draw class mean current positions when
+\code{type = "summary"}.}
 
 \item{show_endpoints}{Logical; draw class mean future positions when
 \code{type = "summary"}.}

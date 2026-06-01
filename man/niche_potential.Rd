@@ -7,9 +7,9 @@
 niche_potential(x, center, A)
 }
 \arguments{
-\item{x}{Standardized climate matrix.}
+\item{x}{Standardised climate matrix.}
 
-\item{center}{Realized niche center.}
+\item{center}{Realised niche centre.}
 
 \item{A}{Niche metric matrix.}
 }

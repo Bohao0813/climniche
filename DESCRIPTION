@@ -1,16 +1,16 @@
 Package: climniche
 Type: Package
 Title: Niche Climate Exposure
-Version: 0.0.1
+Version: 0.2.0
 Authors@R: c(
     person("Bohao", "He", role = c("aut", "cre"), email = "bohao.he@polimi.it")
     )
 Description: Assesses niche climate exposure by interpreting projected climate
     change relative to the climate conditions a species currently occupies.
-    Using occurrence records, range data or thresholded SDM suitability maps,
-    current environmental rasters and future projections, the package separates
-    climate change amount, change in distance to the current niche centre,
-    composition change and exceedance beyond an empirical niche boundary.
+    Using occurrence records, range data, continuous species distribution model
+    suitability maps, current environmental rasters and future projections, the
+    package separates Climatic Displacement, Niche Distance Shift, Climatic
+    Reconfiguration and Niche Boundary Exceedance.
 License: GPL (>= 3)
 URL: https://github.com/Bohao0813/climniche,
     https://bohao0813.github.io/climniche/

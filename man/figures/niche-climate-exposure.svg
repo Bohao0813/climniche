@@ -1,129 +1,85 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- Generator: $$$/GeneralStr/196=Adobe Illustrator 27.6.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
-<svg version="1.1" id="图层_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="1200" height="580"
-	 viewBox="0 0 1200 580" style="enable-background:new 0 0 1200 580;" xml:space="preserve">
-<style type="text/css">
-	.st0{fill:#1D2528;}
-	.st1{font-family:'Arial-BoldMT';}
-	.st2{font-size:28px;}
-	.st3{fill:#505A5D;}
-	.st4{font-family:'ArialMT';}
-	.st5{font-size:17px;}
-	.st6{fill:#F7FAF9;stroke:#D4DCDA;stroke-width:1.5;}
-	.st7{font-size:18px;}
-	.st8{fill:#DCEFEB;stroke:#B7CAC6;}
-	.st9{fill:#EFF2ED;stroke:#C9D1CB;}
-	.st10{fill:none;stroke:#174A44;stroke-width:4;}
-	.st11{opacity:0.85;}
-	.st12{fill:#174A44;}
-	.st13{opacity:0.85;fill:#174A44;enable-background:new    ;}
-	.st14{fill:#374245;}
-	.st15{font-size:14px;}
-	.st16{font-size:13px;}
-	.st17{fill:none;}
-	.st18{fill:#2F3D40;}
-	.st19{font-size:16px;}
-	.st20{fill:#DFE9E6;stroke:#174A44;stroke-width:3;}
-	.st21{opacity:0.75;fill:none;stroke:#174A44;stroke-width:2.5;stroke-dasharray:8,7;enable-background:new    ;}
-	.st22{fill:#FFFFFF;stroke:#000000;stroke-width:2;}
-	.st23{fill:#C65D57;}
-	.st24{fill:#4C78A8;}
-	.st25{fill:#5F9E8F;}
-	.st26{opacity:0.75;enable-background:new    ;}
-	.st27{fill:none;stroke:#C65D57;stroke-width:3;}
-	.st28{fill:none;stroke:#C65D57;stroke-width:2;}
-	.st29{fill:#DFE9E6;stroke:#174A44;}
-	.st30{fill:none;stroke:#174A44;stroke-width:2.2;stroke-dasharray:6,5;}
-	.st31{fill:none;stroke:#000000;stroke-width:3;stroke-miterlimit:10;}
-	.st32{fill:none;stroke:#5F9E8F;stroke-width:3;stroke-miterlimit:10;}
-	.st33{fill:none;stroke:#4C78A8;stroke-width:3;stroke-miterlimit:10;}
-</style>
-<text transform="matrix(1 0 0 1 60 48)" class="st0 st1 st2">Niche climate exposure</text>
-<text transform="matrix(1 0 0 1 60 78)" class="st3 st4 st5">Projected climate change is interpreted against the current climatic niche.</text>
-<rect x="60" y="118" class="st6" width="480" height="370"/>
-<text transform="matrix(1 0 0 1 84 150)" class="st0 st1 st7">(a) Current analysed cells</text>
-<rect x="92" y="180" class="st8" width="415" height="245"/>
-<path class="st9" d="M92,252l56-26l68-2l60,16l62-8l72-36l97-12v-4H92V252z"/>
-<path class="st9" d="M92,425v-44l66-25l65,7l63-13l80,15l73-23l68,10v73H92z"/>
-<ellipse class="st10" cx="295" cy="300" rx="154" ry="42"/>
-<g class="st11">
-	<circle class="st12" cx="198" cy="292" r="4"/>
-	<circle class="st12" cx="224" cy="311" r="4"/>
-	<circle class="st12" cx="254" cy="286" r="4"/>
-	<circle class="st12" cx="284" cy="305" r="4"/>
-	<circle class="st12" cx="316" cy="292" r="4"/>
-	<circle class="st12" cx="348" cy="313" r="4"/>
-	<circle class="st12" cx="382" cy="298" r="4"/>
-	<circle class="st12" cx="420" cy="305" r="4"/>
-</g>
-<rect x="118" y="446" class="st13" width="18" height="10"/>
-<text transform="matrix(1 0 0 1 144 456)" class="st14 st4 st15">cells defining the current niche</text>
-<text transform="matrix(1 0 0 1 92 476)" class="st3 st4 st16">Input can be occurrences, a range map, or thresholded SDM suitability cells.</text>
-<rect x="634.9" y="118" class="st6" width="488" height="370"/>
-<text transform="matrix(1 0 0 1 684 150)" class="st0 st1 st7">(b) Change measured in niche space</text>
-<path class="st17" d=""/>
-<path marker-end="url(#axisArrow)" class="st18" d="M1062,410"/>
-<path class="st17" d=""/>
-<path marker-end="url(#axisArrow)" class="st18" d="M725,197"/>
-<text transform="matrix(1 0 0 1 794.5906 441.0977)" class="st18 st4 st19">Niche climate axis 1</text>
-<ellipse class="st20" cx="875" cy="310" rx="116" ry="63"/>
-<ellipse class="st21" cx="875" cy="310" rx="162" ry="94"/>
-<circle class="st22" cx="875" cy="310" r="6"/>
-<text transform="matrix(1 0 0 1 823.1129 292.0002)" class="st12 st4 st15">niche centre</text>
-<path class="st17" d=""/>
-<path marker-end="url(#changeArrow)" class="st23" d="M1018,247"/>
-<path class="st17" d=""/>
-<path marker-end="url(#nearArrow)" class="st24" d="M807,340"/>
-<path class="st17" d=""/>
-<path marker-end="url(#compArrow)" class="st25" d="M973,338"/>
-<g class="st26">
-	<g>
-		<line class="st27" x1="875" y1="310" x2="1006.4" y2="252.1"/>
-		<g>
-			<path class="st23" d="M1018,247c-4.6,4.4-9.8,10.9-12.4,16.4l-0.7-10.6l-7.3-7.7C1003.4,246.9,1011.7,247.4,1018,247z"/>
-		</g>
-	</g>
-</g>
-<path class="st28" d="M1018,247l16-24"/>
-<text transform="matrix(1 0 0 1 1005.4541 215.9998)" class="st23 st4 st15">outside boundary</text>
-<text transform="matrix(1 0 0 1 1015 259)" class="st23 st4 st16">farther</text>
-<text transform="matrix(1 0 0 1 788.2539 324.577)" class="st24 st4 st16">closer</text>
-<rect x="713" y="462.8" class="st29" width="13" height="13"/>
-<text transform="matrix(1 0 0 1 733 472.7205)" class="st14 st4 st16">current realised niche</text>
-<line class="st30" x1="875" y1="469.3" x2="907" y2="469.3"/>
-<text transform="matrix(1 0 0 1 913 472.7205)" class="st14 st4 st16">empirical boundary</text>
-<g>
-	<g>
-		<line class="st31" x1="702.3" y1="415.7" x2="1042.8" y2="415.7"/>
-		<g>
-			<path d="M1055.4,415.7c-6,2.2-13.4,6-17.9,10l3.6-10l-3.6-10C1042.1,409.7,1049.5,413.5,1055.4,415.7z"/>
-		</g>
-	</g>
-</g>
-<g>
-	<g>
-		<line class="st31" x1="702.3" y1="417.4" x2="702.3" y2="205.7"/>
-		<g>
-			<path d="M702.3,193c2.2,6,6,13.4,10,17.9l-10-3.6l-10,3.6C696.3,206.4,700.1,199,702.3,193z"/>
-		</g>
-	</g>
-</g>
-<text transform="matrix(6.123234e-17 -1 1 6.123234e-17 684.5281 384.298)" class="st18 st4 st19">Niche climate axis 2</text>
-<g>
-	<g>
-		<line class="st32" x1="875" y1="310" x2="953.6" y2="335.3"/>
-		<g>
-			<path class="st25" d="M965.7,339.2c-6.4,0.3-14.6,1.6-20.1,4l6.5-8.4l-0.4-10.6C954.8,329.4,960.7,335.2,965.7,339.2z"/>
-		</g>
-	</g>
-</g>
-<text transform="matrix(1 0 0 1 973.52 353.9998)" class="st25 st4 st16">composition</text>
-<g>
-	<g>
-		<line class="st33" x1="875" y1="310" x2="839.9" y2="320.8"/>
-		<g>
-			<path class="st24" d="M827.7,324.6c5-3.9,11-9.7,14.2-14.8l-0.5,10.6l6.4,8.5C842.3,326.4,834.1,324.9,827.7,324.6z"/>
-		</g>
-	</g>
-</g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 620" role="img" aria-label="Niche climate exposure conceptual diagram">
+  <defs>
+    <marker id="arrowBlue" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#2f6f9f"/>
+    </marker>
+    <marker id="arrowRed" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#bd5a54"/>
+    </marker>
+    <marker id="arrowGreen" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#4f927f"/>
+    </marker>
+    <marker id="arrowOrange" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#d1902e"/>
+    </marker>
+    <marker id="arrowAxis" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,0 L12,6 L0,12 Z" fill="#000000"/>
+    </marker>
+  </defs>
+
+  <rect width="1200" height="620" fill="#ffffff"/>
+
+  <text x="56" y="58" font-family="Arial, Helvetica, sans-serif" font-size="31" font-weight="700" fill="#000000">Niche climate exposure</text>
+  <text x="56" y="90" font-family="Arial, Helvetica, sans-serif" font-size="17" fill="#000000">Projected climate change is measured relative to the centre and empirical boundary of the current realised climatic niche.</text>
+
+  <rect x="56" y="132" width="748" height="412" fill="#ffffff" stroke="#d6d6d6" stroke-width="1.4"/>
+  <text x="88" y="170" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700" fill="#000000">Weighted climate space</text>
+  <text x="88" y="198" font-family="Arial, Helvetica, sans-serif" font-size="14" fill="#000000">The centre is the weighted mean of current reference climate conditions.</text>
+
+  <g transform="translate(104 228)">
+    <line x1="34" y1="250" x2="638" y2="250" stroke="#000000" stroke-width="1.4" marker-end="url(#arrowAxis)"/>
+    <line x1="34" y1="250" x2="34" y2="20" stroke="#000000" stroke-width="1.4" marker-end="url(#arrowAxis)"/>
+    <text x="268" y="292" font-family="Arial, Helvetica, sans-serif" font-size="14" fill="#000000">climate-space axis 1</text>
+    <text x="-52" y="143" transform="rotate(-90 -52 143)" font-family="Arial, Helvetica, sans-serif" font-size="14" fill="#000000">climate-space axis 2</text>
+
+    <ellipse cx="320" cy="150" rx="160" ry="72" transform="rotate(-18 320 150)" fill="#dfecea" stroke="#1d514b" stroke-width="2.5"/>
+    <ellipse cx="320" cy="150" rx="221" ry="102" transform="rotate(-18 320 150)" fill="none" stroke="#1d514b" stroke-width="2.3" stroke-dasharray="8 7"/>
+    <text x="390" y="57" font-family="Arial, Helvetica, sans-serif" font-size="14" fill="#000000">empirical boundary Bq</text>
+
+    <circle cx="320" cy="150" r="7" fill="#ffffff" stroke="#000000" stroke-width="2.4"/>
+    <circle cx="320" cy="150" r="2.6" fill="#000000"/>
+    <text x="332" y="154" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="700" fill="#000000">mu</text>
+
+    <circle cx="226" cy="207" r="7" fill="#2f6f9f"/>
+    <text x="199" y="232" font-family="Arial, Helvetica, sans-serif" font-size="15" fill="#000000">current cell ci</text>
+    <circle cx="532" cy="73" r="7" fill="#bd5a54"/>
+    <text x="543" y="76" font-family="Arial, Helvetica, sans-serif" font-size="15" fill="#000000">future cell fi</text>
+
+    <line x1="226" y1="207" x2="532" y2="73" stroke="#2f6f9f" stroke-width="4.2" marker-end="url(#arrowBlue)"/>
+    <text x="337" y="103" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="700" fill="#2f6f9f">Climatic Displacement Di</text>
+
+    <line x1="320" y1="150" x2="226" y2="207" stroke="#bd5a54" stroke-width="2.5" stroke-dasharray="6 5"/>
+    <line x1="320" y1="150" x2="532" y2="73" stroke="#bd5a54" stroke-width="2.5" stroke-dasharray="6 5"/>
+    <path d="M272,178 C322,224 426,212 488,104" fill="none" stroke="#bd5a54" stroke-width="3.2" marker-end="url(#arrowRed)"/>
+    <text x="396" y="218" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="700" fill="#bd5a54">Niche Distance Shift Ri</text>
+
+    <path d="M249,151 C314,78 424,59 489,88" fill="none" stroke="#4f927f" stroke-width="4" marker-end="url(#arrowGreen)"/>
+    <text x="156" y="88" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="700" fill="#4f927f">Climatic Reconfiguration Ci</text>
+
+    <line x1="470" y1="96" x2="532" y2="73" stroke="#d1902e" stroke-width="4.2" marker-end="url(#arrowOrange)"/>
+    <text x="485" y="47" font-family="Arial, Helvetica, sans-serif" font-size="15" font-weight="700" fill="#d1902e">Niche Boundary Exceedance Ei</text>
+  </g>
+
+  <rect x="842" y="132" width="302" height="412" fill="#ffffff" stroke="#d6d6d6" stroke-width="1.4"/>
+  <text x="872" y="170" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700" fill="#000000">Metric interpretation</text>
+
+  <g transform="translate(874 218)" font-family="Arial, Helvetica, sans-serif">
+    <line x1="0" y1="0" x2="54" y2="0" stroke="#2f6f9f" stroke-width="4" marker-end="url(#arrowBlue)"/>
+    <text x="72" y="5" font-size="16" font-weight="700" fill="#000000">Climatic Displacement</text>
+    <text x="72" y="28" font-size="13" fill="#000000">magnitude of local climatic change</text>
+
+    <line x1="0" y1="82" x2="54" y2="82" stroke="#bd5a54" stroke-width="4" marker-end="url(#arrowRed)"/>
+    <text x="72" y="87" font-size="16" font-weight="700" fill="#000000">Niche Distance Shift</text>
+    <text x="72" y="110" font-size="13" fill="#000000">signed radial change from the centre</text>
+
+    <path d="M0,171 C18,149 40,149 58,171" fill="none" stroke="#4f927f" stroke-width="4" marker-end="url(#arrowGreen)"/>
+    <text x="72" y="173" font-size="16" font-weight="700" fill="#000000">Climatic Reconfiguration</text>
+    <text x="72" y="196" font-size="13" fill="#000000">non radial change in climate balance</text>
+
+    <line x1="0" y1="252" x2="54" y2="252" stroke="#d1902e" stroke-width="4" marker-end="url(#arrowOrange)"/>
+    <text x="72" y="257" font-size="16" font-weight="700" fill="#000000">Niche Boundary Exceedance</text>
+    <text x="72" y="280" font-size="13" fill="#000000">positive excess beyond Bq</text>
+  </g>
+
+  <text x="56" y="586" font-family="Arial, Helvetica, sans-serif" font-size="14" fill="#000000">The drawing is conceptual; all metric values are calculated in the full sensitivity weighted climatic space before plotting.</text>
 </svg>

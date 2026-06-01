@@ -9,11 +9,12 @@ climniche_table(x, scope = c("current", "all"))
 \arguments{
 \item{x}{A fitted \code{climniche_fit} object.}
 
-\item{scope}{\code{"current"} for current occurrence/range cells or \code{"all"} for
-all evaluated cells.}
+\item{scope}{\code{"current"} for current reference cells or \code{"all"} for all
+evaluated cells.}
 }
 \value{
-A data frame with one row per evaluated cell.
+A data frame with one row per evaluated cell, including
+\code{occupied_weight}, the four primary metrics and the old metric aliases.
 }
 \description{
 Extract a tidy climniche table

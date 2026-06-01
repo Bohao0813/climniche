@@ -1,10 +1,11 @@
 .metric_label <- function(metric) {
+  metric <- .metric_key(metric)
   switch(metric,
-         climate_change_amount = "Climate change amount",
-         niche_distance_change = "Niche distance change",
-         composition_change = "Composition change",
+         climate_change_amount = "Climatic Displacement",
+         niche_distance_change = "Niche Distance Shift",
+         climate_reconfiguration = "Climatic Reconfiguration",
          change_alignment = "Change alignment",
-         outside_niche_exceedance = "Niche boundary exceedance",
+         niche_boundary_exceedance = "Niche Boundary Exceedance",
          metric)
 }
 
@@ -75,7 +76,7 @@
   stop("x must be a RasterLayer or terra SpatRaster.", call. = FALSE)
 }
 
-.mask_to_occupied <- function(x, occupied, occupied_threshold = 0) {
+.mask_to_occupied <- function(x, occupied, occupied_threshold = NULL) {
   if (.is_raster(x)) {
     .need_raster()
     if (!.is_raster(occupied)) {
@@ -86,9 +87,11 @@
       stop("occupied raster must match x geometry.", call. = FALSE)
     }
     mask <- raster::raster(occupied)
-    values <- raster::getValues(occupied)
-    raster::values(mask) <- ifelse(!is.na(values) & values > occupied_threshold,
-                                   1, NA_real_)
+    values <- .clean_reference_weights(
+      raster::getValues(occupied),
+      threshold = occupied_threshold
+    )
+    raster::values(mask) <- ifelse(values > 0, 1, NA_real_)
     return(raster::mask(x, mask))
   }
   if (.is_spatraster(x)) {
@@ -104,21 +107,26 @@
       stop("occupied raster must match x geometry.", call. = FALSE)
     }
     mask <- occupied
-    values <- terra::values(mask)[, 1]
-    terra::values(mask) <- ifelse(!is.na(values) & values > occupied_threshold,
-                                  1, NA_real_)
+    values <- .clean_reference_weights(
+      terra::values(mask)[, 1],
+      threshold = occupied_threshold
+    )
+    terra::values(mask) <- ifelse(values > 0, 1, NA_real_)
     return(terra::mask(x, mask))
   }
   stop("x must be a RasterLayer or terra SpatRaster.", call. = FALSE)
 }
 
-.occupied_df <- function(occupied, occupied_threshold = 0) {
+.occupied_df <- function(occupied, occupied_threshold = NULL) {
   if (is.null(occupied)) {
     return(NULL)
   }
   pts <- .spatial_df(occupied, value = "occupied")
-  pts[!is.na(pts$occupied) & pts$occupied > occupied_threshold, ,
-      drop = FALSE]
+  pts$occupied_weight <- .clean_reference_weights(
+    pts$occupied,
+    threshold = occupied_threshold
+  )
+  pts[pts$occupied_weight > 0, , drop = FALSE]
 }
 
 .crop_df <- function(dat, pad = 0.02) {
@@ -140,43 +148,55 @@
 }
 
 .class_colours <- function() {
-  c(
-    "little climate niche change" = "#f0f0f0",
-    "closer to current niche" = "#4c78a8",
-    "farther from current niche" = "#c65d57",
-    "outside current niche boundary" = "#d99b45",
-    "changed composition, similar distance" = "#5f9e8f"
+  stats::setNames(
+    c("#f0f0f0", "#4c78a8", "#c65d57", "#d99b45", "#5f9e8f"),
+    .class_level_names()
   )
+}
+
+.class_labels <- function() {
+  stats::setNames(.class_level_names(), .class_level_names())
 }
 
 .climniche_theme <- function(base_size = 8.5) {
   ggplot2::theme_classic(base_size = base_size) +
     ggplot2::theme(
-      plot.title = ggplot2::element_text(face = "bold", hjust = 0, size = base_size + 0.2),
-      plot.subtitle = ggplot2::element_text(colour = "grey35", size = base_size - 0.8),
-      axis.text = ggplot2::element_text(colour = "grey30", size = base_size - 1.4),
-      axis.title = ggplot2::element_text(colour = "grey15", size = base_size - 0.5),
-      axis.line = ggplot2::element_line(linewidth = 0.25),
-      axis.ticks = ggplot2::element_line(linewidth = 0.25),
+      plot.title = ggplot2::element_text(face = "bold", hjust = 0,
+                                         colour = "black",
+                                         size = base_size + 0.2),
+      plot.subtitle = ggplot2::element_text(colour = "black",
+                                            size = base_size - 0.8),
+      axis.text = ggplot2::element_text(colour = "black",
+                                        size = base_size - 1.4),
+      axis.title = ggplot2::element_text(colour = "black",
+                                         size = base_size - 0.5),
+      axis.line = ggplot2::element_line(linewidth = 0.25,
+                                        colour = "black"),
+      axis.ticks = ggplot2::element_line(linewidth = 0.25,
+                                         colour = "black"),
       legend.position = "right",
-      legend.text = ggplot2::element_text(size = base_size - 1.5),
-      legend.title = ggplot2::element_text(size = base_size - 1.2),
+      legend.text = ggplot2::element_text(colour = "black",
+                                          size = base_size - 1.5),
+      legend.title = ggplot2::element_text(colour = "black",
+                                           size = base_size - 1.2),
       legend.key.height = grid::unit(4.6, "mm"),
       strip.background = ggplot2::element_blank(),
-      strip.text = ggplot2::element_text(face = "bold", size = base_size - 0.4)
+      strip.text = ggplot2::element_text(face = "bold", colour = "black",
+                                         size = base_size - 0.4)
     )
 }
 
 .map_theme <- function() {
   ggplot2::theme_classic(base_size = 8.5) +
     ggplot2::theme(
-      plot.title = ggplot2::element_text(face = "bold", hjust = 0, size = 8.7),
-      axis.text = ggplot2::element_text(colour = "grey35", size = 6.4),
-      axis.ticks = ggplot2::element_line(colour = "grey70", linewidth = 0.2),
-      axis.line = ggplot2::element_line(linewidth = 0.2),
+      plot.title = ggplot2::element_text(face = "bold", hjust = 0,
+                                         colour = "black", size = 8.7),
+      axis.text = ggplot2::element_text(colour = "black", size = 6.4),
+      axis.ticks = ggplot2::element_line(colour = "black", linewidth = 0.2),
+      axis.line = ggplot2::element_line(linewidth = 0.2, colour = "black"),
       legend.position = "right",
-      legend.text = ggplot2::element_text(size = 6.8),
-      legend.title = ggplot2::element_text(size = 7.2),
+      legend.text = ggplot2::element_text(colour = "black", size = 6.8),
+      legend.title = ggplot2::element_text(colour = "black", size = 7.2),
       legend.key.width = grid::unit(3.4, "mm"),
       legend.key.height = grid::unit(8, "mm")
     )
@@ -190,7 +210,7 @@
     set.seed(seed)
     dat <- dat[sample(seq_len(nrow(dat)), max_points), , drop = FALSE]
   }
-  dat$class <- factor(dat$class, levels = names(.class_colours()))
+  dat$class <- .normalise_class(dat$class)
   dat
 }
 
@@ -199,35 +219,42 @@
 #' @param x A `climniche_fit` object with raster outputs, a RasterLayer or a
 #'   one-layer terra SpatRaster.
 #' @param metric Metric to plot when `x` is a `climniche_fit` object.
-#' @param occupied Optional current occurrence, range or SDM raster to overlay.
+#' @param occupied Optional current reference raster to overlay.
 #' @param occupied_only If TRUE, mask the plotted raster to current occurrence
 #'   cells.
 #' @param occupied_threshold Threshold used when `occupied` contains binary or
-#'   continuous values.
+#'   continuous values. Values above the threshold keep their original value
+#'   when used as an overlay or mask.
 #' @param title Optional plot title. Use `FALSE` to suppress it.
-#' @param midpoint Midpoint for the niche distance change colour scale.
+#' @param midpoint Midpoint for the Niche Distance Shift colour scale.
 #'
 #' @return A ggplot object.
 #' @noRd
 .plot_climniche_map <- function(x,
                                 metric = c("niche_distance_change",
-                                           "outside_niche_exceedance",
+                                           "niche_boundary_exceedance",
                                            "climate_change_amount",
-                                           "composition_change",
-                                           "change_alignment"),
+                                           "climate_reconfiguration",
+                                           "change_alignment",
+                                           "outside_niche_exceedance",
+                                           "composition_change"),
                                 occupied = NULL,
                                 occupied_only = FALSE,
-                                occupied_threshold = 0,
+                                occupied_threshold = NULL,
                                 title = NULL,
                                 midpoint = 0) {
   .need_ggplot2()
   metric <- match.arg(metric)
+  metric_key <- .metric_key(metric)
 
   if (inherits(x, "climniche_fit")) {
     if (is.null(x$rasters)) {
       stop("x does not contain raster outputs.", call. = FALSE)
     }
-    r <- x$rasters[[metric]]
+    r <- x$rasters[[metric_key]]
+    if (is.null(r)) {
+      r <- x$rasters[[metric]]
+    }
   } else {
     r <- x
   }
@@ -257,22 +284,22 @@
                   title = ttl) +
     .map_theme()
 
-  if (identical(metric, "niche_distance_change")) {
+  if (identical(metric_key, "niche_distance_change")) {
     p <- p + ggplot2::scale_fill_gradient2(
       low = "#4c78a8", mid = "white", high = "#c65d57",
       midpoint = midpoint, na.value = NA
     )
-  } else if (identical(metric, "change_alignment")) {
+  } else if (identical(metric_key, "change_alignment")) {
     p <- p + ggplot2::scale_fill_gradient2(
       low = "#4c78a8", mid = "white", high = "#c65d57",
       midpoint = 0, limits = c(-1, 1), na.value = NA
     )
-  } else if (identical(metric, "outside_niche_exceedance")) {
+  } else if (identical(metric_key, "niche_boundary_exceedance")) {
     p <- p + ggplot2::scale_fill_gradientn(
       colours = c("white", "#f2d7a0", "#d99b45", "#7a3b20"),
       na.value = NA
     )
-  } else if (identical(metric, "composition_change")) {
+  } else if (identical(metric_key, "climate_reconfiguration")) {
     p <- p + ggplot2::scale_fill_gradientn(
       colours = c("#f7fcf5", "#b7e0c2", "#5f9e8f", "#1b5e50"),
       na.value = NA
@@ -300,8 +327,8 @@
 #' Plot the climniche exposure plane
 #'
 #' @param x A fitted `climniche_fit` object.
-#' @param scope `"current"` for current occurrence/range cells or `"all"` for
-#'   all evaluated cells.
+#' @param scope `"current"` for current reference cells or `"all"` for all
+#'   evaluated cells.
 #' @param max_points Maximum number of points to draw.
 #' @param seed Random seed used when subsampling.
 #' @param title Optional plot title.
@@ -328,13 +355,17 @@
     ggplot2::geom_hline(yintercept = 0, colour = "grey45",
                         linewidth = 0.3, linetype = 2) +
     ggplot2::geom_point(alpha = 0.42, size = 0.65) +
-    ggplot2::scale_colour_manual(values = .class_colours(), drop = FALSE) +
+    ggplot2::scale_colour_manual(
+      values = .class_colours(),
+      labels = .class_labels(),
+      drop = FALSE
+    ) +
     ggplot2::labs(
-      x = "Climate change amount",
-      y = "Niche distance change",
-      colour = NULL,
+      x = "Climatic Displacement",
+      y = "Niche Distance Shift",
+      colour = "Derived exposure class",
       title = ttl,
-      subtitle = "Positive values indicate divergence from the current realised climatic niche"
+      subtitle = "Positive Niche Distance Shift indicates movement away from the realised niche centre"
     ) +
     .climniche_theme()
 }
@@ -342,8 +373,8 @@
 #' Plot climniche class proportions
 #'
 #' @param x A fitted `climniche_fit` object.
-#' @param scope `"current"` for current occurrence/range cells or `"all"` for
-#'   all evaluated cells.
+#' @param scope `"current"` for current reference cells or `"all"` for all
+#'   evaluated cells.
 #' @param title Optional plot title.
 #'
 #' @return A ggplot object.
@@ -356,18 +387,29 @@
   }
   scope <- match.arg(scope)
   tab <- climniche_table(x, scope = scope)
-  dat <- as.data.frame(prop.table(table(tab$class)), stringsAsFactors = FALSE)
-  names(dat) <- c("class", "proportion")
+  weights <- if (scope == "current") tab$occupied_weight else rep(1, nrow(tab))
+  props <- .weighted_class_prop(tab$class, weights)
+  dat <- data.frame(
+    class = names(props),
+    proportion = as.numeric(props),
+    stringsAsFactors = FALSE
+  )
+  dat <- dat[dat$proportion > 0, , drop = FALSE]
   dat$class <- factor(dat$class, levels = names(.class_colours()))
   dat <- dat[order(dat$proportion), , drop = FALSE]
   dat$prop <- dat$proportion
-  ttl <- .plot_title(title, "climniche class proportions")
+  ttl <- .plot_title(title, "Derived exposure class proportions")
 
   ggplot2::ggplot(dat, ggplot2::aes(x = class, y = prop, fill = class)) +
     ggplot2::geom_col(width = 0.68, colour = "grey25", linewidth = 0.18) +
     ggplot2::coord_flip() +
+    ggplot2::scale_x_discrete(labels = .class_labels()) +
     ggplot2::scale_y_continuous(labels = function(z) paste0(round(100 * z), "%")) +
-    ggplot2::scale_fill_manual(values = .class_colours(), drop = FALSE) +
+    ggplot2::scale_fill_manual(
+      values = .class_colours(),
+      labels = .class_labels(),
+      drop = FALSE
+    ) +
     ggplot2::labs(x = NULL, y = "Proportion of analysed cells", title = ttl) +
     .climniche_theme() +
     ggplot2::theme(legend.position = "none")
@@ -377,9 +419,9 @@
 #'
 #' @param x A fitted `climniche_fit` object.
 #' @param metric One of `"climate_change_amount"`, `"niche_distance_change"`,
-#'   `"outside_niche_exceedance"` or `"composition_change"`.
-#' @param scope `"current"` for current occurrence/range cells or `"all"` for
-#'   all evaluated cells.
+#'   `"niche_boundary_exceedance"` or `"climate_reconfiguration"`.
+#' @param scope `"current"` for current reference cells or `"all"` for all
+#'   evaluated cells.
 #' @param title Optional plot title.
 #'
 #' @return A ggplot object.
@@ -387,15 +429,18 @@
 .plot_climniche_distribution <- function(x,
                                          metric = c("niche_distance_change",
                                                     "climate_change_amount",
+                                                    "niche_boundary_exceedance",
+                                                    "climate_reconfiguration",
                                                     "outside_niche_exceedance",
                                                     "composition_change"),
                                          scope = c("current", "all"),
                                          title = NULL) {
   .need_ggplot2()
   metric <- match.arg(metric)
+  metric_key <- .metric_key(metric)
   scope <- match.arg(scope)
   tab <- climniche_table(x, scope = scope)
-  tab$value <- tab[[metric]]
+  tab$value <- tab[[metric_key]]
   ttl <- .plot_title(title, .metric_label(metric))
 
   ggplot2::ggplot(tab, ggplot2::aes(x = value)) +
@@ -412,8 +457,8 @@
 #' Plot a climniche report figure
 #'
 #' @param x A fitted `climniche_fit` object.
-#' @param scope `"current"` for current occurrence/range cells or `"all"` for
-#'   all evaluated cells.
+#' @param scope `"current"` for current reference cells or `"all"` for all
+#'   evaluated cells.
 #'
 #' @return A patchwork object when `patchwork` is installed, otherwise a named
 #'   list of ggplot objects.
@@ -429,13 +474,14 @@
 #' @param occupied Optional occupied-cell RasterLayer or SpatRaster to overlay.
 #' @param occupied_only If TRUE, mask the plotted classes to occupied cells.
 #' @param occupied_threshold Threshold used when `occupied` contains binary or
-#'   continuous values.
+#'   continuous values. Values above the threshold keep their original value
+#'   when used as an overlay or mask.
 #' @param title Optional plot title. Use `FALSE` to suppress it.
 #'
 #' @return A ggplot object.
 #' @noRd
 .plot_climniche_classes <- function(x, occupied = NULL, occupied_only = FALSE,
-                                    occupied_threshold = 0,
+                                    occupied_threshold = NULL,
                                     title = NULL) {
   .need_ggplot2()
   if (!inherits(x, "climniche_fit") || is.null(x$rasters$classification)) {
@@ -453,8 +499,7 @@
   }
   dat <- .spatial_df(r, value = "class_id")
   lookup <- x$class_lookup
-  dat$class <- lookup$class[match(dat$class_id, lookup$id)]
-  dat$class <- factor(dat$class, levels = lookup$class)
+  dat$class <- .normalise_class(lookup$class[match(dat$class_id, lookup$id)])
   occ <- .occupied_df(occupied, occupied_threshold = occupied_threshold)
   lim <- .crop_df(dat)
   cell_size <- .spatial_res(r)
@@ -464,10 +509,11 @@
     ggplot2::coord_equal(xlim = lim$xlim, ylim = lim$ylim, expand = FALSE) +
     ggplot2::scale_fill_manual(
       values = .class_colours(),
+      labels = .class_labels(),
       na.value = NA
     ) +
-    ggplot2::labs(x = NULL, y = NULL, fill = "Exposure class",
-                  title = .plot_title(title, "Climate niche change classes")) +
+    ggplot2::labs(x = NULL, y = NULL, fill = "Derived exposure class",
+                  title = .plot_title(title, "Derived exposure classes")) +
     .map_theme() +
     ggplot2::theme(legend.key.height = grid::unit(4.6, "mm"))
 
@@ -501,7 +547,13 @@ plot_climniche_variable_contribution <- function(x, occupied_only = TRUE,
     stop("x must be a climniche object.", call. = FALSE)
   }
   idx <- if (occupied_only) x$occupied else seq_len(nrow(x$variable_contribution))
-  vals <- colMeans(x$variable_contribution[idx, , drop = FALSE])
+  weights <- if (occupied_only) {
+    .fit_reference_weights(x)[idx]
+  } else {
+    rep(1, length(idx))
+  }
+  vals <- .weighted_col_means(x$variable_contribution[idx, , drop = FALSE],
+                              weights)
   variables <- names(vals)
   if (!is.null(variable_labels)) {
     replace <- match(variables, names(variable_labels))
@@ -519,16 +571,18 @@ plot_climniche_variable_contribution <- function(x, occupied_only = TRUE,
     ggplot2::geom_hline(yintercept = 0, linewidth = 0.3, colour = "grey35") +
     ggplot2::scale_fill_manual(values = c("TRUE" = "#c65d57",
                                           "FALSE" = "#4c78a8")) +
-    ggplot2::labs(x = NULL, y = "Mean contribution",
+    ggplot2::labs(x = NULL, y = "Mean contribution to niche potential change",
                   title = .plot_title(title, "Variable contribution")) +
     ggplot2::theme_classic(base_size = 8.5) +
     ggplot2::theme(
       legend.position = "none",
-      axis.text.x = ggplot2::element_text(angle = 45, hjust = 1, size = 7),
-      axis.text.y = ggplot2::element_text(size = 7),
-      axis.title.y = ggplot2::element_text(size = 8),
-      axis.line = ggplot2::element_line(linewidth = 0.2),
-      axis.ticks = ggplot2::element_line(linewidth = 0.2)
+      plot.title = ggplot2::element_text(colour = "black"),
+      axis.text.x = ggplot2::element_text(angle = 45, hjust = 1,
+                                          colour = "black", size = 7),
+      axis.text.y = ggplot2::element_text(colour = "black", size = 7),
+      axis.title.y = ggplot2::element_text(colour = "black", size = 8),
+      axis.line = ggplot2::element_line(linewidth = 0.2, colour = "black"),
+      axis.ticks = ggplot2::element_line(linewidth = 0.2, colour = "black")
     )
 }
 

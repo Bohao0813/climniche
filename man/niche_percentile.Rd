@@ -11,7 +11,8 @@ niche_percentile(psi_current, psi_future, occupied)
 
 \item{psi_future}{Future niche potential for all cells.}
 
-\item{occupied}{Current occurrence indices used to define the reference CDF.}
+\item{occupied}{Current reference weights or indices used to define the
+reference CDF.}
 }
 \value{
 Data frame with current, future, and delta percentiles.

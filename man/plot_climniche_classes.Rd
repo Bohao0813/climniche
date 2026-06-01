@@ -8,20 +8,21 @@ plot_climniche_classes(
   x,
   occupied = NULL,
   occupied_only = FALSE,
-  occupied_threshold = 0,
+  occupied_threshold = NULL,
   title = NULL
 )
 }
 \arguments{
 \item{x}{A fitted climniche object with raster outputs.}
 
-\item{occupied}{Optional current occurrence/range RasterLayer to overlay.}
+\item{occupied}{Optional current reference RasterLayer to overlay.}
 
 \item{occupied_only}{If TRUE, mask the plotted classes to current occurrence
 cells.}
 
 \item{occupied_threshold}{Threshold used when \code{occupied} contains binary or
-continuous values.}
+continuous values. Values above the threshold keep their original value
+when used as an overlay or mask.}
 
 \item{title}{Optional plot title. Use \code{FALSE} to suppress it.}
 }

@@ -14,8 +14,8 @@ climniche_diagram_data(
 \arguments{
 \item{x}{A fitted climniche object.}
 
-\item{scope}{\code{"current"} for current occurrence, range or thresholded SDM
-cells; \code{"all"} for all evaluated cells.}
+\item{scope}{\code{"current"} for current reference cells; \code{"all"} for all
+evaluated cells.}
 
 \item{max_arrows}{Maximum number of current to future arrows to keep.}
 
