@@ -13,23 +13,27 @@
 #' @param sensitivity Optional environmental sensitivity weights.
 #' @param A Optional niche metric matrix.
 #' @param metric Metric construction when `A` is not supplied.
-#' @param boundary Quantile defining the empirical realised niche boundary.
+#' @param boundary User-set quantile defining the empirical realised niche
+#'   boundary. The default is `0.95`.
 #' @param scale Logical. If TRUE, standardise current and future values.
 #' @param global_mean Optional means used for standardisation.
 #' @param global_sd Optional standard deviations used for standardisation.
-#' @param tolerance Optional Niche Distance Shift tolerance.
+#' @param tolerance Optional user-set Niche Distance Shift tolerance. If `NULL`,
+#'   the value is calculated from `tolerance_quantile`.
 #' @param tolerance_quantile Quantile of absolute Niche Distance Shift used
 #'   when `tolerance = NULL`.
-#' @param stable_climate_change Optional threshold for limited climate niche
-#'   change.
+#' @param stable_climate_change Optional user-set threshold for limited
+#'   Climatic Displacement. If `NULL`, the value is calculated from
+#'   `stable_quantile`.
 #' @param stable_quantile Quantile of Climatic Displacement used when
 #'   `stable_climate_change = NULL`.
-#' @param stable_reconfiguration Optional threshold for low Climatic
-#'   Reconfiguration.
+#' @param stable_reconfiguration Optional user-set threshold for low Climatic
+#'   Reconfiguration. If `NULL`, the value is calculated from
+#'   `stable_reconfiguration_quantile`.
 #' @param stable_reconfiguration_quantile Quantile of Climatic Reconfiguration
 #'   used when `stable_reconfiguration = NULL`.
-#' @param boundary_exceedance_tolerance Tolerance for deciding whether future
-#'   climate exceeds the empirical niche boundary.
+#' @param boundary_exceedance_tolerance User-set tolerance for deciding whether
+#'   future climate exceeds the empirical niche boundary.
 #' @param conflict_ratio Minimum minority sign contribution share used to mark
 #'   mixed variable responses. Set to NULL to disable this flag.
 #'
@@ -40,15 +44,42 @@
 #' Climatic Displacement (`climate_change_amount`), Niche Distance Shift
 #' (`niche_distance_change`), Climatic Reconfiguration
 #' (`climate_reconfiguration`) and Niche Boundary Exceedance
-#' (`niche_boundary_exceedance`). Let current and future climatic conditions at
-#' cell `i` be `c_i` and `f_i`, let `mu` be the centre of the current realised
-#' climatic niche, and let `d_A(x, y)` be the sensitivity weighted distance
-#' under weighting matrix `A`. Climatic Displacement is `d_A(f_i, c_i)`. Niche
-#' Distance Shift is `d_A(f_i, mu) - d_A(c_i, mu)`. Climatic Reconfiguration is
-#' `sqrt(max(0, D_i^2 - R_i^2))`, where `D_i` is Climatic Displacement and
-#' `R_i` is Niche Distance Shift. Niche Boundary Exceedance is
-#' `max(0, d_A(f_i, mu) - B_q)`, where `B_q` is the `q`-th weighted quantile of
-#' current reference cell distances from the realised niche centre.
+#' (`niche_boundary_exceedance`).
+#'
+#' Let current and future climatic conditions at cell \eqn{i} be \eqn{c_i} and
+#' \eqn{f_i}. Let \eqn{\mu} be the centre of the current realised climatic niche,
+#' and let \eqn{d_A(x, y)} be the sensitivity weighted distance under weighting
+#' matrix \eqn{A}. The four metrics are
+#'
+#' \deqn{D_i = d_A(f_i, c_i)}
+#'
+#' \deqn{R_i = d_A(f_i, \mu) - d_A(c_i, \mu)}
+#'
+#' \deqn{C_i = \sqrt{\max(0, D_i^2 - R_i^2)}}
+#'
+#' \deqn{E_i = \max(0, d_A(f_i, \mu) - B_q)}
+#'
+#' where \eqn{B_q} is the \eqn{q}-th weighted quantile of current reference cell
+#' distances from the realised niche centre. Positive Niche Boundary Exceedance
+#' is therefore an excess distance beyond this empirical radial boundary.
+#'
+#' All classification-related thresholds are user-settable. If a direct
+#' threshold argument is `NULL`, `climniche` calculates the effective threshold
+#' from the corresponding quantile argument. The fitted object stores the
+#' effective values actually used in `classification_settings`.
+#'
+#' @section User-settable thresholds:
+#' - `boundary`: quantile used to define the empirical realised niche boundary.
+#' - `tolerance`: direct Niche Distance Shift tolerance; otherwise
+#'   `tolerance_quantile`.
+#' - `stable_climate_change`: direct Climatic Displacement threshold for the
+#'   limited-change class; otherwise `stable_quantile`.
+#' - `stable_reconfiguration`: direct Climatic Reconfiguration threshold for
+#'   the limited-change class; otherwise `stable_reconfiguration_quantile`.
+#' - `boundary_exceedance_tolerance`: direct tolerance for Niche Boundary
+#'   Exceedance.
+#' - `conflict_ratio`: minority-sign contribution share used by the mixed
+#'   variable-response diagnostic.
 #' @export
 fit_climniche <- function(current, future, occupied = NULL,
                           occupied_threshold = NULL, cnfa = NULL,
@@ -99,7 +130,11 @@ fit_climniche <- function(current, future, occupied = NULL,
 #'   reference weight. Values above it keep their original value.
 #' @param domain Optional RasterLayer limiting cells where exposure is analysed.
 #' @param domain_threshold Values greater than this threshold define the domain.
-#' @param ... Additional arguments passed to `fit_climniche()`.
+#' @param ... Additional arguments passed to `fit_climniche()`, including
+#'   `boundary`, `tolerance`, `tolerance_quantile`, `stable_climate_change`,
+#'   `stable_quantile`, `stable_reconfiguration`,
+#'   `stable_reconfiguration_quantile`, `boundary_exceedance_tolerance` and
+#'   `conflict_ratio`.
 #'
 #' @return An object of class `climniche_fit` with raster outputs.
 #' @export
@@ -124,7 +159,11 @@ fit_climniche_raster <- function(current, future, occupied = NULL,
 #' @param domain Optional one layer SpatRaster limiting cells where exposure is
 #'   analysed.
 #' @param domain_threshold Values greater than this threshold define the domain.
-#' @param ... Additional arguments passed to `fit_climniche()`.
+#' @param ... Additional arguments passed to `fit_climniche()`, including
+#'   `boundary`, `tolerance`, `tolerance_quantile`, `stable_climate_change`,
+#'   `stable_quantile`, `stable_reconfiguration`,
+#'   `stable_reconfiguration_quantile`, `boundary_exceedance_tolerance` and
+#'   `conflict_ratio`.
 #'
 #' @return An object of class `climniche_fit` with raster outputs.
 #' @export

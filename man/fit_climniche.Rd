@@ -51,7 +51,8 @@ weight; values above it keep their original value.}
 
 \item{metric}{Metric construction when \code{A} is not supplied.}
 
-\item{boundary}{Quantile defining the empirical realised niche boundary.}
+\item{boundary}{User-set quantile defining the empirical realised niche
+boundary. The default is \code{0.95}.}
 
 \item{scale}{Logical. If TRUE, standardise current and future values.}
 
@@ -59,25 +60,28 @@ weight; values above it keep their original value.}
 
 \item{global_sd}{Optional standard deviations used for standardisation.}
 
-\item{tolerance}{Optional Niche Distance Shift tolerance.}
+\item{tolerance}{Optional user-set Niche Distance Shift tolerance. If \code{NULL},
+the value is calculated from \code{tolerance_quantile}.}
 
 \item{tolerance_quantile}{Quantile of absolute Niche Distance Shift used
 when \code{tolerance = NULL}.}
 
-\item{stable_climate_change}{Optional threshold for limited climate niche
-change.}
+\item{stable_climate_change}{Optional user-set threshold for limited
+Climatic Displacement. If \code{NULL}, the value is calculated from
+\code{stable_quantile}.}
 
 \item{stable_quantile}{Quantile of Climatic Displacement used when
 \code{stable_climate_change = NULL}.}
 
-\item{stable_reconfiguration}{Optional threshold for low Climatic
-Reconfiguration.}
+\item{stable_reconfiguration}{Optional user-set threshold for low Climatic
+Reconfiguration. If \code{NULL}, the value is calculated from
+\code{stable_reconfiguration_quantile}.}
 
 \item{stable_reconfiguration_quantile}{Quantile of Climatic Reconfiguration
 used when \code{stable_reconfiguration = NULL}.}
 
-\item{boundary_exceedance_tolerance}{Tolerance for deciding whether future
-climate exceeds the empirical niche boundary.}
+\item{boundary_exceedance_tolerance}{User-set tolerance for deciding whether
+future climate exceeds the empirical niche boundary.}
 
 \item{conflict_ratio}{Minimum minority sign contribution share used to mark
 mixed variable responses. Set to NULL to disable this flag.}
@@ -93,13 +97,44 @@ The fitted object stores four primary metrics as snake_case fields:
 Climatic Displacement (\code{climate_change_amount}), Niche Distance Shift
 (\code{niche_distance_change}), Climatic Reconfiguration
 (\code{climate_reconfiguration}) and Niche Boundary Exceedance
-(\code{niche_boundary_exceedance}). Let current and future climatic conditions at
-cell \code{i} be \code{c_i} and \code{f_i}, let \code{mu} be the centre of the current realised
-climatic niche, and let \code{d_A(x, y)} be the sensitivity weighted distance
-under weighting matrix \code{A}. Climatic Displacement is \code{d_A(f_i, c_i)}. Niche
-Distance Shift is \code{d_A(f_i, mu) - d_A(c_i, mu)}. Climatic Reconfiguration is
-\code{sqrt(max(0, D_i^2 - R_i^2))}, where \code{D_i} is Climatic Displacement and
-\code{R_i} is Niche Distance Shift. Niche Boundary Exceedance is
-\code{max(0, d_A(f_i, mu) - B_q)}, where \code{B_q} is the \code{q}-th weighted quantile of
-current reference cell distances from the realised niche centre.
+(\code{niche_boundary_exceedance}).
+
+Let current and future climatic conditions at cell \eqn{i} be \eqn{c_i} and
+\eqn{f_i}. Let \eqn{\mu} be the centre of the current realised climatic niche,
+and let \eqn{d_A(x, y)} be the sensitivity weighted distance under weighting
+matrix \eqn{A}. The four metrics are
+
+\deqn{D_i = d_A(f_i, c_i)}
+
+\deqn{R_i = d_A(f_i, \mu) - d_A(c_i, \mu)}
+
+\deqn{C_i = \sqrt{\max(0, D_i^2 - R_i^2)}}
+
+\deqn{E_i = \max(0, d_A(f_i, \mu) - B_q)}
+
+where \eqn{B_q} is the \eqn{q}-th weighted quantile of current reference cell
+distances from the realised niche centre. Positive Niche Boundary Exceedance
+is therefore an excess distance beyond this empirical radial boundary.
+
+All classification-related thresholds are user-settable. If a direct
+threshold argument is \code{NULL}, \code{climniche} calculates the effective threshold
+from the corresponding quantile argument. The fitted object stores the
+effective values actually used in \code{classification_settings}.
 }
+\section{User-settable thresholds}{
+
+\itemize{
+\item \code{boundary}: quantile used to define the empirical realised niche boundary.
+\item \code{tolerance}: direct Niche Distance Shift tolerance; otherwise
+\code{tolerance_quantile}.
+\item \code{stable_climate_change}: direct Climatic Displacement threshold for the
+limited-change class; otherwise \code{stable_quantile}.
+\item \code{stable_reconfiguration}: direct Climatic Reconfiguration threshold for
+the limited-change class; otherwise \code{stable_reconfiguration_quantile}.
+\item \code{boundary_exceedance_tolerance}: direct tolerance for Niche Boundary
+Exceedance.
+\item \code{conflict_ratio}: minority-sign contribution share used by the mixed
+variable-response diagnostic.
+}
+}
+

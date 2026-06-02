@@ -29,7 +29,11 @@ reference weight. Values above it keep their original value.}
 
 \item{domain_threshold}{Values greater than this threshold define the domain.}
 
-\item{...}{Additional arguments passed to \code{fit_climniche()}.}
+\item{...}{Additional arguments passed to \code{fit_climniche()}, including
+\code{boundary}, \code{tolerance}, \code{tolerance_quantile}, \code{stable_climate_change},
+\code{stable_quantile}, \code{stable_reconfiguration},
+\code{stable_reconfiguration_quantile}, \code{boundary_exceedance_tolerance} and
+\code{conflict_ratio}.}
 }
 \value{
 An object of class \code{climniche_fit} with raster outputs.
