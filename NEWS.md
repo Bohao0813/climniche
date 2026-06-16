@@ -8,6 +8,9 @@
   four metrics.
 * Added publication-oriented PDF outputs for the Mediterranean anchovy map and
   summary figures used in the vignette.
+* Refreshed the Mediterranean anchovy example with Bio-ORACLE v3 marine climate
+  layers, VIF-screened multivariate predictors and an SDM suitability threshold
+  selected by maximum test-set TSS.
 
 # climniche 0.1.1
 

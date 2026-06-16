@@ -154,6 +154,11 @@ stopifnot(isTRUE(all.equal(
 stopifnot(is.finite(away$classification_settings$tolerance))
 stopifnot(is.finite(away$classification_settings$stable_climate_change))
 stopifnot(is.finite(away$classification_settings$stable_reconfiguration))
+limited_summary <- climniche_summary(custom_class)
+stopifnot(isTRUE(all.equal(limited_summary$prop_stable, 1)))
+stopifnot(isTRUE(all.equal(limited_summary$prop_niche_convergence, 0)))
+stopifnot(isTRUE(all.equal(limited_summary$prop_niche_divergence, 0)))
+stopifnot(isTRUE(all.equal(limited_summary$prop_niche_exceedance, 0)))
 
 A_full <- matrix(c(1, 0.25, 0.25, 1.4), 2, 2)
 fit_full <- fit_climniche(

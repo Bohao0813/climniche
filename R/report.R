@@ -67,8 +67,9 @@ climniche_table <- function(x, scope = c("current", "all")) {
   if (!any(ok)) {
     return(out)
   }
-  totals <- tapply(weights[ok], class[ok], sum)
+  totals <- tapply(weights[ok], droplevels(class[ok]), sum)
   out[names(totals)] <- totals / sum(weights[ok])
+  out[is.na(out)] <- 0
   out
 }
 

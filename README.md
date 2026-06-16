@@ -99,6 +99,15 @@ arguments such as `tolerance`, `stable_climate_change`,
 `stable_reconfiguration`, `boundary_exceedance_tolerance`, and
 `conflict_ratio`.
 
+## Worked example
+
+The [Examples](https://bohao0813.github.io/climniche/articles/climniche-examples.html)
+page uses a Mediterranean European anchovy case study with Bio-ORACLE v3 marine
+climate layers. It shows VIF-screened multivariate predictors, an SDM
+suitability threshold selected by maximum test-set TSS, continuous suitability
+weights in the climniche fit, maps of the four metrics, and the derived exposure
+classes.
+
 ## Contributor
 
 We are welcome any helps! Please make a pull request or reach out to
