@@ -216,6 +216,34 @@
   weights
 }
 
+.fit_exposure_descriptors <- function(x) {
+  if (!is.null(x$radial_direction) && !is.null(x$boundary_status)) {
+    return(list(
+      radial_direction = factor(
+        as.character(x$radial_direction),
+        levels = .radial_direction_levels()
+      ),
+      boundary_status = factor(
+        as.character(x$boundary_status),
+        levels = .boundary_status_levels()
+      )
+    ))
+  }
+  settings <- x$classification_settings
+  tolerance <- if (is.null(settings$tolerance)) 0 else settings$tolerance
+  boundary_tolerance <- if (is.null(settings$boundary_exceedance_tolerance)) {
+    0
+  } else {
+    settings$boundary_exceedance_tolerance
+  }
+  .exposure_descriptors(
+    niche_distance_change = x$niche_distance_change,
+    niche_boundary_exceedance = .fit_metric(x, "niche_boundary_exceedance"),
+    tolerance = tolerance,
+    boundary_exceedance_tolerance = boundary_tolerance
+  )
+}
+
 .metric_key <- function(metric) {
   aliases <- c(
     composition_change = "climate_reconfiguration",

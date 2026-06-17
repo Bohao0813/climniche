@@ -9,7 +9,8 @@ plot_climniche_exposure(
   scope = c("current", "all"),
   max_points = 6000,
   seed = 1,
-  title = NULL
+  title = NULL,
+  colour_by = c("niche_boundary_exceedance", "classification")
 )
 }
 \arguments{
@@ -23,6 +24,9 @@ evaluated cells.}
 \item{seed}{Random seed used when subsampling.}
 
 \item{title}{Optional plot title.}
+
+\item{colour_by}{Colour cells by Niche Boundary Exceedance or by the
+compatibility classification.}
 }
 \value{
 A ggplot object.

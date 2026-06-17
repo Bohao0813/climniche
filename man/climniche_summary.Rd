@@ -13,8 +13,9 @@ climniche_summary(x, scope = c("current", "all"))
 evaluated cells. Current-scope summaries use reference weights.}
 }
 \value{
-A one-row data frame with reported quantity summaries and the effective
-classification settings.
+A one-row data frame with summaries of the four continuous reported
+quantities. Descriptor and compatibility-classification columns remain
+available for programmatic use.
 }
 \description{
 Summarise climniche results

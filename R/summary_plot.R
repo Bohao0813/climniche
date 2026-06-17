@@ -1,5 +1,6 @@
 #' @export
 summary.climniche_fit <- function(object, ...) {
+  descriptors <- .fit_exposure_descriptors(object)
   out <- list(
     n = nrow(object$current),
     p = ncol(object$current),
@@ -17,6 +18,8 @@ summary.climniche_fit <- function(object, ...) {
     outside_niche_exceedance =
       base::summary(.fit_metric(object, "outside_niche_exceedance")),
     classification_settings = object$classification_settings,
+    radial_direction = table(descriptors$radial_direction),
+    boundary_status = table(descriptors$boundary_status),
     classification = table(.normalise_class(object$classification))
   )
   class(out) <- "summary.climniche_fit"

@@ -100,6 +100,16 @@
       fit$outside_niche_exceedance,
       complete
     ),
+    radial_direction = .values_to_raster(
+      current,
+      as.integer(fit$radial_direction),
+      complete
+    ),
+    boundary_status = .values_to_raster(
+      current,
+      as.integer(fit$boundary_status),
+      complete
+    ),
     classification = .values_to_raster(
       current,
       as.integer(fit$classification),
@@ -109,6 +119,16 @@
   fit$class_lookup <- data.frame(
     id = seq_along(levels(fit$classification)),
     class = levels(fit$classification)
+  )
+  fit$descriptor_lookup <- list(
+    radial_direction = data.frame(
+      id = seq_along(levels(fit$radial_direction)),
+      level = levels(fit$radial_direction)
+    ),
+    boundary_status = data.frame(
+      id = seq_along(levels(fit$boundary_status)),
+      level = levels(fit$boundary_status)
+    )
   )
   fit$raster_complete <- complete
   fit
@@ -224,6 +244,12 @@
     outside_niche_exceedance = .values_to_spatraster(
       current, fit$outside_niche_exceedance, complete
     ),
+    radial_direction = .values_to_spatraster(
+      current, as.integer(fit$radial_direction), complete
+    ),
+    boundary_status = .values_to_spatraster(
+      current, as.integer(fit$boundary_status), complete
+    ),
     classification = .values_to_spatraster(
       current, as.integer(fit$classification), complete
     )
@@ -231,6 +257,16 @@
   fit$class_lookup <- data.frame(
     id = seq_along(levels(fit$classification)),
     class = levels(fit$classification)
+  )
+  fit$descriptor_lookup <- list(
+    radial_direction = data.frame(
+      id = seq_along(levels(fit$radial_direction)),
+      level = levels(fit$radial_direction)
+    ),
+    boundary_status = data.frame(
+      id = seq_along(levels(fit$boundary_status)),
+      level = levels(fit$boundary_status)
+    )
   )
   fit$raster_complete <- complete
   fit

@@ -133,6 +133,13 @@
   )
   classification_settings <- attr(class, "classification_settings")
   attr(class, "classification_settings") <- NULL
+  descriptors <- .exposure_descriptors(
+    niche_distance_change = distance_change,
+    niche_boundary_exceedance = exceed,
+    tolerance = classification_settings$tolerance,
+    boundary_exceedance_tolerance =
+      classification_settings$boundary_exceedance_tolerance
+  )
 
   out <- list(
     call = match.call(),
@@ -161,6 +168,8 @@
     niche_percentile = perc,
     variable_contribution = contrib,
     mixed_variable_response = mixed,
+    radial_direction = descriptors$radial_direction,
+    boundary_status = descriptors$boundary_status,
     classification = class,
     classification_settings = classification_settings,
     standardization = list(center = scaled$center, scale = scaled$scale)

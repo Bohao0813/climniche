@@ -11,10 +11,16 @@ sf::sf_use_s2(FALSE)
 species_name <- "Engraulis encrasicolus"
 region_name <- "Mediterranean Sea"
 
-data_dir <- file.path("data-raw", "mediterranean_anchovy")
-biooracle_dir <- file.path("data-raw", "biooracle_v3")
+input_root <- "data-raw"
+external_input_root <- file.path("..", "..", "data-raw")
+if (!dir.exists(file.path(input_root, "marine_regions")) &&
+    dir.exists(file.path(external_input_root, "marine_regions"))) {
+  input_root <- external_input_root
+}
+data_dir <- file.path(input_root, "mediterranean_anchovy")
+biooracle_dir <- file.path(input_root, "biooracle_v3")
 region_file <- file.path(
-  "data-raw",
+  input_root,
   "marine_regions",
   "mediterranean_iho_mrgid1905.gpkg"
 )
@@ -682,6 +688,9 @@ utils::write.csv(climniche_summary(fit, scope = "current"),
 utils::write.csv(report$class_summary,
                  file.path(out_dir, "anchovy_climniche_class_proportions.csv"),
                  row.names = FALSE)
+utils::write.csv(report$descriptor_summary,
+                 file.path(out_dir, "anchovy_climniche_descriptor_proportions.csv"),
+                 row.names = FALSE)
 utils::write.csv(report$top_variables,
                  file.path(out_dir, "anchovy_climniche_variable_contributions.csv"),
                  row.names = FALSE)
@@ -693,7 +702,6 @@ amount_r <- fit$rasters$climate_change_amount
 distance_r <- fit$rasters$niche_distance_change
 composition_r <- fit$rasters$climate_reconfiguration
 exceed_r <- fit$rasters$niche_boundary_exceedance
-class_r <- fit$rasters$classification
 
 terra::writeRaster(suitability_r, file.path(out_dir, "anchovy_sdm_suitability.tif"),
                    overwrite = TRUE)
@@ -704,8 +712,6 @@ terra::writeRaster(distance_r, file.path(out_dir, "anchovy_niche_distance_change
 terra::writeRaster(composition_r, file.path(out_dir, "anchovy_climate_reconfiguration.tif"),
                    overwrite = TRUE)
 terra::writeRaster(exceed_r, file.path(out_dir, "anchovy_boundary_exceedance.tif"),
-                   overwrite = TRUE)
-terra::writeRaster(class_r, file.path(out_dir, "anchovy_climniche_class.tif"),
                    overwrite = TRUE)
 
 map_df <- function(r, name) {
@@ -721,14 +727,6 @@ amount_df <- map_df(amount_r, "value")
 distance_df <- map_df(distance_r, "value")
 composition_df <- map_df(composition_r, "value")
 exceed_df <- map_df(exceed_r, "value")
-class_df <- map_df(class_r, "class_id")
-
-class_lookup <- data.frame(
-  id = seq_along(levels(fit$classification)),
-  class = levels(fit$classification)
-)
-class_df$class <- class_lookup$class[match(class_df$class_id, class_lookup$id)]
-class_df$class <- factor(class_df$class, levels = class_lookup$class)
 
 world <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
 world <- sf::st_transform(world, 4326)
@@ -740,22 +738,6 @@ region_crop_box <- sf::st_bbox(
   crs = sf::st_crs(4326)
 )
 world_plot <- suppressWarnings(sf::st_crop(world, region_crop_box))
-
-class_cols <- c(
-  "Limited niche relative change" = "#eeeeee",
-  "Closer to current niche" = "#386fa4",
-  "Farther from current niche" = "#c7514a",
-  "Outside current niche boundary" = "#d9942f",
-  "Climatic Reconfiguration with limited Niche Distance Shift" = "#5b9d8f"
-)
-class_labs <- c(
-  "Limited niche relative change" = "Limited niche relative change",
-  "Closer to current niche" = "Closer to niche centre",
-  "Farther from current niche" = "Farther from niche centre",
-  "Outside current niche boundary" = "Beyond niche boundary",
-  "Climatic Reconfiguration with limited Niche Distance Shift" =
-    "Reconfiguration, limited distance shift"
-)
 
 format_degree <- function(x, positive, negative) {
   value <- abs(x)
@@ -808,7 +790,7 @@ guide_metric <- function(bar_width_mm = 31) {
 
 base_map <- function() {
   ggplot() +
-    scale_x_continuous(breaks = c(-5, 0, 10, 20, 30),
+    scale_x_continuous(breaks = c(-5, 10, 25),
                        labels = format_lon) +
     scale_y_continuous(breaks = c(30, 35, 40, 45),
                        labels = format_lat) +
@@ -843,17 +825,6 @@ p_sdm <- base_map() +
   labs(title = "(a) Current suitability weights") +
   theme_map(show_x = FALSE, show_y = TRUE)
 
-p_class <- base_map() +
-  geom_tile(data = class_df, aes(x = x, y = y, fill = class),
-            width = cell_width, height = cell_height, alpha = 0.95) +
-  geography_layers() +
-  scale_fill_manual(values = class_cols, labels = class_labs, drop = TRUE,
-                    name = "Observed class",
-                    guide = guide_legend(title.position = "top",
-                                         ncol = 2, byrow = TRUE)) +
-  labs(title = "(f) Exposure classes") +
-  theme_map(show_x = TRUE, show_y = FALSE)
-
 p_amount <- base_map() +
   geom_tile(data = amount_df, aes(x = x, y = y, fill = value),
             width = cell_width, height = cell_height, alpha = 0.95) +
@@ -880,7 +851,7 @@ p_distance <- base_map() +
   ) +
   guides(fill = guide_metric()) +
   labs(title = "(c) Change in niche distance") +
-  theme_map(show_x = FALSE, show_y = TRUE)
+  theme_map(show_x = FALSE, show_y = FALSE)
 
 p_composition <- base_map() +
   geom_tile(data = composition_df, aes(x = x, y = y, fill = value),
@@ -893,7 +864,7 @@ p_composition <- base_map() +
   ) +
   guides(fill = guide_metric()) +
   labs(title = "(d) Non radial displacement") +
-  theme_map(show_x = FALSE, show_y = FALSE)
+  theme_map(show_x = TRUE, show_y = TRUE)
 
 p_exceed <- base_map() +
   geom_tile(data = exceed_df, aes(x = x, y = y, fill = value),
@@ -902,16 +873,16 @@ p_exceed <- base_map() +
   scale_fill_gradientn(
     colours = c("white", "#f3dfb8", "#d9942f", "#8a3f20"),
     limits = c(0, max(exceed_df$value, na.rm = TRUE)),
-    name = "Weighted distance"
+    name = "Niche Boundary Exceedance"
   ) +
   guides(fill = guide_metric(24)) +
   labs(title = "(e) Boundary exceedance") +
-  theme_map(show_x = TRUE, show_y = TRUE)
+  theme_map(show_x = TRUE, show_y = FALSE)
 
-fig_main <- (p_sdm | p_amount) /
-  (p_distance | p_composition) /
-  (p_exceed | p_class) +
-  plot_layout(widths = c(1, 1), heights = c(1, 1, 1))
+fig_main <- wrap_plots(
+  p_sdm, p_amount, p_distance, p_composition, p_exceed,
+  design = "AABBCC\n#DDEE#"
+)
 
 diagram_labels <- var_labels
 
@@ -943,7 +914,7 @@ save_plot <- function(plot, file_base, width_mm, height_mm, dpi = 600) {
 
 save_plot(fig_main,
           file.path(out_dir, "figure_anchovy_mediterranean_climniche_maps"),
-          width_mm = 183, height_mm = 136)
+          width_mm = 183, height_mm = 88)
 save_plot(fig_report,
           file.path(out_dir, "figure_anchovy_mediterranean_climniche_report"),
           width_mm = 183, height_mm = 128)
@@ -953,4 +924,4 @@ cat("Clean OBIS records inside Mediterranean:", nrow(occ), "\n")
 cat("Presence cells:", length(presence_cells), "\n")
 cat("SDM threshold:", round(sdm$threshold, 4), "\n")
 print(climniche_summary(fit, scope = "current"))
-print(report$class_summary)
+print(report$descriptor_summary)

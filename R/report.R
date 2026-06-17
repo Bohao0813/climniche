@@ -22,6 +22,7 @@ climniche_table <- function(x, scope = c("current", "all")) {
   }
   climate_reconfiguration <- .fit_metric(x, "climate_reconfiguration")[idx]
   niche_boundary_exceedance <- .fit_metric(x, "niche_boundary_exceedance")[idx]
+  descriptors <- .fit_exposure_descriptors(x)
 
   data.frame(
     cell = idx,
@@ -38,6 +39,8 @@ climniche_table <- function(x, scope = c("current", "all")) {
     current_niche_percentile = x$niche_percentile$current[idx],
     future_niche_percentile = x$niche_percentile$future[idx],
     percentile_change = x$niche_percentile$delta[idx],
+    radial_direction = descriptors$radial_direction[idx],
+    boundary_status = descriptors$boundary_status[idx],
     class = .normalise_class(x$classification[idx]),
     mixed_variable_response = mixed,
     stringsAsFactors = FALSE
@@ -71,6 +74,20 @@ climniche_table <- function(x, scope = c("current", "all")) {
   out[names(totals)] <- totals / sum(weights[ok])
   out[is.na(out)] <- 0
   out
+}
+
+.descriptor_summary <- function(tab, weights) {
+  radial <- .weighted_class_prop(tab$radial_direction, weights)
+  boundary <- .weighted_class_prop(tab$boundary_status, weights)
+  data.frame(
+    descriptor = c(
+      rep("Niche Distance Shift direction", length(radial)),
+      rep("Niche boundary status", length(boundary))
+    ),
+    level = c(names(radial), names(boundary)),
+    proportion = c(as.numeric(radial), as.numeric(boundary)),
+    stringsAsFactors = FALSE
+  )
 }
 
 .classification_settings_df <- function(x) {
@@ -138,17 +155,24 @@ climniche_table <- function(x, scope = c("current", "all")) {
       "Climatic Displacement",
       "Niche Distance Shift",
       "Niche Distance Shift",
+      "Climatic Reconfiguration",
+      "Climatic Reconfiguration",
+      "Niche Boundary Exceedance",
       "Niche Boundary Exceedance"
     ),
     statistic = c("mean", "median", "90th percentile",
-                  "mean", "median", "mean"),
+                  "mean", "median", "mean", "median",
+                  "mean", "90th percentile"),
     value = c(
       summary$mean_climate_change_amount,
       summary$median_climate_change_amount,
       summary$q90_climate_change_amount,
       summary$mean_niche_distance_change,
       summary$median_niche_distance_change,
-      summary$mean_niche_boundary_exceedance
+      summary$mean_climate_reconfiguration,
+      summary$median_climate_reconfiguration,
+      summary$mean_niche_boundary_exceedance,
+      summary$q90_niche_boundary_exceedance
     ),
     stringsAsFactors = FALSE
   )
@@ -167,14 +191,20 @@ climniche_table <- function(x, scope = c("current", "all")) {
 #' @param scope `"current"` for current reference cells or `"all"` for all
 #'   evaluated cells. Current-scope summaries use reference weights.
 #'
-#' @return A one-row data frame with reported quantity summaries and the effective
-#'   classification settings.
+#' @return A one-row data frame with summaries of the four continuous reported
+#'   quantities. Descriptor and compatibility-classification columns remain
+#'   available for programmatic use.
 #' @export
 climniche_summary <- function(x, scope = c("current", "all")) {
   scope <- match.arg(scope)
   tab <- climniche_table(x, scope = scope)
   weights <- .summary_weights(tab, scope)
   class_prop <- .weighted_class_prop(tab$class, weights)
+  descriptor_summary <- .descriptor_summary(tab, weights)
+  get_descriptor_prop <- function(label) {
+    value <- descriptor_summary$proportion[descriptor_summary$level == label]
+    if (length(value)) value[[1]] else 0
+  }
   get_prop <- function(label) {
     if (label %in% names(class_prop)) unname(class_prop[[label]]) else 0
   }
@@ -184,7 +214,7 @@ climniche_summary <- function(x, scope = c("current", "all")) {
     boundary_tol <- 0
   }
 
-  cbind(data.frame(
+  out <- cbind(data.frame(
     scope = scope,
     n = nrow(tab),
     reference_weight_sum = sum(weights, na.rm = TRUE),
@@ -202,6 +232,23 @@ climniche_summary <- function(x, scope = c("current", "all")) {
       .weighted_mean_vector(tab$niche_distance_change, weights),
     median_niche_distance_change = .weighted_quantile(
       tab$niche_distance_change, weights, 0.50
+    ),
+    mean_climate_reconfiguration =
+      .weighted_mean_vector(tab$climate_reconfiguration, weights),
+    median_climate_reconfiguration = .weighted_quantile(
+      tab$climate_reconfiguration, weights, 0.50
+    ),
+    prop_toward_niche_center = get_descriptor_prop(
+      "Toward realised niche centre"
+    ),
+    prop_limited_niche_distance_shift = get_descriptor_prop(
+      "Limited Niche Distance Shift"
+    ),
+    prop_away_from_niche_center = get_descriptor_prop(
+      "Away from realised niche centre"
+    ),
+    prop_beyond_niche_boundary = get_descriptor_prop(
+      "Beyond empirical niche boundary"
     ),
     prop_niche_convergence = get_prop("Closer to current niche"),
     prop_niche_divergence = get_prop("Farther from current niche"),
@@ -221,10 +268,71 @@ climniche_summary <- function(x, scope = c("current", "all")) {
     ),
     mean_niche_boundary_exceedance =
       .weighted_mean_vector(tab$niche_boundary_exceedance, weights),
+    median_niche_boundary_exceedance = .weighted_quantile(
+      tab$niche_boundary_exceedance, weights, 0.50
+    ),
+    q90_niche_boundary_exceedance = .weighted_quantile(
+      tab$niche_boundary_exceedance, weights, 0.90
+    ),
     mean_outside_niche_exceedance =
       .weighted_mean_vector(tab$niche_boundary_exceedance, weights),
     stringsAsFactors = FALSE
   ), settings)
+  class(out) <- c("climniche_summary", "data.frame")
+  out
+}
+
+#' Print a climniche summary
+#'
+#' Prints the four continuous reported quantities. Compatibility columns for
+#' the earlier combined classification remain available in the underlying data
+#' frame but are not included in the default display.
+#'
+#' @param x An object returned by [climniche_summary()].
+#' @param ... Additional arguments passed to the data-frame print method.
+#'
+#' @return Invisibly returns `x`.
+#' @export
+print.climniche_summary <- function(x, ...) {
+  settings <- data.frame(
+    Scope = x$scope,
+    Cells = x$n,
+    `Reference weight sum` = x$reference_weight_sum,
+    `Boundary quantile` = x$boundary_quantile,
+    `Boundary distance` = x$boundary_distance,
+    check.names = FALSE
+  )
+  metrics <- data.frame(
+    Metric = c(
+      "Climatic Displacement",
+      "Niche Distance Shift",
+      "Climatic Reconfiguration",
+      "Niche Boundary Exceedance"
+    ),
+    Mean = c(
+      x$mean_climate_change_amount,
+      x$mean_niche_distance_change,
+      x$mean_climate_reconfiguration,
+      x$mean_niche_boundary_exceedance
+    ),
+    Median = c(
+      x$median_climate_change_amount,
+      x$median_niche_distance_change,
+      x$median_climate_reconfiguration,
+      x$median_niche_boundary_exceedance
+    ),
+    `90th percentile` = c(
+      x$q90_climate_change_amount,
+      NA_real_,
+      NA_real_,
+      x$q90_niche_boundary_exceedance
+    ),
+    check.names = FALSE
+  )
+  print.data.frame(settings, row.names = FALSE, ...)
+  cat("\n")
+  print.data.frame(metrics, row.names = FALSE, ...)
+  invisible(x)
 }
 
 #' Build a climniche report
@@ -261,6 +369,7 @@ climniche_report <- function(x, species = NULL, scope = c("current", "all"),
   cls$count <- as.integer(counts[cls$class])
   cls$count[is.na(cls$count)] <- 0L
   cls$class <- factor(cls$class, levels = .class_level_names())
+  descriptor_summary <- .descriptor_summary(tab, weights)
 
   vals <- .weighted_col_means(x$variable_contribution[idx, , drop = FALSE],
                               weights)
@@ -277,11 +386,6 @@ climniche_report <- function(x, species = NULL, scope = c("current", "all"),
                      , drop = FALSE]
   var_tab <- utils::head(var_tab, top_variables)
 
-  dominant <- if (nrow(cls)) {
-    .class_labels()[as.character(cls$class[1])]
-  } else {
-    NA_character_
-  }
   direction <- if (summ$mean_niche_distance_change > 0) {
     "positive on average"
   } else if (summ$mean_niche_distance_change < 0) {
@@ -292,10 +396,6 @@ climniche_report <- function(x, species = NULL, scope = c("current", "all"),
 
   interpretation <- c(
     paste0("Mean Niche Distance Shift is ", direction, "."),
-    paste0("The most frequent exposure class is '", dominant, "'."),
-    paste0(round(100 * summ$prop_mixed_variable_response, 1),
-           "% of analysed cells show mixed variable contributions while ",
-           "remaining within the Niche Boundary Exceedance tolerance."),
     paste0(round(100 * summ$prop_outside_niche, 1),
            "% of analysed cells have Niche Boundary Exceedance above the ",
            "configured tolerance at q = ", summ$boundary_quantile, ".")
@@ -313,8 +413,16 @@ climniche_report <- function(x, species = NULL, scope = c("current", "all"),
       stringsAsFactors = FALSE
     ),
     classification_settings = .classification_settings_df(x),
+    descriptor_settings = data.frame(
+      niche_distance_shift_tolerance =
+        x$classification_settings$tolerance %||% NA_real_,
+      boundary_exceedance_tolerance =
+        x$classification_settings$boundary_exceedance_tolerance %||% NA_real_,
+      stringsAsFactors = FALSE
+    ),
     summary = summ,
     metric_summary = .report_metric_summary(summ),
+    descriptor_summary = descriptor_summary,
     class_summary = cls,
     top_variables = var_tab,
     interpretation = interpretation,
@@ -336,8 +444,8 @@ print.climniche_report <- function(x, ...) {
   cat("Scope: ", x$scope, "\n", sep = "")
   cat("Cells: ", x$settings$n_cells, "\n", sep = "")
   cat("Boundary quantile: ", x$settings$boundary_quantile, "\n\n", sep = "")
-  cat("Classification settings\n")
-  print(x$classification_settings, row.names = FALSE)
+  cat("Descriptor settings\n")
+  print(x$descriptor_settings, row.names = FALSE)
   cat("\n")
 
   cat("Interpretation\n")
@@ -347,9 +455,6 @@ print.climniche_report <- function(x, ...) {
 
   cat("\nReported quantity summary\n")
   print(x$metric_summary, row.names = FALSE)
-
-  cat("\nDerived exposure class proportions\n")
-  print(.class_summary_report(x$class_summary), row.names = FALSE)
 
   cat("\nTop variable contributions\n")
   print(x$top_variables, row.names = FALSE)
@@ -394,19 +499,14 @@ write_climniche_report <- function(report, file) {
     fmt_row(report$settings),
     "```",
     "",
-    "## Classification settings",
+    "## Descriptor settings",
     "```text",
-    fmt_row(report$classification_settings),
+    fmt_row(report$descriptor_settings),
     "```",
     "",
     "## Reported quantity summary",
     "```text",
     fmt_row(report$metric_summary),
-    "```",
-    "",
-    "## Derived Exposure Class Proportions",
-    "```text",
-    fmt_row(.class_summary_report(report$class_summary)),
     "```",
     "",
     "## Top Variable Contributions",

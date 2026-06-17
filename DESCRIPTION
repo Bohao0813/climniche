@@ -26,6 +26,7 @@ Suggests:
     patchwork,
     raster,
     rmarkdown,
+    sf,
     terra
 VignetteBuilder: knitr
 Config/roxygen2/version: 8.0.0

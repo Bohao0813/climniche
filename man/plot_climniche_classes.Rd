@@ -2,7 +2,7 @@
 % Please edit documentation in R/aliases.R
 \name{plot_climniche_classes}
 \alias{plot_climniche_classes}
-\title{Plot climniche classes}
+\title{Plot optional combined exposure classes}
 \usage{
 plot_climniche_classes(
   x,
@@ -16,7 +16,11 @@ plot_climniche_classes(
   legend_position = "right",
   show_legend = TRUE,
   extent = NULL,
-  degree_labels = c("auto", "none", "hemisphere")
+  degree_labels = c("auto", "none", "hemisphere"),
+  study_region = NULL,
+  region_colour = "black",
+  region_linewidth = 0.35,
+  region_linetype = 1
 )
 }
 \arguments{
@@ -48,10 +52,18 @@ classes in the legend.}
 
 \item{degree_labels}{Use hemisphere degree labels automatically for
 longitude-latitude rasters, always, or never.}
+
+\item{study_region}{Optional study-region boundary supplied as an \code{sf},
+\code{sfc}, \code{Spatial}, \code{SpatVector}, or data frame with \code{x} and \code{y} columns.}
+
+\item{region_colour, region_linewidth, region_linetype}{Appearance of the
+optional study-region boundary.}
 }
 \value{
 A ggplot object.
 }
 \description{
-Plot climniche classes
+This function retains the earlier five-class interpretation for compatible
+workflows. The four continuous reported quantities remain the primary
+climniche outputs.
 }

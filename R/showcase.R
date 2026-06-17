@@ -90,6 +90,45 @@
           "cell_weight", "x_width", "y_height")]
 }
 
+.weighted_quantity_bins <- function(tab, x, y, bins = 45L, weights = NULL) {
+  bins <- max(8L, as.integer(bins)[1])
+  x_values <- tab[[x]]
+  y_values <- tab[[y]]
+  x_breaks <- .showcase_breaks(x_values, bins)
+  y_breaks <- .showcase_breaks(y_values, bins)
+  if (is.null(weights)) {
+    weights <- if ("occupied_weight" %in% names(tab)) {
+      tab$occupied_weight
+    } else {
+      rep(1, nrow(tab))
+    }
+  }
+  ok <- is.finite(x_values) & is.finite(y_values) &
+    is.finite(weights) & weights > 0
+  if (!any(ok)) {
+    return(data.frame(
+      x_mid = numeric(), y_mid = numeric(), total_count = integer(),
+      total_weight = numeric(), x_width = numeric(), y_height = numeric()
+    ))
+  }
+  dat <- data.frame(
+    x_id = findInterval(x_values[ok], x_breaks, all.inside = TRUE),
+    y_id = findInterval(y_values[ok], y_breaks, all.inside = TRUE),
+    weight = weights[ok]
+  )
+  out <- stats::aggregate(
+    list(total_count = rep(1L, nrow(dat)), total_weight = dat$weight),
+    by = list(x_id = dat$x_id, y_id = dat$y_id),
+    FUN = sum
+  )
+  out$x_mid <- (x_breaks[out$x_id] + x_breaks[out$x_id + 1L]) / 2
+  out$y_mid <- (y_breaks[out$y_id] + y_breaks[out$y_id + 1L]) / 2
+  out$x_width <- diff(x_breaks)[out$x_id]
+  out$y_height <- diff(y_breaks)[out$y_id]
+  out[, c("x_mid", "y_mid", "total_count", "total_weight",
+          "x_width", "y_height")]
+}
+
 .showcase_metric_distribution <- function(tab, weights) {
   metrics <- c(
     climate_change_amount = "Climatic\nDisplacement",
@@ -219,6 +258,22 @@ climniche_showcase_data <- function(x, scope = c("current", "all"),
     "<1%",
     paste0(round(100 * class_counts$proportion), "%"))
   )
+  descriptors <- .descriptor_summary(tab, tab_weight)
+  descriptor_levels <- c(
+    "Away from realised niche centre",
+    "Limited Niche Distance Shift",
+    "Toward realised niche centre",
+    "Beyond empirical niche boundary",
+    "Within empirical niche boundary"
+  )
+  descriptors$level <- factor(descriptors$level,
+                              levels = descriptor_levels)
+  descriptors$label <- ifelse(
+    descriptors$proportion == 0,
+    "0%",
+    ifelse(descriptors$proportion < 0.01, "<1%",
+           paste0(round(100 * descriptors$proportion), "%"))
+  )
 
   idx <- if (scope == "current") x$occupied else seq_len(nrow(x$current))
   reference_weights <- .fit_reference_weights(x)
@@ -284,7 +339,15 @@ climniche_showcase_data <- function(x, scope = c("current", "all"),
     plane = plane,
     plane_bins = .dominant_exposure_bins(tab, bins = plane_bins,
                                          weights = tab_weight),
+    reconfiguration_bins = .weighted_quantity_bins(
+      tab,
+      x = "climate_reconfiguration",
+      y = "niche_boundary_exceedance",
+      bins = plane_bins,
+      weights = tab_weight
+    ),
     classes = class_counts,
+    descriptors = descriptors,
     variables = variables,
     boundary = boundary,
     metrics = metric_data,
@@ -348,15 +411,6 @@ plot_climniche_showcase <- function(x, scope = c("current", "all"),
     )] <- unname(variable_labels[idx[replace]])
   }
 
-  class_cols <- .class_colours()
-  class_labs <- c(
-    "Limited niche relative change" = "Limited niche relative change",
-    "Closer to current niche" = "Closer to niche centre",
-    "Farther from current niche" = "Farther from niche centre",
-    "Outside current niche boundary" = "Beyond current niche boundary",
-    "Climatic Reconfiguration with limited Niche Distance Shift" =
-      "Reconfiguration with limited distance shift"
-  )
   tile_width <- if (nrow(x$plane_bins)) x$plane_bins$x_width[1] else 1
   tile_height <- if (nrow(x$plane_bins)) x$plane_bins$y_height[1] else 1
   p_plane <- ggplot2::ggplot(
@@ -373,7 +427,7 @@ plot_climniche_showcase <- function(x, scope = c("current", "all"),
       name = "Weighted reference\nsupport"
     ) +
     ggplot2::labs(
-      title = "Climatic Displacement plane",
+      title = "Displacement and niche distance shift",
       x = "Climatic Displacement",
       y = "Niche Distance Shift"
     ) +
@@ -390,27 +444,60 @@ plot_climniche_showcase <- function(x, scope = c("current", "all"),
       )
     )
 
-  p_classes <- ggplot2::ggplot(
+  secondary_width <- if (nrow(x$reconfiguration_bins)) {
+    x$reconfiguration_bins$x_width[1]
+  } else {
+    1
+  }
+  secondary_height <- if (nrow(x$reconfiguration_bins)) {
+    x$reconfiguration_bins$y_height[1]
+  } else {
+    1
+  }
+  p_reconfiguration <- ggplot2::ggplot(
+    x$reconfiguration_bins,
+    ggplot2::aes(x = x_mid, y = y_mid, fill = total_weight)
+  ) +
+    ggplot2::geom_tile(
+      width = secondary_width,
+      height = secondary_height,
+      colour = NA
+    ) +
+    ggplot2::scale_fill_gradientn(
+      colours = c("#fffaf0", "#f2ce91", "#d99238", "#8a3f20"),
+      trans = "sqrt",
+      name = "Weighted reference\nsupport"
+    ) +
+    ggplot2::labs(
+      title = "Reconfiguration and boundary exceedance",
+      x = "Climatic Reconfiguration",
+      y = "Niche Boundary Exceedance"
+    ) +
+    .climniche_theme(base_size = 8.2) +
+    ggplot2::theme(
+      legend.position = "right",
+      legend.direction = "vertical"
+    ) +
+    ggplot2::guides(
+      fill = ggplot2::guide_colourbar(
+        title.position = "top",
+        barwidth = grid::unit(2.8, "mm"),
+        barheight = grid::unit(23, "mm")
+      )
+    )
+
+  p_classes_compatibility <- ggplot2::ggplot(
     x$classes,
     ggplot2::aes(x = proportion, y = class, fill = class)
   ) +
     ggplot2::geom_col(width = 0.66, colour = "grey25", linewidth = 0.15) +
-    ggplot2::geom_text(ggplot2::aes(label = label), hjust = -0.12,
-                       size = 2.3) +
     ggplot2::scale_x_continuous(
-      labels = function(z) paste0(round(100 * z), "%"),
-      limits = c(0, max(x$classes$proportion) * 1.18),
-      expand = ggplot2::expansion(mult = c(0, 0.02))
+      labels = function(z) paste0(round(100 * z), "%")
     ) +
-    ggplot2::scale_fill_manual(values = class_cols, drop = TRUE) +
-    ggplot2::scale_y_discrete(labels = class_labs) +
+    ggplot2::scale_fill_manual(values = .class_colours(), drop = FALSE) +
     ggplot2::labs(
-      title = "Hierarchical exposure classes",
-      x = if (identical(x$settings$scope[1], "current")) {
-        "Suitability weighted proportion\nof reference cells"
-      } else {
-        "Proportion of analysed cells"
-      },
+      title = "Optional combined exposure classes",
+      x = "Proportion of analysed cells",
       y = NULL
     ) +
     .climniche_theme(base_size = 8.2) +
@@ -448,9 +535,9 @@ plot_climniche_showcase <- function(x, scope = c("current", "all"),
       labels = function(z) paste0(round(100 * z), "%")
     ) +
     ggplot2::labs(
-      title = "Climatic variable contributions",
+      title = "Variable contributions",
       subtitle = direction_subtitle,
-      x = "Mean absolute contribution share",
+      x = "Mean absolute contribution",
       y = NULL
     ) +
     .climniche_theme(base_size = 8.2) +
@@ -500,9 +587,10 @@ plot_climniche_showcase <- function(x, scope = c("current", "all"),
 
   plots <- list(
     exposure = p_plane,
-    classes = p_classes,
+    reconfiguration = p_reconfiguration,
     variables = p_vars,
-    metrics = p_metrics
+    metrics = p_metrics,
+    classes = p_classes_compatibility
   )
   if (requireNamespace("patchwork", quietly = TRUE)) {
     p_vars_layout <- p_vars
@@ -514,7 +602,7 @@ plot_climniche_showcase <- function(x, scope = c("current", "all"),
         patchwork::free(p_vars)
       }
     }
-    out <- (p_plane | p_classes) / (p_vars_layout | p_metrics) +
+    out <- (p_plane | p_reconfiguration) / (p_vars_layout | p_metrics) +
       patchwork::plot_layout(widths = c(1, 1.18))
     out <- out + patchwork::plot_annotation(
       title = title,

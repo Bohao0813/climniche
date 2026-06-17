@@ -202,6 +202,10 @@ fit_climniche_terra <- function(current, future, occupied = NULL,
 #' @param extent Optional `c(xmin, xmax, ymin, ymax)` plotting extent.
 #' @param degree_labels Use hemisphere degree labels automatically for
 #'   longitude-latitude rasters, always, or never.
+#' @param study_region Optional study-region boundary supplied as an `sf`,
+#'   `sfc`, `Spatial`, `SpatVector`, or data frame with `x` and `y` columns.
+#' @param region_colour,region_linewidth,region_linetype Appearance of the
+#'   optional study-region boundary.
 #'
 #' @return A ggplot object.
 #' @export
@@ -226,7 +230,11 @@ plot_climniche_map <- function(x,
                                show_legend = TRUE,
                                symmetric = NULL,
                                extent = NULL,
-                               degree_labels = c("auto", "none", "hemisphere")) {
+                               degree_labels = c("auto", "none", "hemisphere"),
+                               study_region = NULL,
+                               region_colour = "black",
+                               region_linewidth = 0.35,
+                               region_linetype = 1) {
   metric <- match.arg(metric)
   .plot_climniche_map(x = x, metric = metric, occupied = occupied,
                       occupied_only = occupied_only,
@@ -241,10 +249,18 @@ plot_climniche_map <- function(x,
                       show_legend = show_legend,
                       symmetric = symmetric,
                       extent = extent,
-                      degree_labels = degree_labels)
+                      degree_labels = degree_labels,
+                      study_region = study_region,
+                      region_colour = region_colour,
+                      region_linewidth = region_linewidth,
+                      region_linetype = region_linetype)
 }
 
-#' Plot climniche classes
+#' Plot optional combined exposure classes
+#'
+#' This function retains the earlier five-class interpretation for compatible
+#' workflows. The four continuous reported quantities remain the primary
+#' climniche outputs.
 #'
 #' @param x A fitted climniche object with raster outputs.
 #' @param occupied Optional current reference RasterLayer to overlay.
@@ -263,6 +279,10 @@ plot_climniche_map <- function(x,
 #' @param extent Optional `c(xmin, xmax, ymin, ymax)` plotting extent.
 #' @param degree_labels Use hemisphere degree labels automatically for
 #'   longitude-latitude rasters, always, or never.
+#' @param study_region Optional study-region boundary supplied as an `sf`,
+#'   `sfc`, `Spatial`, `SpatVector`, or data frame with `x` and `y` columns.
+#' @param region_colour,region_linewidth,region_linetype Appearance of the
+#'   optional study-region boundary.
 #'
 #' @return A ggplot object.
 #' @export
@@ -275,7 +295,11 @@ plot_climniche_classes <- function(x, occupied = NULL, occupied_only = FALSE,
                                    legend_position = "right",
                                    show_legend = TRUE,
                                    extent = NULL,
-                                   degree_labels = c("auto", "none", "hemisphere")) {
+                                   degree_labels = c("auto", "none", "hemisphere"),
+                                   study_region = NULL,
+                                   region_colour = "black",
+                                   region_linewidth = 0.35,
+                                   region_linetype = 1) {
   .plot_climniche_classes(x = x, occupied = occupied,
                           occupied_only = occupied_only,
                           occupied_threshold = occupied_threshold,
@@ -286,7 +310,11 @@ plot_climniche_classes <- function(x, occupied = NULL, occupied_only = FALSE,
                           legend_position = legend_position,
                           show_legend = show_legend,
                           extent = extent,
-                          degree_labels = degree_labels)
+                          degree_labels = degree_labels,
+                          study_region = study_region,
+                          region_colour = region_colour,
+                          region_linewidth = region_linewidth,
+                          region_linetype = region_linetype)
 }
 
 #' Plot the climniche exposure plane
@@ -297,17 +325,24 @@ plot_climniche_classes <- function(x, occupied = NULL, occupied_only = FALSE,
 #' @param max_points Maximum number of points to draw.
 #' @param seed Random seed used when subsampling.
 #' @param title Optional plot title.
+#' @param colour_by Colour cells by Niche Boundary Exceedance or by the
+#'   compatibility classification.
 #'
 #' @return A ggplot object.
 #' @export
 plot_climniche_exposure <- function(x, scope = c("current", "all"),
                                     max_points = 6000, seed = 1,
-                                    title = NULL) {
+                                    title = NULL,
+                                    colour_by = c("niche_boundary_exceedance",
+                                                  "classification")) {
   .plot_climniche_exposure(x = x, scope = scope, max_points = max_points,
-                           seed = seed, title = title)
+                           seed = seed, title = title,
+                           colour_by = colour_by)
 }
 
-#' Plot climniche class proportions
+#' Plot optional combined exposure class proportions
+#'
+#' This compatibility plot is not used by the default climniche summary figure.
 #'
 #' @param x A fitted climniche object.
 #' @param scope `"current"` for current reference cells or `"all"` for all

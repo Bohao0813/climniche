@@ -18,13 +18,22 @@
 * Refreshed the Mediterranean anchovy example with prepared Bio-ORACLE v3
   marine climate rasters and continuous suitability weights.
 * Reworked the summary figure to use weighted exposure-plane bins, weighted
-  quantity distributions, normalised variable contribution shares and all
-  five possible hierarchical exposure classes, including zero proportions.
+  quantity distributions, normalised variable contribution shares and two
+  weighted planes that display the four reported quantities without assigning
+  cells to exposure classes.
+* Retained the earlier five-class `classification` field and plotting function
+  for compatibility, but removed this threshold hierarchy from the default
+  report and summary figure.
+* Added `radial_direction` and `boundary_status` to fitted objects and cell-level
+  tables. Raster workflows also return these descriptor layers.
 * Restored the package default classification settings in the anchovy example;
   example thresholds are no longer adjusted to produce a chosen number of
   classes.
 * Added `plot_climniche_maps()` and extended map controls for colour limits,
   palettes, legends, plotting extent and longitude-latitude labels.
+* Added optional `study_region` boundaries to raster maps. The same interface
+  supports terrestrial and marine study regions, while `domain` controls which
+  cells enter the calculation.
 * Revised the Mediterranean maps to use a dissolved sea boundary, a distinct
   land mask, aligned geographic axes and horizontal legends.
 * Changed the package license to MIT.

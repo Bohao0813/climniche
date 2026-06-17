@@ -64,8 +64,18 @@ stopifnot(sum(away$niche_boundary_exceedance > 0) >=
             sum(toward$niche_boundary_exceedance > 0))
 stopifnot(all(c("occupied_weight", "climate_reconfiguration",
                 "niche_boundary_exceedance", "composition_change",
-                "outside_niche_exceedance") %in%
+                "outside_niche_exceedance", "radial_direction",
+                "boundary_status") %in%
                 names(climniche_table(away))))
+stopifnot(identical(levels(away$radial_direction), c(
+  "Toward realised niche centre",
+  "Limited Niche Distance Shift",
+  "Away from realised niche centre"
+)))
+stopifnot(identical(levels(away$boundary_status), c(
+  "Within empirical niche boundary",
+  "Beyond empirical niche boundary"
+)))
 
 simple_current <- matrix(c(
   0, 0,
@@ -143,6 +153,9 @@ custom_class <- fit_climniche(
 stopifnot(!identical(as.character(away$classification),
                      as.character(custom_class$classification)))
 stopifnot(all(custom_class$classification == "Limited niche relative change"))
+stopifnot(all(custom_class$radial_direction == "Limited Niche Distance Shift"))
+stopifnot(all(custom_class$boundary_status ==
+                "Within empirical niche boundary"))
 stopifnot(as.character(normalise_class_test("Limited climate niche change")) ==
             "Limited niche relative change")
 stopifnot(as.character(normalise_class_test("little climate niche change")) ==
@@ -207,16 +220,22 @@ stopifnot(inherits(showcase, "climniche_showcase_data"))
 stopifnot(nrow(showcase$plane) <= 80)
 stopifnot(all(c("x_mid", "y_mid", "cell_weight", "total_weight") %in%
                 names(showcase$plane_bins)))
+stopifnot(all(c("x_mid", "y_mid", "total_weight") %in%
+                names(showcase$reconfiguration_bins)))
 stopifnot(all(c("metric", "value", "weight") %in% names(showcase$metrics)))
 stopifnot(all(c("proportion", "count", "weight") %in%
                 names(showcase$classes)))
 stopifnot(nrow(showcase$classes) == 5L)
+stopifnot(all(c("descriptor", "level", "proportion") %in%
+                names(showcase$descriptors)))
+stopifnot(nrow(showcase$descriptors) == 5L)
 stopifnot(all(c("metric", "x", "width", "proportion") %in%
                 names(showcase$metric_histograms)))
 stopifnot("mean_absolute_share" %in% names(showcase$variables))
 stopifnot(all(c("boundary_quantile", "prop_exceeded") %in%
                 names(showcase$boundary)))
 report_all_classes <- climniche_report(away, scope = "current")
+stopifnot(nrow(report_all_classes$descriptor_summary) == 5L)
 stopifnot(nrow(report_all_classes$class_summary) == 5L)
 stopifnot(all(as.character(report_all_classes$class_summary$class) ==
                 c(
@@ -238,6 +257,12 @@ if (requireNamespace("ggplot2", quietly = TRUE)) {
   stopifnot(inherits(p_new, "ggplot"))
   stopifnot(inherits(p_old, "ggplot"))
   stopifnot(isTRUE(all.equal(p_new$data$value, p_old$data$value)))
+  p_exposure <- plot_climniche_exposure(away)
+  p_exposure_classes <- plot_climniche_exposure(
+    away, colour_by = "classification"
+  )
+  stopifnot(inherits(p_exposure, "ggplot"))
+  stopifnot(inherits(p_exposure_classes, "ggplot"))
 }
 
 if (requireNamespace("raster", quietly = TRUE)) {
@@ -304,9 +329,37 @@ if (requireNamespace("raster", quietly = TRUE)) {
       rf, metric = "climate_change_amount", limits = c(0, 3),
       extent = c(0, 4, 0, 4), degree_labels = "hemisphere"
     )
+    region_boundary <- data.frame(
+      x = c(0.5, 3.5, 3.5, 0.5, 0.5),
+      y = c(0.5, 0.5, 3.5, 3.5, 0.5),
+      group = 1L
+    )
+    p_region <- plot_climniche_map(
+      rf,
+      metric = "climate_change_amount",
+      study_region = region_boundary
+    )
     stopifnot(isTRUE(all.equal(
       p_custom$scales$get_scales("fill")$limits, c(0, 3)
     )))
+    stopifnot(inherits(p_region, "ggplot"))
+    stopifnot(any(vapply(p_region$layers, function(layer) {
+      inherits(layer$geom, "GeomPath")
+    }, logical(1))))
+    if (requireNamespace("sf", quietly = TRUE)) {
+      region_sf <- sf::st_sf(
+        geometry = sf::st_sfc(
+          sf::st_polygon(list(as.matrix(region_boundary[, c("x", "y")]))),
+          crs = 4326
+        )
+      )
+      p_region_sf <- plot_climniche_map(
+        rf,
+        metric = "climate_change_amount",
+        study_region = region_sf
+      )
+      stopifnot(inherits(p_region_sf, "ggplot"))
+    }
     stopifnot(inherits(plot_climniche_variable_contribution(away), "ggplot"))
   }
 }

@@ -22,7 +22,11 @@ plot_climniche_map(
   show_legend = TRUE,
   symmetric = NULL,
   extent = NULL,
-  degree_labels = c("auto", "none", "hemisphere")
+  degree_labels = c("auto", "none", "hemisphere"),
+  study_region = NULL,
+  region_colour = "black",
+  region_linewidth = 0.35,
+  region_linetype = 1
 )
 }
 \arguments{
@@ -61,6 +65,12 @@ when used as an overlay or mask.}
 
 \item{degree_labels}{Use hemisphere degree labels automatically for
 longitude-latitude rasters, always, or never.}
+
+\item{study_region}{Optional study-region boundary supplied as an \code{sf},
+\code{sfc}, \code{Spatial}, \code{SpatVector}, or data frame with \code{x} and \code{y} columns.}
+
+\item{region_colour, region_linewidth, region_linetype}{Appearance of the
+optional study-region boundary.}
 }
 \value{
 A ggplot object.

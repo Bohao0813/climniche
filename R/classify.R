@@ -146,6 +146,50 @@ classify_exposure <- function(climate_change_amount, niche_distance_change,
   out
 }
 
+.radial_direction_levels <- function() {
+  c(
+    "Toward realised niche centre",
+    "Limited Niche Distance Shift",
+    "Away from realised niche centre"
+  )
+}
+
+.boundary_status_levels <- function() {
+  c(
+    "Within empirical niche boundary",
+    "Beyond empirical niche boundary"
+  )
+}
+
+.exposure_descriptors <- function(niche_distance_change,
+                                  niche_boundary_exceedance,
+                                  tolerance,
+                                  boundary_exceedance_tolerance) {
+  radial_direction <- rep("Limited Niche Distance Shift",
+                          length(niche_distance_change))
+  radial_direction[niche_distance_change < -tolerance] <-
+    "Toward realised niche centre"
+  radial_direction[niche_distance_change > tolerance] <-
+    "Away from realised niche centre"
+
+  boundary_status <- ifelse(
+    niche_boundary_exceedance > boundary_exceedance_tolerance,
+    "Beyond empirical niche boundary",
+    "Within empirical niche boundary"
+  )
+
+  list(
+    radial_direction = factor(
+      radial_direction,
+      levels = .radial_direction_levels()
+    ),
+    boundary_status = factor(
+      boundary_status,
+      levels = .boundary_status_levels()
+    )
+  )
+}
+
 mixed_variable_response <- function(contribution, niche_boundary_exceedance = NULL,
                                     outside_niche_exceedance = NULL,
                                     boundary_exceedance_tolerance = 0,

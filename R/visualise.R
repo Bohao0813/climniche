@@ -127,6 +127,53 @@
   list(xlim = extent[1:2], ylim = extent[3:4])
 }
 
+.study_region_df <- function(study_region, raster) {
+  if (is.null(study_region)) {
+    return(NULL)
+  }
+  if (is.data.frame(study_region) && !inherits(study_region, "sf")) {
+    if (!all(c("x", "y") %in% names(study_region))) {
+      stop("A study_region data frame must contain x and y columns.",
+           call. = FALSE)
+    }
+    if (!"group" %in% names(study_region)) {
+      study_region$group <- 1L
+    }
+    return(study_region[, c("x", "y", "group"), drop = FALSE])
+  }
+  if (!requireNamespace("sf", quietly = TRUE)) {
+    stop("sf is required to draw spatial study_region objects.",
+         call. = FALSE)
+  }
+  region <- try(sf::st_as_sf(study_region), silent = TRUE)
+  if (inherits(region, "try-error")) {
+    stop("study_region must be an sf, sfc, Spatial, SpatVector, or x-y data frame.",
+         call. = FALSE)
+  }
+  raster_crs <- if (.is_raster(raster)) {
+    sf::st_crs(raster::crs(raster))
+  } else {
+    sf::st_crs(terra::crs(raster, proj = TRUE))
+  }
+  if (!is.na(sf::st_crs(region)) && !is.na(raster_crs) &&
+      sf::st_crs(region) != raster_crs) {
+    region <- sf::st_transform(region, raster_crs)
+  }
+  lines <- suppressWarnings(sf::st_cast(
+    sf::st_boundary(sf::st_geometry(region)),
+    "LINESTRING"
+  ))
+  coordinates <- sf::st_coordinates(lines)
+  group_columns <- grep("^L[0-9]+$", colnames(coordinates))
+  group <- if (length(group_columns)) {
+    interaction(as.data.frame(coordinates[, group_columns, drop = FALSE]),
+                drop = TRUE)
+  } else {
+    factor(rep(1L, nrow(coordinates)))
+  }
+  data.frame(x = coordinates[, "X"], y = coordinates[, "Y"], group = group)
+}
+
 .metric_map_colours <- function(metric) {
   switch(
     .metric_key(metric),
@@ -310,6 +357,10 @@
 #' @param extent Optional `c(xmin, xmax, ymin, ymax)` plotting extent.
 #' @param degree_labels Use hemisphere degree labels automatically for
 #'   longitude-latitude rasters, always, or never.
+#' @param study_region Optional study-region boundary supplied as an `sf`,
+#'   `sfc`, `Spatial`, `SpatVector`, or data frame with `x` and `y` columns.
+#' @param region_colour,region_linewidth,region_linetype Appearance of the
+#'   optional study-region boundary.
 #'
 #' @return A ggplot object.
 #' @noRd
@@ -334,7 +385,11 @@
                                 show_legend = TRUE,
                                 symmetric = NULL,
                                 extent = NULL,
-                                degree_labels = c("auto", "none", "hemisphere")) {
+                                degree_labels = c("auto", "none", "hemisphere"),
+                                study_region = NULL,
+                                region_colour = "black",
+                                region_linewidth = 0.35,
+                                region_linetype = 1) {
   .need_ggplot2()
   metric <- match.arg(metric)
   metric_key <- .metric_key(metric)
@@ -369,6 +424,7 @@
   ttl <- .plot_title(title, .metric_label(metric))
   cell_size <- .spatial_res(r)
   axis_spec <- .map_axis_spec(r, degree_labels = degree_labels)
+  region_df <- .study_region_df(study_region, r)
   if (is.null(legend_title)) {
     legend_title <- .metric_label(metric)
   }
@@ -429,6 +485,17 @@
       alpha = 0.14
     )
   }
+  if (!is.null(region_df) && nrow(region_df) > 0) {
+    p <- p + ggplot2::geom_path(
+      data = region_df,
+      ggplot2::aes(x = x, y = y, group = group),
+      inherit.aes = FALSE,
+      colour = region_colour,
+      linewidth = region_linewidth,
+      linetype = region_linetype,
+      lineend = "round"
+    )
+  }
   p
 }
 
@@ -440,42 +507,58 @@
 #' @param max_points Maximum number of points to draw.
 #' @param seed Random seed used when subsampling.
 #' @param title Optional plot title.
+#' @param colour_by Colour cells by Niche Boundary Exceedance or by the
+#'   compatibility classification.
 #'
 #' @return A ggplot object.
 #' @noRd
 .plot_climniche_exposure <- function(x, scope = c("current", "all"),
                                      max_points = 6000, seed = 1,
-                                     title = NULL) {
+                                     title = NULL,
+                                     colour_by = c("niche_boundary_exceedance",
+                                                   "classification")) {
   .need_ggplot2()
   if (!inherits(x, "climniche_fit")) {
     stop("x must be a fitted climniche object.", call. = FALSE)
   }
   dat <- .climniche_plot_data(x, scope = scope, max_points = max_points,
                               seed = seed)
+  colour_by <- match.arg(colour_by)
   dat$x_value <- dat$climate_change_amount
   dat$y_value <- dat$niche_distance_change
   ttl <- .plot_title(title, "Niche relative climate exposure")
 
-  ggplot2::ggplot(
-    dat,
-    ggplot2::aes(x = x_value, y = y_value, colour = class)
-  ) +
+  p <- ggplot2::ggplot(dat, ggplot2::aes(x = x_value, y = y_value)) +
     ggplot2::geom_hline(yintercept = 0, colour = "grey45",
                         linewidth = 0.3, linetype = 2) +
-    ggplot2::geom_point(alpha = 0.42, size = 0.65) +
-    ggplot2::scale_colour_manual(
-      values = .class_colours(),
-      labels = .class_labels(),
-      drop = FALSE
+    ggplot2::geom_point(
+      ggplot2::aes(colour = if (identical(colour_by, "classification")) {
+        class
+      } else {
+        niche_boundary_exceedance
+      }),
+      alpha = 0.42,
+      size = 0.65
     ) +
     ggplot2::labs(
       x = "Climatic Displacement",
       y = "Niche Distance Shift",
-      colour = "Derived exposure class",
       title = ttl,
       subtitle = "Positive Niche Distance Shift indicates movement away from the realised niche centre"
     ) +
     .climniche_theme()
+  if (identical(colour_by, "classification")) {
+    p <- p + ggplot2::scale_colour_manual(
+      values = .class_colours(), labels = .class_labels(), drop = FALSE,
+      name = "Optional combined exposure class"
+    )
+  } else {
+    p <- p + ggplot2::scale_colour_gradientn(
+      colours = .metric_map_colours("niche_boundary_exceedance"),
+      name = "Niche Boundary\nExceedance"
+    )
+  }
+  p
 }
 
 #' Plot climniche class proportions
@@ -576,7 +659,10 @@
   plot_climniche_showcase(x, scope = scope)
 }
 
-#' Plot projected climate change classes
+#' Plot optional combined exposure classes
+#'
+#' This compatibility plot is separate from the four continuous reported
+#' quantities.
 #'
 #' @param x A `climniche_fit` object with raster outputs.
 #' @param occupied Optional occupied-cell RasterLayer or SpatRaster to overlay.
@@ -594,6 +680,10 @@
 #' @param extent Optional `c(xmin, xmax, ymin, ymax)` plotting extent.
 #' @param degree_labels Use hemisphere degree labels automatically for
 #'   longitude-latitude rasters, always, or never.
+#' @param study_region Optional study-region boundary supplied as an `sf`,
+#'   `sfc`, `Spatial`, `SpatVector`, or data frame with `x` and `y` columns.
+#' @param region_colour,region_linewidth,region_linetype Appearance of the
+#'   optional study-region boundary.
 #'
 #' @return A ggplot object.
 #' @noRd
@@ -606,7 +696,11 @@
                                     legend_position = "right",
                                     show_legend = TRUE,
                                     extent = NULL,
-                                    degree_labels = c("auto", "none", "hemisphere")) {
+                                    degree_labels = c("auto", "none", "hemisphere"),
+                                    study_region = NULL,
+                                    region_colour = "black",
+                                    region_linewidth = 0.35,
+                                    region_linetype = 1) {
   .need_ggplot2()
   class_display <- match.arg(class_display)
   if (!inherits(x, "climniche_fit") || is.null(x$rasters$classification)) {
@@ -629,6 +723,7 @@
   lim <- .map_extent(dat, extent = extent)
   cell_size <- .spatial_res(r)
   axis_spec <- .map_axis_spec(r, degree_labels = degree_labels)
+  region_df <- .study_region_df(study_region, r)
   if (is.null(class_colours)) class_colours <- .class_colours()
   if (is.null(class_labels)) class_labels <- .class_labels()
 
@@ -660,6 +755,17 @@
       size = 0.05,
       colour = "grey10",
       alpha = 0.12
+    )
+  }
+  if (!is.null(region_df) && nrow(region_df) > 0) {
+    p <- p + ggplot2::geom_path(
+      data = region_df,
+      ggplot2::aes(x = x, y = y, group = group),
+      inherit.aes = FALSE,
+      colour = region_colour,
+      linewidth = region_linewidth,
+      linetype = region_linetype,
+      lineend = "round"
     )
   }
   p

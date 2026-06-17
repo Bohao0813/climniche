@@ -32,9 +32,6 @@ if (identical(case_path, "")) {
 metric_summary <- read.csv(
   file.path(case_path, "anchovy_climniche_metric_summary.csv")
 )
-class_proportions <- read.csv(
-  file.path(case_path, "anchovy_climniche_class_proportions.csv")
-)
 variable_contributions <- read.csv(
   file.path(case_path, "anchovy_climniche_variable_contributions.csv")
 )
@@ -112,27 +109,22 @@ sensitivity weighted climatic space.
 fit_settings[fit_settings$setting %in% c(
   "boundary_quantile",
   "tolerance",
-  "stable_climate_change",
-  "stable_reconfiguration",
   "boundary_exceedance_tolerance"
 ), ]
 
 metric_summary[, c(
   "n", "reference_weight_sum", "boundary_quantile",
   "mean_climate_change_amount", "mean_niche_distance_change",
-  "prop_niche_divergence", "prop_niche_convergence",
-  "prop_niche_exceedance", "prop_climate_reconfiguration"
+  "prop_outside_niche", "mean_niche_boundary_exceedance"
 )]
 ```
 
-The derived exposure classes are a secondary, hierarchical interpretation of
-the continuous quantities. They are not one class per reported quantity. The
-table retains all five possible classes, including classes with zero reference
-weight in this example.
-
-```{r}
-class_proportions
-```
+Niche Distance Shift direction and boundary status are interpreted separately.
+A cell can move away from the realised niche centre without crossing the
+empirical boundary, or cross the boundary while retaining its measured
+Climatic Reconfiguration. The package therefore does not treat the four
+continuous quantities as four classes. The earlier five-class field is retained
+for compatibility with existing analyses.
 
 Variable contributions summarise fitted changes in niche potential. They are
 model-derived contributions, not causal attribution.
@@ -144,9 +136,8 @@ variable_contributions
 ## Mediterranean maps
 
 Panel (a) shows the continuous suitability values retained as current reference
-weights. Panels (b)-(e) show the four continuous reported quantities. Panel
-(f) maps the exposure classes observed in the analysed cells. Land is shown in
-grey and is not part of the calculation.
+weights. Panels (b)-(e) show the four continuous reported quantities. Land is
+shown in grey and is not part of the calculation.
 
 ```{r, echo = FALSE, out.width = "100%"}
 knitr::include_graphics("figures/anchovy-mediterranean-maps.png")
@@ -154,10 +145,10 @@ knitr::include_graphics("figures/anchovy-mediterranean-maps.png")
 
 ## Summary figure
 
-The summary figure combines the weighted Climatic Displacement plane, all five
-possible class proportions, normalised variable contribution shares and
-weighted distributions of the reported quantities. Zero values for a class
-mean that no current reference weight was assigned to that class.
+The summary figure uses one weighted plane for Climatic Displacement and Niche
+Distance Shift and a second for Climatic Reconfiguration and Niche Boundary
+Exceedance. It also shows normalised variable contribution shares and weighted
+distributions of the four reported quantities.
 
 ```{r, echo = FALSE, out.width = "95%"}
 knitr::include_graphics("figures/anchovy-climniche-showcase.png")
@@ -198,13 +189,12 @@ climniche_summary(fit)
 plot_climniche_map(fit, metric = "niche_distance_change",
                    occupied = anchovy_suitability,
                    occupied_only = TRUE,
-                   occupied_threshold = sdm_threshold)
-plot_climniche_classes(fit, occupied = anchovy_suitability,
-                       occupied_only = TRUE,
-                       occupied_threshold = sdm_threshold)
+                   occupied_threshold = sdm_threshold,
+                   study_region = mediterranean_boundary)
 plot_climniche_maps(fit, occupied = anchovy_suitability,
                     occupied_only = TRUE,
-                    occupied_threshold = sdm_threshold)
+                    occupied_threshold = sdm_threshold,
+                    study_region = mediterranean_boundary)
 plot_climniche_showcase(fit)
 ```
 
@@ -219,5 +209,27 @@ fit <- fit_climniche(
   occupied_threshold = sdm_threshold,
   sensitivity = predictor_sensitivity,
   boundary = 0.95
+)
+```
+
+## Terrestrial study regions
+
+The raster workflow is not tied to marine systems. For a terrestrial species,
+use a land or study-area raster as `domain`; cells outside it are excluded from
+the fit. The same boundary can be added to maps for geographic context.
+
+```r
+fit_land <- fit_climniche_terra(
+  current = current_land_climate,
+  future = future_land_climate,
+  occupied = binary_or_continuous_sdm,
+  domain = terrestrial_study_mask,
+  sensitivity = predictor_sensitivity
+)
+
+plot_climniche_maps(
+  fit_land,
+  study_region = terrestrial_study_boundary,
+  degree_labels = "auto"
 )
 ```

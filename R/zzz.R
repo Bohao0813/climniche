@@ -14,6 +14,7 @@ if (getRversion() >= "2.15.1") {
     "future",
     "future_axis1",
     "future_axis2",
+    "group",
     "label",
     "metric",
     "mean_contribution",

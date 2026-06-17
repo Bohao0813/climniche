@@ -2,7 +2,7 @@
 % Please edit documentation in R/aliases.R
 \name{plot_climniche_class_summary}
 \alias{plot_climniche_class_summary}
-\title{Plot climniche class proportions}
+\title{Plot optional combined exposure class proportions}
 \usage{
 plot_climniche_class_summary(x, scope = c("current", "all"), title = NULL)
 }
@@ -18,5 +18,5 @@ evaluated cells.}
 A ggplot object.
 }
 \description{
-Plot climniche class proportions
+This compatibility plot is not used by the default climniche summary figure.
 }

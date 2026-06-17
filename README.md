@@ -62,16 +62,14 @@ Binary rasters are used as 0/1 reference weights. Continuous suitability values
 are used as continuous reference weights; `occupied_threshold` only removes low
 values and does not convert higher values to 1.
 
-The outputs are cell-level tables, maps, derived exposure classes, variable
-contributions, report text, and figure data.
-
-The four reported quantities are continuous and are not exposure classes. A
-separate hierarchical rule assigns each cell to one of five interpretive
-classes: limited niche relative change, movement closer to the niche centre,
-movement farther from the niche centre, exceedance of the current niche
-boundary, or Climatic Reconfiguration with limited Niche Distance Shift. The
-classification settings are stored in the fitted object and can be supplied
-directly or estimated from user-defined quantiles.
+The outputs are cell-level tables, maps, weighted summaries, variable
+contributions, report text, and figure data. The four reported quantities are
+continuous. Two optional descriptors summarise Niche Distance Shift as toward,
+limited, or away from the realised niche centre and record whether the empirical
+niche boundary is exceeded. These descriptors are reported separately because
+they answer different questions. The earlier five-class combination remains
+available through `classification` and `plot_climniche_classes()` for existing
+workflows, but is not required to interpret the decomposition.
 
 ## Basic use
 
@@ -94,12 +92,13 @@ plot_climniche_showcase(fit)
 ```
 
 For spatial data, use `fit_climniche_raster()` or `fit_climniche_terra()`.
-Both functions accept binary and continuous reference rasters. `domain` can be
-used to restrict the calculation to a study area such as a marine region or a
-modelled accessible area. Classification thresholds can be set directly through
-arguments such as `tolerance`, `stable_climate_change`,
-`stable_reconfiguration`, `boundary_exceedance_tolerance`, and
-`conflict_ratio`.
+Both functions accept binary and continuous reference rasters. `domain` limits
+the calculation to the study region, whether it is a terrestrial range, an
+island, a catchment, a marine region, or a modelled accessible area. Map
+functions accept `study_region` as an `sf`, `Spatial`, `SpatVector`, or x-y
+boundary data frame, so terrestrial study boundaries can be drawn without
+changing the analysis. Thresholds used by the optional descriptors or legacy
+classification remain user-settable.
 
 ## Worked example
 
@@ -107,7 +106,7 @@ The [Examples](https://bohao0813.github.io/climniche/articles/climniche-examples
 page uses a Mediterranean European anchovy case study with Bio-ORACLE v3 marine
 climate layers. It starts from prepared current and future rasters plus a
 continuous suitability map, then shows how `climniche` reports the
-niche-relative decomposition, hierarchical classes and spatial summaries.
+niche-relative decomposition and spatial summaries.
 
 ## Contributor
 
