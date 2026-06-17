@@ -3,6 +3,12 @@ if (!exists("fit_climniche", mode = "function") &&
   library(climniche)
 }
 
+normalise_class_test <- if (exists(".normalise_class", mode = "function")) {
+  .normalise_class
+} else {
+  get(".normalise_class", envir = asNamespace("climniche"))
+}
+
 sim <- simulate_climniche(n = 500, seed = 10)
 
 toward <- fit_climniche(
@@ -137,9 +143,9 @@ custom_class <- fit_climniche(
 stopifnot(!identical(as.character(away$classification),
                      as.character(custom_class$classification)))
 stopifnot(all(custom_class$classification == "Limited niche relative change"))
-stopifnot(as.character(climniche:::.normalise_class("Limited climate niche change")) ==
+stopifnot(as.character(normalise_class_test("Limited climate niche change")) ==
             "Limited niche relative change")
-stopifnot(as.character(climniche:::.normalise_class("little climate niche change")) ==
+stopifnot(as.character(normalise_class_test("little climate niche change")) ==
             "Limited niche relative change")
 stopifnot(isTRUE(all.equal(custom_class$classification_settings$tolerance,
                            1e6)))

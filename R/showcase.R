@@ -298,14 +298,19 @@ plot_climniche_showcase <- function(x, scope = c("current", "all"),
     ggplot2::scale_alpha(range = c(0.25, 0.95), guide = "none") +
     ggplot2::labs(
       title = "(a) Binned exposure plane",
-      subtitle = "Squares are fixed bins; colours follow panel (b)",
       x = "Climatic Displacement",
       y = "Niche Distance Shift",
       fill = "Dominant exposure class"
     ) +
     .climniche_theme(base_size = 8.2) +
     ggplot2::theme(
-      legend.position = "none"
+      legend.position = "none",
+      axis.title.y = ggplot2::element_text(
+        colour = "black",
+        size = 7.7,
+        margin = ggplot2::margin(r = 5)
+      ),
+      plot.margin = ggplot2::margin(4, 5, 4, 7)
     )
 
   p_classes <- ggplot2::ggplot(

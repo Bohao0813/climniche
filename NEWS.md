@@ -17,6 +17,10 @@
   summary figures used in the vignette.
 * Refreshed the Mediterranean anchovy example with prepared Bio-ORACLE v3
   marine climate rasters and continuous suitability weights.
+* Updated the Mediterranean anchovy summary figure so the exposure plane and
+  class proportion panel show four observed derived exposure classes.
+* Removed the exposure-plane subtitle and adjusted the panel axis layout.
+* Changed the package license to MIT.
 
 # climniche 0.1.1
 

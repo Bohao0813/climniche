@@ -11,7 +11,7 @@ Description: Decomposes projected climate change relative to the current
     environmental rasters and future projections, the package reports related
     quantities for displacement magnitude, radial niche shift, non-radial
     displacement and empirical niche boundary exceedance.
-License: GPL (>= 3)
+License: MIT + file LICENSE
 URL: https://github.com/Bohao0813/climniche,
     https://bohao0813.github.io/climniche/
 BugReports: https://github.com/Bohao0813/climniche/issues
