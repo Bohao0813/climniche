@@ -17,6 +17,7 @@ if (getRversion() >= "2.15.1") {
     "label",
     "metric",
     "mean_contribution",
+    "mean_absolute_share",
     "niche_boundary_exceedance",
     "niche_distance_change",
     "occupied_weight",
@@ -26,6 +27,7 @@ if (getRversion() >= "2.15.1") {
     "total_weight",
     "value",
     "variable",
+    "width",
     "x",
     "axis1",
     "axis2",
@@ -33,6 +35,7 @@ if (getRversion() >= "2.15.1") {
     "x_value",
     "y",
     "y_mid",
-    "y_value"
+    "y_value",
+    "xintercept"
   ))
 }

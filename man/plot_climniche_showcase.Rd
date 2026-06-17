@@ -9,7 +9,7 @@ plot_climniche_showcase(
   scope = c("current", "all"),
   max_points = 6000L,
   seed = 1L,
-  plane_bins = 45L,
+  plane_bins = 35L,
   boundary_probs = seq(0.5, 0.99, 0.01),
   top_variables = 6L,
   variable_labels = NULL,

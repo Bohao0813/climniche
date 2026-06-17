@@ -48,8 +48,7 @@ reports use the names below.
   from the current realised climatic niche centre.
 - Climatic Reconfiguration (`climate_reconfiguration`): non radial component
   of climatic displacement. It is derived from Climatic Displacement and Niche
-  Distance Shift; it should not be read as species or community composition
-  change.
+  Distance Shift rather than estimated independently.
 - Niche Boundary Exceedance (`niche_boundary_exceedance`): positive excess of
   future niche distance beyond the empirical boundary of the current realised
   climatic niche.
@@ -66,14 +65,13 @@ values and does not convert higher values to 1.
 The outputs are cell-level tables, maps, derived exposure classes, variable
 contributions, report text, and figure data.
 
-The exposure classes are derived from the continuous quantities. They are not
-one class per quantity, and a fitted case may contain only a subset of the
-possible classes. Niche Distance Shift is signed, so it separates movement
-toward and away from the realised niche centre. A separate low-change class
-identifies cells with limited Climatic Displacement, limited Climatic
-Reconfiguration and little Niche Distance Shift. Niche Boundary Exceedance is
-treated as an overriding class when future conditions exceed the empirical
-boundary.
+The four reported quantities are continuous and are not exposure classes. A
+separate hierarchical rule assigns each cell to one of five interpretive
+classes: limited niche relative change, movement closer to the niche centre,
+movement farther from the niche centre, exceedance of the current niche
+boundary, or Climatic Reconfiguration with limited Niche Distance Shift. The
+classification settings are stored in the fitted object and can be supplied
+directly or estimated from user-defined quantiles.
 
 ## Basic use
 
@@ -109,7 +107,7 @@ The [Examples](https://bohao0813.github.io/climniche/articles/climniche-examples
 page uses a Mediterranean European anchovy case study with Bio-ORACLE v3 marine
 climate layers. It starts from prepared current and future rasters plus a
 continuous suitability map, then shows how `climniche` reports the
-niche-relative decomposition, observed derived classes and summary figures.
+niche-relative decomposition, hierarchical classes and spatial summaries.
 
 ## Contributor
 

@@ -9,7 +9,14 @@ plot_climniche_classes(
   occupied = NULL,
   occupied_only = FALSE,
   occupied_threshold = NULL,
-  title = NULL
+  title = NULL,
+  class_display = c("observed", "all"),
+  class_colours = NULL,
+  class_labels = NULL,
+  legend_position = "right",
+  show_legend = TRUE,
+  extent = NULL,
+  degree_labels = c("auto", "none", "hemisphere")
 )
 }
 \arguments{
@@ -25,6 +32,22 @@ continuous values. Values above the threshold keep their original value
 when used as an overlay or mask.}
 
 \item{title}{Optional plot title. Use \code{FALSE} to suppress it.}
+
+\item{class_display}{Show only observed classes or retain all possible
+classes in the legend.}
+
+\item{class_colours}{Optional named vector replacing class colours.}
+
+\item{class_labels}{Optional named vector replacing class labels.}
+
+\item{legend_position}{Position passed to the ggplot theme.}
+
+\item{show_legend}{If FALSE, suppress the class legend.}
+
+\item{extent}{Optional \code{c(xmin, xmax, ymin, ymax)} plotting extent.}
+
+\item{degree_labels}{Use hemisphere degree labels automatically for
+longitude-latitude rasters, always, or never.}
 }
 \value{
 A ggplot object.

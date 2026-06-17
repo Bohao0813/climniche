@@ -207,11 +207,28 @@ stopifnot(inherits(showcase, "climniche_showcase_data"))
 stopifnot(nrow(showcase$plane) <= 80)
 stopifnot(all(c("x_mid", "y_mid", "cell_weight", "total_weight") %in%
                 names(showcase$plane_bins)))
-stopifnot(all(c("metric", "value") %in% names(showcase$metrics)))
+stopifnot(all(c("metric", "value", "weight") %in% names(showcase$metrics)))
 stopifnot(all(c("proportion", "count", "weight") %in%
                 names(showcase$classes)))
+stopifnot(nrow(showcase$classes) == 5L)
+stopifnot(all(c("metric", "x", "width", "proportion") %in%
+                names(showcase$metric_histograms)))
+stopifnot("mean_absolute_share" %in% names(showcase$variables))
 stopifnot(all(c("boundary_quantile", "prop_exceeded") %in%
                 names(showcase$boundary)))
+report_all_classes <- climniche_report(away, scope = "current")
+stopifnot(nrow(report_all_classes$class_summary) == 5L)
+stopifnot(all(as.character(report_all_classes$class_summary$class) ==
+                c(
+                  "Limited niche relative change",
+                  "Closer to current niche",
+                  "Farther from current niche",
+                  "Outside current niche boundary",
+                  paste(
+                    "Climatic Reconfiguration with limited",
+                    "Niche Distance Shift"
+                  )
+                )))
 
 if (requireNamespace("ggplot2", quietly = TRUE)) {
   p_new <- plot_climniche_distribution(away,
@@ -261,12 +278,35 @@ if (requireNamespace("raster", quietly = TRUE)) {
                                     occupied_threshold = 0.5)
     p_cls <- plot_climniche_classes(rf, occupied = occ, occupied_only = TRUE,
                                     occupied_threshold = 0.5)
+    p_cls_all <- plot_climniche_classes(
+      rf, occupied = occ, occupied_only = TRUE,
+      occupied_threshold = 0.5, class_display = "all"
+    )
+    p_maps <- plot_climniche_maps(
+      rf, occupied = occ, occupied_only = TRUE,
+      occupied_threshold = 0.5, degree_labels = "hemisphere"
+    )
     stopifnot(inherits(p_map_new, "ggplot"))
     stopifnot(inherits(p_map_old, "ggplot"))
     stopifnot(inherits(p_cls, "ggplot"))
+    stopifnot(inherits(p_cls_all, "ggplot"))
+    stopifnot(inherits(p_maps, "patchwork") || is.list(p_maps))
     stopifnot(nrow(p_map_new$data) == 8)
     stopifnot(nrow(p_cls$data) == 8)
     stopifnot(isTRUE(all.equal(p_map_new$data$value, p_map_old$data$value)))
+    stopifnot(isTRUE(all.equal(
+      p_map_new$scales$get_scales("fill")$limits[1], 0
+    )))
+    p_shift <- plot_climniche_map(rf, metric = "niche_distance_change")
+    shift_limits <- p_shift$scales$get_scales("fill")$limits
+    stopifnot(isTRUE(all.equal(abs(shift_limits[1]), abs(shift_limits[2]))))
+    p_custom <- plot_climniche_map(
+      rf, metric = "climate_change_amount", limits = c(0, 3),
+      extent = c(0, 4, 0, 4), degree_labels = "hemisphere"
+    )
+    stopifnot(isTRUE(all.equal(
+      p_custom$scales$get_scales("fill")$limits, c(0, 3)
+    )))
     stopifnot(inherits(plot_climniche_variable_contribution(away), "ggplot"))
   }
 }
@@ -309,9 +349,14 @@ if (requireNamespace("terra", quietly = TRUE)) {
                                     occupied_threshold = 0.5)
     p_cls <- plot_climniche_classes(tf, occupied = occ, occupied_only = TRUE,
                                     occupied_threshold = 0.5)
+    p_maps <- plot_climniche_maps(
+      tf, occupied = occ, occupied_only = TRUE,
+      occupied_threshold = 0.5
+    )
     stopifnot(inherits(p_map_new, "ggplot"))
     stopifnot(inherits(p_map_old, "ggplot"))
     stopifnot(inherits(p_cls, "ggplot"))
+    stopifnot(inherits(p_maps, "patchwork") || is.list(p_maps))
     stopifnot(nrow(p_map_new$data) == 8)
     stopifnot(nrow(p_cls$data) == 8)
     stopifnot(isTRUE(all.equal(p_map_new$data$value, p_map_old$data$value)))

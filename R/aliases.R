@@ -63,8 +63,8 @@
 #' distances from the realised niche centre. Positive Niche Boundary Exceedance
 #' is therefore an excess distance beyond this empirical radial boundary.
 #' Climatic Reconfiguration is derived from Climatic Displacement and Niche
-#' Distance Shift; it is a non-radial displacement component, not an independent
-#' ecological process or a measure of species composition change.
+#' Distance Shift; it is a non radial displacement component rather than an
+#' independently estimated process.
 #'
 #' All classification-related thresholds are user-settable. If a direct
 #' threshold argument is `NULL`, `climniche` calculates the effective threshold
@@ -192,6 +192,16 @@ fit_climniche_terra <- function(current, future, occupied = NULL,
 #'   when used as an overlay or mask.
 #' @param title Optional plot title. Use `FALSE` to suppress it.
 #' @param midpoint Midpoint for the Niche Distance Shift colour scale.
+#' @param limits Optional two-element colour scale limits.
+#' @param breaks Optional colour scale breaks.
+#' @param colours Optional colour vector replacing the metric palette.
+#' @param legend_title Optional colour legend title.
+#' @param legend_position Position passed to the ggplot theme.
+#' @param show_legend If FALSE, suppress the colour legend.
+#' @param symmetric If TRUE, use limits symmetric around `midpoint`.
+#' @param extent Optional `c(xmin, xmax, ymin, ymax)` plotting extent.
+#' @param degree_labels Use hemisphere degree labels automatically for
+#'   longitude-latitude rasters, always, or never.
 #'
 #' @return A ggplot object.
 #' @export
@@ -207,13 +217,31 @@ plot_climniche_map <- function(x,
                                occupied_only = FALSE,
                                occupied_threshold = NULL,
                                title = NULL,
-                               midpoint = 0) {
+                               midpoint = 0,
+                               limits = NULL,
+                               breaks = NULL,
+                               colours = NULL,
+                               legend_title = NULL,
+                               legend_position = "right",
+                               show_legend = TRUE,
+                               symmetric = NULL,
+                               extent = NULL,
+                               degree_labels = c("auto", "none", "hemisphere")) {
   metric <- match.arg(metric)
   .plot_climniche_map(x = x, metric = metric, occupied = occupied,
                       occupied_only = occupied_only,
                       occupied_threshold = occupied_threshold,
                       title = title,
-                      midpoint = midpoint)
+                      midpoint = midpoint,
+                      limits = limits,
+                      breaks = breaks,
+                      colours = colours,
+                      legend_title = legend_title,
+                      legend_position = legend_position,
+                      show_legend = show_legend,
+                      symmetric = symmetric,
+                      extent = extent,
+                      degree_labels = degree_labels)
 }
 
 #' Plot climniche classes
@@ -226,16 +254,39 @@ plot_climniche_map <- function(x,
 #'   continuous values. Values above the threshold keep their original value
 #'   when used as an overlay or mask.
 #' @param title Optional plot title. Use `FALSE` to suppress it.
+#' @param class_display Show only observed classes or retain all possible
+#'   classes in the legend.
+#' @param class_colours Optional named vector replacing class colours.
+#' @param class_labels Optional named vector replacing class labels.
+#' @param legend_position Position passed to the ggplot theme.
+#' @param show_legend If FALSE, suppress the class legend.
+#' @param extent Optional `c(xmin, xmax, ymin, ymax)` plotting extent.
+#' @param degree_labels Use hemisphere degree labels automatically for
+#'   longitude-latitude rasters, always, or never.
 #'
 #' @return A ggplot object.
 #' @export
 plot_climniche_classes <- function(x, occupied = NULL, occupied_only = FALSE,
                                    occupied_threshold = NULL,
-                                   title = NULL) {
+                                   title = NULL,
+                                   class_display = c("observed", "all"),
+                                   class_colours = NULL,
+                                   class_labels = NULL,
+                                   legend_position = "right",
+                                   show_legend = TRUE,
+                                   extent = NULL,
+                                   degree_labels = c("auto", "none", "hemisphere")) {
   .plot_climniche_classes(x = x, occupied = occupied,
                           occupied_only = occupied_only,
                           occupied_threshold = occupied_threshold,
-                          title = title)
+                          title = title,
+                          class_display = class_display,
+                          class_colours = class_colours,
+                          class_labels = class_labels,
+                          legend_position = legend_position,
+                          show_legend = show_legend,
+                          extent = extent,
+                          degree_labels = degree_labels)
 }
 
 #' Plot the climniche exposure plane

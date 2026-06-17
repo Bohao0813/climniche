@@ -17,9 +17,16 @@
   summary figures used in the vignette.
 * Refreshed the Mediterranean anchovy example with prepared Bio-ORACLE v3
   marine climate rasters and continuous suitability weights.
-* Updated the Mediterranean anchovy summary figure so the exposure plane and
-  class proportion panel show four observed derived exposure classes.
-* Removed the exposure-plane subtitle and adjusted the panel axis layout.
+* Reworked the summary figure to use weighted exposure-plane bins, weighted
+  quantity distributions, normalised variable contribution shares and all
+  five possible hierarchical exposure classes, including zero proportions.
+* Restored the package default classification settings in the anchovy example;
+  example thresholds are no longer adjusted to produce a chosen number of
+  classes.
+* Added `plot_climniche_maps()` and extended map controls for colour limits,
+  palettes, legends, plotting extent and longitude-latitude labels.
+* Revised the Mediterranean maps to use a dissolved sea boundary, a distinct
+  land mask, aligned geographic axes and horizontal legends.
 * Changed the package license to MIT.
 
 # climniche 0.1.1

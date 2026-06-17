@@ -90,7 +90,7 @@
           "cell_weight", "x_width", "y_height")]
 }
 
-.showcase_metric_distribution <- function(tab) {
+.showcase_metric_distribution <- function(tab, weights) {
   metrics <- c(
     climate_change_amount = "Climatic\nDisplacement",
     niche_distance_change = "Niche Distance\nShift",
@@ -101,12 +101,75 @@
     data.frame(
       metric = unname(metrics[nm]),
       value = tab[[nm]],
+      weight = weights,
       stringsAsFactors = FALSE
     )
   }))
-  out <- out[is.finite(out$value), , drop = FALSE]
+  out <- out[is.finite(out$value) & is.finite(out$weight) & out$weight > 0,
+             , drop = FALSE]
   out$metric <- factor(out$metric, levels = unname(metrics))
   out
+}
+
+.showcase_metric_histograms <- function(metric_data, bins = 30L) {
+  bins <- max(10L, as.integer(bins)[1])
+  metric_levels <- levels(metric_data$metric)
+  histograms <- list()
+  zero_mass <- data.frame(
+    metric = factor(character(), levels = metric_levels),
+    proportion = numeric(),
+    label = character()
+  )
+
+  for (metric_name in metric_levels) {
+    dat <- metric_data[metric_data$metric == metric_name, , drop = FALSE]
+    total_weight <- sum(dat$weight)
+    if (!nrow(dat) || total_weight <= 0) {
+      next
+    }
+    is_boundary <- identical(metric_name, "Niche Boundary\nExceedance")
+    zero <- if (is_boundary) dat$value <= sqrt(.Machine$double.eps) else FALSE
+    if (is_boundary) {
+      proportion <- sum(dat$weight[zero]) / total_weight
+      zero_mass <- rbind(
+        zero_mass,
+        data.frame(
+          metric = factor(metric_name, levels = metric_levels),
+          proportion = proportion,
+          label = paste0("Zero: ", round(100 * proportion), "%")
+        )
+      )
+      dat <- dat[!zero, , drop = FALSE]
+    }
+    if (!nrow(dat)) {
+      next
+    }
+    breaks <- .showcase_breaks(dat$value, bins)
+    bin <- findInterval(dat$value, breaks, all.inside = TRUE)
+    weighted_count <- tapply(dat$weight, bin, sum)
+    ids <- as.integer(names(weighted_count))
+    histograms[[length(histograms) + 1L]] <- data.frame(
+      metric = factor(metric_name, levels = metric_levels),
+      x = (breaks[ids] + breaks[ids + 1L]) / 2,
+      width = diff(breaks)[ids],
+      proportion = as.numeric(weighted_count) / total_weight,
+      stringsAsFactors = FALSE
+    )
+  }
+
+  histogram_data <- if (length(histograms)) {
+    do.call(rbind, histograms)
+  } else {
+    data.frame(
+      metric = factor(character(), levels = metric_levels),
+      x = numeric(), width = numeric(), proportion = numeric()
+    )
+  }
+
+  list(
+    histograms = histogram_data,
+    zero_mass = zero_mass
+  )
 }
 
 #' Build data for the climniche summary figure
@@ -124,7 +187,7 @@
 #' @export
 climniche_showcase_data <- function(x, scope = c("current", "all"),
                                     max_points = 6000L, seed = 1L,
-                                    plane_bins = 45L,
+                                    plane_bins = 35L,
                                     boundary_probs = seq(0.50, 0.99, 0.01),
                                     top_variables = 6L) {
   if (!inherits(x, "climniche_fit")) {
@@ -147,13 +210,14 @@ climniche_showcase_data <- function(x, scope = c("current", "all"),
   class_counts$weight <- as.numeric(class_weight[as.character(class_counts$class)])
   class_counts$weight[is.na(class_counts$weight)] <- 0
   class_counts$proportion <- class_counts$weight / sum(tab_weight)
-  class_counts <- class_counts[class_counts$count > 0, , drop = FALSE]
   class_counts$class <- factor(class_counts$class,
                                levels = rev(as.character(class_counts$class)))
   class_counts$label <- ifelse(
-    class_counts$proportion > 0 & class_counts$proportion < 0.01,
+    class_counts$proportion == 0,
+    "0%",
+    ifelse(class_counts$proportion < 0.01,
     "<1%",
-    paste0(round(100 * class_counts$proportion), "%")
+    paste0(round(100 * class_counts$proportion), "%"))
   )
 
   idx <- if (scope == "current") x$occupied else seq_len(nrow(x$current))
@@ -163,18 +227,28 @@ climniche_showcase_data <- function(x, scope = c("current", "all"),
   } else {
     rep(1, length(idx))
   }
-  vals <- .weighted_col_means(x$variable_contribution[idx, , drop = FALSE],
-                              weights)
+  contribution <- x$variable_contribution[idx, , drop = FALSE]
+  vals <- .weighted_col_means(contribution, weights)
+  absolute_contribution <- abs(contribution)
+  contribution_total <- rowSums(absolute_contribution)
+  contribution_share <- absolute_contribution
+  positive_total <- contribution_total > 0
+  contribution_share[positive_total, ] <-
+    contribution_share[positive_total, , drop = FALSE] /
+    contribution_total[positive_total]
+  contribution_share[!positive_total, ] <- 0
+  mean_absolute_share <- .weighted_col_means(contribution_share, weights)
   variables <- data.frame(
     variable = names(vals),
     mean_contribution = as.numeric(vals),
     abs_mean_contribution = abs(as.numeric(vals)),
+    mean_absolute_share = as.numeric(mean_absolute_share),
     direction = ifelse(vals >= 0,
                        "positive niche potential contribution",
                        "negative niche potential contribution"),
     stringsAsFactors = FALSE
   )
-  variables <- variables[order(variables$abs_mean_contribution,
+  variables <- variables[order(variables$mean_absolute_share,
                                decreasing = TRUE), , drop = FALSE]
   variables <- utils::head(variables, top_variables)
   variables$variable <- factor(variables$variable,
@@ -203,6 +277,9 @@ climniche_showcase_data <- function(x, scope = c("current", "all"),
     )
   }))
 
+  metric_data <- .showcase_metric_distribution(tab, tab_weight)
+  metric_histograms <- .showcase_metric_histograms(metric_data)
+
   out <- list(
     plane = plane,
     plane_bins = .dominant_exposure_bins(tab, bins = plane_bins,
@@ -210,7 +287,9 @@ climniche_showcase_data <- function(x, scope = c("current", "all"),
     classes = class_counts,
     variables = variables,
     boundary = boundary,
-    metrics = .showcase_metric_distribution(tab),
+    metrics = metric_data,
+    metric_histograms = metric_histograms$histograms,
+    metric_zero_mass = metric_histograms$zero_mass,
     settings = data.frame(
       scope = scope,
       n_cells = nrow(tab),
@@ -243,7 +322,7 @@ climniche_showcase_data <- function(x, scope = c("current", "all"),
 #' @export
 plot_climniche_showcase <- function(x, scope = c("current", "all"),
                                     max_points = 6000L, seed = 1L,
-                                    plane_bins = 45L,
+                                    plane_bins = 35L,
                                     boundary_probs = seq(0.50, 0.99, 0.01),
                                     top_variables = 6L,
                                     variable_labels = NULL,
@@ -271,46 +350,44 @@ plot_climniche_showcase <- function(x, scope = c("current", "all"),
 
   class_cols <- .class_colours()
   class_labs <- c(
-    "Limited niche relative change" = "Limited niche\nrelative change",
-    "Closer to current niche" = "Closer to\ncurrent niche",
-    "Farther from current niche" = "Farther from\ncurrent niche",
-    "Outside current niche boundary" = "Outside current\nniche boundary",
+    "Limited niche relative change" = "Limited niche relative change",
+    "Closer to current niche" = "Closer to niche centre",
+    "Farther from current niche" = "Farther from niche centre",
+    "Outside current niche boundary" = "Beyond current niche boundary",
     "Climatic Reconfiguration with limited Niche Distance Shift" =
-      "Climatic Reconfiguration\nwith limited Niche Distance Shift"
+      "Reconfiguration with limited distance shift"
   )
   tile_width <- if (nrow(x$plane_bins)) x$plane_bins$x_width[1] else 1
   tile_height <- if (nrow(x$plane_bins)) x$plane_bins$y_height[1] else 1
   p_plane <- ggplot2::ggplot(
     x$plane_bins,
-    ggplot2::aes(x = x_mid, y = y_mid, fill = class,
-                 alpha = cell_weight)
+    ggplot2::aes(x = x_mid, y = y_mid, fill = total_weight)
   ) +
     ggplot2::geom_hline(yintercept = 0, linewidth = 0.25,
                         linetype = 2, colour = "grey45") +
     ggplot2::geom_tile(width = tile_width, height = tile_height,
                        colour = NA) +
-    ggplot2::scale_fill_manual(
-      values = class_cols,
-      labels = class_labs,
-      drop = TRUE,
-      guide = ggplot2::guide_legend(nrow = 2, byrow = TRUE)
+    ggplot2::scale_fill_gradientn(
+      colours = c("#f7fbfa", "#b7d7d1", "#4f8f86", "#1f5f58"),
+      trans = "sqrt",
+      name = "Weighted reference\nsupport"
     ) +
-    ggplot2::scale_alpha(range = c(0.25, 0.95), guide = "none") +
     ggplot2::labs(
-      title = "(a) Binned exposure plane",
+      title = "Climatic Displacement plane",
       x = "Climatic Displacement",
-      y = "Niche Distance Shift",
-      fill = "Dominant exposure class"
+      y = "Niche Distance Shift"
     ) +
     .climniche_theme(base_size = 8.2) +
     ggplot2::theme(
-      legend.position = "none",
-      axis.title.y = ggplot2::element_text(
-        colour = "black",
-        size = 7.7,
-        margin = ggplot2::margin(r = 5)
-      ),
-      plot.margin = ggplot2::margin(4, 5, 4, 7)
+      legend.position = "right",
+      legend.direction = "vertical"
+    ) +
+    ggplot2::guides(
+      fill = ggplot2::guide_colourbar(
+        title.position = "top",
+        barwidth = grid::unit(2.8, "mm"),
+        barheight = grid::unit(23, "mm")
+      )
     )
 
   p_classes <- ggplot2::ggplot(
@@ -328,47 +405,95 @@ plot_climniche_showcase <- function(x, scope = c("current", "all"),
     ggplot2::scale_fill_manual(values = class_cols, drop = TRUE) +
     ggplot2::scale_y_discrete(labels = class_labs) +
     ggplot2::labs(
-      title = "(b) Derived exposure classes",
-      x = "Proportion of analysed cells",
+      title = "Hierarchical exposure classes",
+      x = if (identical(x$settings$scope[1], "current")) {
+        "Suitability weighted proportion\nof reference cells"
+      } else {
+        "Proportion of analysed cells"
+      },
       y = NULL
     ) +
     .climniche_theme(base_size = 8.2) +
     ggplot2::theme(legend.position = "none")
 
+  contribution_direction <- x$variables$mean_contribution >= 0
+  mixed_direction <- length(unique(contribution_direction)) > 1L
   p_vars <- ggplot2::ggplot(
     x$variables,
-    ggplot2::aes(x = mean_contribution, y = variable,
-                 fill = mean_contribution > 0)
-  ) +
-    ggplot2::geom_col(width = 0.66, colour = "grey25", linewidth = 0.15) +
-    ggplot2::geom_vline(xintercept = 0, linewidth = 0.25,
-                        colour = "grey45") +
-    ggplot2::scale_fill_manual(
-      values = c("TRUE" = "#c65d57", "FALSE" = "#4c78a8"),
-      labels = c("TRUE" = "positive", "FALSE" = "negative")
+    ggplot2::aes(x = mean_absolute_share, y = variable)
+  )
+  if (mixed_direction) {
+    p_vars <- p_vars +
+      ggplot2::geom_col(
+        ggplot2::aes(fill = mean_contribution > 0),
+        width = 0.66, colour = "grey25", linewidth = 0.15
+      ) +
+      ggplot2::scale_fill_manual(
+        values = c("TRUE" = "#c65d57", "FALSE" = "#4c78a8"),
+        labels = c("TRUE" = "Positive", "FALSE" = "Negative")
+      )
+  } else {
+    p_vars <- p_vars + ggplot2::geom_col(
+      width = 0.66, fill = "#6f9fbc",
+      colour = "grey25", linewidth = 0.15
+    )
+  }
+  direction_subtitle <- if (mixed_direction) {
+    "Colour indicates the direction of mean niche potential change"
+  } else {
+    NULL
+  }
+  p_vars <- p_vars +
+    ggplot2::scale_x_continuous(
+      labels = function(z) paste0(round(100 * z), "%")
     ) +
     ggplot2::labs(
-      title = "(c) Variable contributions",
-      x = "Mean contribution to niche potential change",
-      y = NULL,
-      fill = NULL
+      title = "Climatic variable contributions",
+      subtitle = direction_subtitle,
+      x = "Mean absolute contribution share",
+      y = NULL
     ) +
     .climniche_theme(base_size = 8.2) +
-    ggplot2::theme(legend.position = "none")
+    ggplot2::theme(
+      legend.position = if (mixed_direction) "bottom" else "none",
+      legend.direction = "horizontal",
+      legend.key.width = grid::unit(3.6, "mm"),
+      legend.key.height = grid::unit(3.0, "mm")
+    )
+  if (mixed_direction) {
+    p_vars <- p_vars + ggplot2::labs(fill = "Mean niche potential change")
+  }
 
   p_metrics <- ggplot2::ggplot(
-    x$metrics,
-    ggplot2::aes(x = value)
+    x$metric_histograms,
+    ggplot2::aes(x = x, y = proportion)
   ) +
-    ggplot2::geom_histogram(bins = 32, fill = "#6f9fbc",
-                            colour = "white", linewidth = 0.10) +
-    ggplot2::geom_vline(xintercept = 0, linewidth = 0.22,
-                        linetype = 2, colour = "grey45") +
-    ggplot2::facet_wrap(~metric, scales = "free", nrow = 2) +
+    ggplot2::geom_col(ggplot2::aes(width = width),
+                      fill = "#6f9fbc", colour = "white",
+                      linewidth = 0.10) +
+    ggplot2::geom_vline(
+      data = data.frame(
+        metric = factor("Niche Distance\nShift",
+                        levels = levels(x$metric_histograms$metric)),
+        xintercept = 0
+      ),
+      ggplot2::aes(xintercept = xintercept),
+      linewidth = 0.22, linetype = 2, colour = "grey45"
+    ) +
+    ggplot2::geom_text(
+      data = x$metric_zero_mass,
+      ggplot2::aes(x = -Inf, y = Inf, label = label),
+      inherit.aes = FALSE, hjust = -0.05, vjust = 1.2,
+      size = 2.1, colour = "black"
+    ) +
+    ggplot2::facet_wrap(~metric, scales = "free_x", nrow = 2) +
+    ggplot2::scale_y_continuous(
+      labels = function(z) paste0(round(100 * z), "%")
+    ) +
     ggplot2::labs(
-      title = "(d) Reported quantity distributions",
+      title = "Reported quantity distributions",
       x = NULL,
-      y = "Number of cells"
+      y = "Weighted percentage"
     ) +
     .climniche_theme(base_size = 8.2) +
     ggplot2::theme(legend.position = "none")
@@ -380,10 +505,23 @@ plot_climniche_showcase <- function(x, scope = c("current", "all"),
     metrics = p_metrics
   )
   if (requireNamespace("patchwork", quietly = TRUE)) {
-    out <- (p_plane | p_classes) / (p_vars | p_metrics)
-    if (!is.null(title)) {
-      out <- out + patchwork::plot_annotation(title = title)
+    p_vars_layout <- p_vars
+    if ("free" %in% getNamespaceExports("patchwork")) {
+      free_args <- names(formals(patchwork::free))
+      p_vars_layout <- if (all(c("type", "side") %in% free_args)) {
+        patchwork::free(p_vars, type = "space", side = "l")
+      } else {
+        patchwork::free(p_vars)
+      }
     }
+    out <- (p_plane | p_classes) / (p_vars_layout | p_metrics) +
+      patchwork::plot_layout(widths = c(1, 1.18))
+    out <- out + patchwork::plot_annotation(
+      title = title,
+      tag_levels = "a",
+      tag_prefix = "(",
+      tag_suffix = ")"
+    )
     return(out)
   }
   plots

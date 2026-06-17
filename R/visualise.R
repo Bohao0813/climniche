@@ -76,6 +76,78 @@
   stop("x must be a RasterLayer or terra SpatRaster.", call. = FALSE)
 }
 
+.spatial_is_lonlat <- function(x) {
+  if (.is_raster(x)) {
+    .need_raster()
+    return(isTRUE(raster::isLonLat(x)))
+  }
+  if (.is_spatraster(x)) {
+    .need_terra()
+    return(isTRUE(terra::is.lonlat(x)))
+  }
+  FALSE
+}
+
+.degree_label <- function(x, positive, negative) {
+  value <- abs(x)
+  label <- ifelse(
+    abs(value - round(value)) < 1e-7,
+    as.character(round(value)),
+    formatC(value, format = "fg", digits = 4)
+  )
+  hemisphere <- ifelse(x < 0, negative, ifelse(x > 0, positive, ""))
+  paste0(label, "\u00b0", hemisphere)
+}
+
+.map_axis_spec <- function(r, degree_labels = c("auto", "none", "hemisphere")) {
+  degree_labels <- match.arg(degree_labels)
+  use_degrees <- identical(degree_labels, "hemisphere") ||
+    (identical(degree_labels, "auto") && .spatial_is_lonlat(r))
+  if (!use_degrees) {
+    return(list(x = ggplot2::waiver(), y = ggplot2::waiver(),
+                xlab = NULL, ylab = NULL))
+  }
+  list(
+    x = function(z) .degree_label(z, "E", "W"),
+    y = function(z) .degree_label(z, "N", "S"),
+    xlab = "Longitude",
+    ylab = "Latitude"
+  )
+}
+
+.map_extent <- function(dat, extent = NULL) {
+  if (is.null(extent)) {
+    return(.crop_df(dat))
+  }
+  extent <- as.numeric(extent)
+  if (length(extent) != 4L || any(!is.finite(extent)) ||
+      extent[1] >= extent[2] || extent[3] >= extent[4]) {
+    stop("extent must be c(xmin, xmax, ymin, ymax).", call. = FALSE)
+  }
+  list(xlim = extent[1:2], ylim = extent[3:4])
+}
+
+.metric_map_colours <- function(metric) {
+  switch(
+    .metric_key(metric),
+    niche_distance_change = c("#386fa4", "#ffffff", "#c7514a"),
+    change_alignment = c("#386fa4", "#ffffff", "#c7514a"),
+    niche_boundary_exceedance = c("#ffffff", "#f3dfb8", "#d9942f", "#8a3f20"),
+    climate_reconfiguration = c("#f7fcf5", "#c7e9c0", "#74c476", "#238b45"),
+    c("#f7fbff", "#d6e6f2", "#91b9d5", "#27658f")
+  )
+}
+
+.squish_values <- function(x, range, only.finite = TRUE) {
+  if (only.finite) {
+    finite <- is.finite(x)
+    x[finite] <- pmax(range[1], pmin(range[2], x[finite]))
+  } else {
+    x <- pmax(range[1], pmin(range[2], x))
+  }
+  x
+}
+
 .mask_to_occupied <- function(x, occupied, occupied_threshold = NULL) {
   if (.is_raster(x)) {
     .need_raster()
@@ -227,6 +299,17 @@
 #'   when used as an overlay or mask.
 #' @param title Optional plot title. Use `FALSE` to suppress it.
 #' @param midpoint Midpoint for the Niche Distance Shift colour scale.
+#' @param limits Optional two-element colour scale limits.
+#' @param breaks Optional colour scale breaks.
+#' @param colours Optional colour vector replacing the metric palette.
+#' @param legend_title Optional colour legend title.
+#' @param legend_position Position passed to the ggplot theme.
+#' @param show_legend If FALSE, suppress the colour legend.
+#' @param symmetric If TRUE, use limits symmetric around `midpoint`. The
+#'   default applies this to Niche Distance Shift and change alignment.
+#' @param extent Optional `c(xmin, xmax, ymin, ymax)` plotting extent.
+#' @param degree_labels Use hemisphere degree labels automatically for
+#'   longitude-latitude rasters, always, or never.
 #'
 #' @return A ggplot object.
 #' @noRd
@@ -242,7 +325,16 @@
                                 occupied_only = FALSE,
                                 occupied_threshold = NULL,
                                 title = NULL,
-                                midpoint = 0) {
+                                midpoint = 0,
+                                limits = NULL,
+                                breaks = NULL,
+                                colours = NULL,
+                                legend_title = NULL,
+                                legend_position = "right",
+                                show_legend = TRUE,
+                                symmetric = NULL,
+                                extent = NULL,
+                                degree_labels = c("auto", "none", "hemisphere")) {
   .need_ggplot2()
   metric <- match.arg(metric)
   metric_key <- .metric_key(metric)
@@ -273,41 +365,57 @@
 
   dat <- .spatial_df(r, value = "value")
   occ <- .occupied_df(occupied, occupied_threshold = occupied_threshold)
-  lim <- .crop_df(dat)
+  lim <- .map_extent(dat, extent = extent)
   ttl <- .plot_title(title, .metric_label(metric))
   cell_size <- .spatial_res(r)
+  axis_spec <- .map_axis_spec(r, degree_labels = degree_labels)
+  if (is.null(legend_title)) {
+    legend_title <- .metric_label(metric)
+  }
+  if (is.null(colours)) {
+    colours <- .metric_map_colours(metric_key)
+  }
+  if (is.null(symmetric)) {
+    symmetric <- metric_key %in% c("niche_distance_change", "change_alignment")
+  }
+  if (is.null(limits)) {
+    if (identical(metric_key, "change_alignment")) {
+      limits <- c(-1, 1)
+    } else if (isTRUE(symmetric)) {
+      radius <- max(abs(dat$value - midpoint), na.rm = TRUE)
+      if (!is.finite(radius) || radius <= 0) radius <- 1
+      limits <- midpoint + c(-radius, radius)
+    } else if (metric_key %in% c("climate_change_amount",
+                                 "climate_reconfiguration",
+                                 "niche_boundary_exceedance")) {
+      upper <- max(dat$value, na.rm = TRUE)
+      if (!is.finite(upper) || upper <= 0) upper <- 1
+      limits <- c(0, upper)
+    }
+  }
 
   p <- ggplot2::ggplot(dat, ggplot2::aes(x = x, y = y, fill = value)) +
     ggplot2::geom_tile(width = cell_size[1], height = cell_size[2]) +
     ggplot2::coord_equal(xlim = lim$xlim, ylim = lim$ylim, expand = FALSE) +
-    ggplot2::labs(x = NULL, y = NULL, fill = .metric_label(metric),
+    ggplot2::scale_x_continuous(labels = axis_spec$x) +
+    ggplot2::scale_y_continuous(labels = axis_spec$y) +
+    ggplot2::labs(x = axis_spec$xlab, y = axis_spec$ylab, fill = legend_title,
                   title = ttl) +
-    .map_theme()
+    .map_theme() +
+    ggplot2::theme(
+      legend.position = if (isTRUE(show_legend)) legend_position else "none"
+    )
 
-  if (identical(metric_key, "niche_distance_change")) {
+  if (metric_key %in% c("niche_distance_change", "change_alignment")) {
     p <- p + ggplot2::scale_fill_gradient2(
-      low = "#4c78a8", mid = "white", high = "#c65d57",
-      midpoint = midpoint, na.value = NA
-    )
-  } else if (identical(metric_key, "change_alignment")) {
-    p <- p + ggplot2::scale_fill_gradient2(
-      low = "#4c78a8", mid = "white", high = "#c65d57",
-      midpoint = 0, limits = c(-1, 1), na.value = NA
-    )
-  } else if (identical(metric_key, "niche_boundary_exceedance")) {
-    p <- p + ggplot2::scale_fill_gradientn(
-      colours = c("white", "#f2d7a0", "#d99b45", "#7a3b20"),
-      na.value = NA
-    )
-  } else if (identical(metric_key, "climate_reconfiguration")) {
-    p <- p + ggplot2::scale_fill_gradientn(
-      colours = c("#f7fcf5", "#b7e0c2", "#5f9e8f", "#1b5e50"),
-      na.value = NA
+      low = colours[1], mid = colours[2], high = colours[3],
+      midpoint = midpoint, limits = limits, breaks = breaks, na.value = NA,
+      oob = .squish_values
     )
   } else {
     p <- p + ggplot2::scale_fill_gradientn(
-      colours = c("#f7fbff", "#aac7df", "#5b91bd", "#1f4f78"),
-      na.value = NA
+      colours = colours, limits = limits, breaks = breaks, na.value = NA,
+      oob = .squish_values
     )
   }
 
@@ -477,13 +585,30 @@
 #'   continuous values. Values above the threshold keep their original value
 #'   when used as an overlay or mask.
 #' @param title Optional plot title. Use `FALSE` to suppress it.
+#' @param class_display Show only observed classes or retain all possible
+#'   classes in the legend.
+#' @param class_colours Optional named vector replacing class colours.
+#' @param class_labels Optional named vector replacing class labels.
+#' @param legend_position Position passed to the ggplot theme.
+#' @param show_legend If FALSE, suppress the class legend.
+#' @param extent Optional `c(xmin, xmax, ymin, ymax)` plotting extent.
+#' @param degree_labels Use hemisphere degree labels automatically for
+#'   longitude-latitude rasters, always, or never.
 #'
 #' @return A ggplot object.
 #' @noRd
 .plot_climniche_classes <- function(x, occupied = NULL, occupied_only = FALSE,
                                     occupied_threshold = NULL,
-                                    title = NULL) {
+                                    title = NULL,
+                                    class_display = c("observed", "all"),
+                                    class_colours = NULL,
+                                    class_labels = NULL,
+                                    legend_position = "right",
+                                    show_legend = TRUE,
+                                    extent = NULL,
+                                    degree_labels = c("auto", "none", "hemisphere")) {
   .need_ggplot2()
+  class_display <- match.arg(class_display)
   if (!inherits(x, "climniche_fit") || is.null(x$rasters$classification)) {
     stop("x must be a climniche object with a classification raster.",
          call. = FALSE)
@@ -501,21 +626,31 @@
   lookup <- x$class_lookup
   dat$class <- .normalise_class(lookup$class[match(dat$class_id, lookup$id)])
   occ <- .occupied_df(occupied, occupied_threshold = occupied_threshold)
-  lim <- .crop_df(dat)
+  lim <- .map_extent(dat, extent = extent)
   cell_size <- .spatial_res(r)
+  axis_spec <- .map_axis_spec(r, degree_labels = degree_labels)
+  if (is.null(class_colours)) class_colours <- .class_colours()
+  if (is.null(class_labels)) class_labels <- .class_labels()
 
   p <- ggplot2::ggplot(dat, ggplot2::aes(x = x, y = y, fill = class)) +
     ggplot2::geom_tile(width = cell_size[1], height = cell_size[2]) +
     ggplot2::coord_equal(xlim = lim$xlim, ylim = lim$ylim, expand = FALSE) +
+    ggplot2::scale_x_continuous(labels = axis_spec$x) +
+    ggplot2::scale_y_continuous(labels = axis_spec$y) +
     ggplot2::scale_fill_manual(
-      values = .class_colours(),
-      labels = .class_labels(),
+      values = class_colours,
+      labels = class_labels,
+      drop = identical(class_display, "observed"),
       na.value = NA
     ) +
-    ggplot2::labs(x = NULL, y = NULL, fill = "Derived exposure class",
+    ggplot2::labs(x = axis_spec$xlab, y = axis_spec$ylab,
+                  fill = "Derived exposure class",
                   title = .plot_title(title, "Derived exposure classes")) +
     .map_theme() +
-    ggplot2::theme(legend.key.height = grid::unit(4.6, "mm"))
+    ggplot2::theme(
+      legend.key.height = grid::unit(4.6, "mm"),
+      legend.position = if (isTRUE(show_legend)) legend_position else "none"
+    )
 
   if (!occupied_only && !is.null(occ) && nrow(occ) > 0) {
     p <- p + ggplot2::geom_point(
@@ -528,6 +663,47 @@
     )
   }
   p
+}
+
+#' Plot the four reported climniche quantities as maps
+#'
+#' @param x A fitted `climniche_fit` object with raster outputs.
+#' @param metrics Character vector of reported quantity field names.
+#' @param ncol Number of map columns when patchwork is available.
+#' @param ... Additional arguments passed to `plot_climniche_map()`.
+#'
+#' @return A patchwork object when patchwork is installed, otherwise a named
+#'   list of ggplot objects.
+#' @export
+plot_climniche_maps <- function(
+    x,
+    metrics = c("climate_change_amount", "niche_distance_change",
+                "climate_reconfiguration", "niche_boundary_exceedance"),
+    ncol = 2L,
+    ...) {
+  titles <- c(
+    climate_change_amount = "Projected climatic displacement",
+    niche_distance_change = "Shift relative to niche centre",
+    climate_reconfiguration = "Climatic reconfiguration",
+    niche_boundary_exceedance = "Exceedance beyond niche boundary"
+  )
+  metrics <- vapply(metrics, .metric_key, character(1))
+  plots <- lapply(metrics, function(metric) {
+    plot_climniche_map(
+      x,
+      metric = metric,
+      title = unname(titles[metric]),
+      ...
+    )
+  })
+  names(plots) <- metrics
+  if (!requireNamespace("patchwork", quietly = TRUE)) {
+    return(plots)
+  }
+  patchwork::wrap_plots(plots, ncol = max(1L, as.integer(ncol)[1])) +
+    patchwork::plot_annotation(
+      tag_levels = "a", tag_prefix = "(", tag_suffix = ")"
+    )
 }
 
 #' Plot mean variable contribution

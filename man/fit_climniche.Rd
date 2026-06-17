@@ -116,8 +116,8 @@ where \eqn{B_q} is the \eqn{q}-th weighted quantile of current reference cell
 distances from the realised niche centre. Positive Niche Boundary Exceedance
 is therefore an excess distance beyond this empirical radial boundary.
 Climatic Reconfiguration is derived from Climatic Displacement and Niche
-Distance Shift; it is a non-radial displacement component, not an independent
-ecological process or a measure of species composition change.
+Distance Shift; it is a non radial displacement component rather than an
+independently estimated process.
 
 All classification-related thresholds are user-settable. If a direct
 threshold argument is \code{NULL}, \code{climniche} calculates the effective threshold

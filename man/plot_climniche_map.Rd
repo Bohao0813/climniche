@@ -13,7 +13,16 @@ plot_climniche_map(
   occupied_only = FALSE,
   occupied_threshold = NULL,
   title = NULL,
-  midpoint = 0
+  midpoint = 0,
+  limits = NULL,
+  breaks = NULL,
+  colours = NULL,
+  legend_title = NULL,
+  legend_position = "right",
+  show_legend = TRUE,
+  symmetric = NULL,
+  extent = NULL,
+  degree_labels = c("auto", "none", "hemisphere")
 )
 }
 \arguments{
@@ -33,6 +42,25 @@ when used as an overlay or mask.}
 \item{title}{Optional plot title. Use \code{FALSE} to suppress it.}
 
 \item{midpoint}{Midpoint for the Niche Distance Shift colour scale.}
+
+\item{limits}{Optional two-element colour scale limits.}
+
+\item{breaks}{Optional colour scale breaks.}
+
+\item{colours}{Optional colour vector replacing the metric palette.}
+
+\item{legend_title}{Optional colour legend title.}
+
+\item{legend_position}{Position passed to the ggplot theme.}
+
+\item{show_legend}{If FALSE, suppress the colour legend.}
+
+\item{symmetric}{If TRUE, use limits symmetric around \code{midpoint}.}
+
+\item{extent}{Optional \code{c(xmin, xmax, ymin, ymax)} plotting extent.}
+
+\item{degree_labels}{Use hemisphere degree labels automatically for
+longitude-latitude rasters, always, or never.}
 }
 \value{
 A ggplot object.

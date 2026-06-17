@@ -260,8 +260,7 @@ climniche_report <- function(x, species = NULL, scope = c("current", "all"),
   counts <- table(tab$class)
   cls$count <- as.integer(counts[cls$class])
   cls$count[is.na(cls$count)] <- 0L
-  cls <- cls[cls$count > 0, , drop = FALSE]
-  cls <- cls[order(cls$proportion, decreasing = TRUE), , drop = FALSE]
+  cls$class <- factor(cls$class, levels = .class_level_names())
 
   vals <- .weighted_col_means(x$variable_contribution[idx, , drop = FALSE],
                               weights)

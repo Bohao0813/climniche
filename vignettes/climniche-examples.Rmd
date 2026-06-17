@@ -105,6 +105,8 @@ current realised niche centre. Climatic Reconfiguration is the remaining
 non-radial component, calculated from the geometric identity
 `D^2 = R^2 + C^2`. Niche Boundary Exceedance is the positive distance beyond the
 weighted empirical boundary of the current realised niche.
+All four quantities are dimensionless distances in the standardised,
+sensitivity weighted climatic space.
 
 ```{r}
 fit_settings[fit_settings$setting %in% c(
@@ -123,9 +125,10 @@ metric_summary[, c(
 )]
 ```
 
-The derived exposure classes summarise the continuous quantities. A case study
-may show fewer classes than the full set of possible classes because only
-classes observed in the fitted data are plotted and reported.
+The derived exposure classes are a secondary, hierarchical interpretation of
+the continuous quantities. They are not one class per reported quantity. The
+table retains all five possible classes, including classes with zero reference
+weight in this example.
 
 ```{r}
 class_proportions
@@ -140,8 +143,10 @@ variable_contributions
 
 ## Mediterranean maps
 
-Panels (b)-(e) show the four continuous reported quantities. Panel (f) shows the
-observed derived exposure classes for this case.
+Panel (a) shows the continuous suitability values retained as current reference
+weights. Panels (b)-(e) show the four continuous reported quantities. Panel
+(f) maps the exposure classes observed in the analysed cells. Land is shown in
+grey and is not part of the calculation.
 
 ```{r, echo = FALSE, out.width = "100%"}
 knitr::include_graphics("figures/anchovy-mediterranean-maps.png")
@@ -149,8 +154,10 @@ knitr::include_graphics("figures/anchovy-mediterranean-maps.png")
 
 ## Summary figure
 
-The summary figure combines the exposure plane, observed class proportions,
-variable contributions and distributions of the reported quantities.
+The summary figure combines the weighted Climatic Displacement plane, all five
+possible class proportions, normalised variable contribution shares and
+weighted distributions of the reported quantities. Zero values for a class
+mean that no current reference weight was assigned to that class.
 
 ```{r, echo = FALSE, out.width = "95%"}
 knitr::include_graphics("figures/anchovy-climniche-showcase.png")
@@ -195,6 +202,9 @@ plot_climniche_map(fit, metric = "niche_distance_change",
 plot_climniche_classes(fit, occupied = anchovy_suitability,
                        occupied_only = TRUE,
                        occupied_threshold = sdm_threshold)
+plot_climniche_maps(fit, occupied = anchovy_suitability,
+                    occupied_only = TRUE,
+                    occupied_threshold = sdm_threshold)
 plot_climniche_showcase(fit)
 ```
 
