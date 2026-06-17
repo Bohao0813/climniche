@@ -33,14 +33,14 @@ navbar:
       aria-label: GitHub
 home:
   title: climniche
-  description: Niche climate exposure for ecological climate change assessment.
+  description: Niche relative decomposition of projected climate exposure.
 authors:
   Bohao He:
     href: https://github.com/Bohao0813
 development:
   mode: auto
 reference:
-  - title: Fit niche climate exposure
+  - title: Fit niche relative climate exposure
     contents:
       - fit_climniche
       - fit_climniche_raster
@@ -65,7 +65,7 @@ reference:
       - plot_climniche_report
       - plot_climniche_variable_contribution
       - plot_variable_contribution
-  - title: Metrics
+  - title: Reported quantities
     contents:
       - niche_metric
       - niche_potential

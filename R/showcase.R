@@ -271,7 +271,7 @@ plot_climniche_showcase <- function(x, scope = c("current", "all"),
 
   class_cols <- .class_colours()
   class_labs <- c(
-    "Limited climate niche change" = "Limited climate\nniche change",
+    "Limited niche relative change" = "Limited niche\nrelative change",
     "Closer to current niche" = "Closer to\ncurrent niche",
     "Farther from current niche" = "Farther from\ncurrent niche",
     "Outside current niche boundary" = "Outside current\nniche boundary",
@@ -361,7 +361,7 @@ plot_climniche_showcase <- function(x, scope = c("current", "all"),
                         linetype = 2, colour = "grey45") +
     ggplot2::facet_wrap(~metric, scales = "free", nrow = 2) +
     ggplot2::labs(
-      title = "(d) Metric distributions",
+      title = "(d) Reported quantity distributions",
       x = NULL,
       y = "Number of cells"
     ) +

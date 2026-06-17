@@ -14,7 +14,7 @@ evaluated cells.}
 }
 \value{
 A data frame with one row per evaluated cell, including
-\code{occupied_weight}, the four primary metrics and the old metric aliases.
+\code{occupied_weight}, the four reported quantities and the old field aliases.
 }
 \description{
 Extract a tidy climniche table

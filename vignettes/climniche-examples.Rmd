@@ -12,12 +12,11 @@ knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.align = "center")
 ```
 
 This example uses European anchovy (*Engraulis encrasicolus*) in the
-Mediterranean Sea. The analysis asks how projected marine climate conditions
-for areas with current SDM support are displaced relative to the species'
-current realised climatic niche.
-
-The vignette uses small output tables and prebuilt figures so it can run quickly
-on CRAN. The full workflow used the same `climniche` functions shown below.
+Mediterranean Sea. It starts after data preparation: current and future
+environmental rasters have been aligned, and a continuous SDM suitability map is
+available as the current reference layer. The purpose is to show how
+`climniche` interprets projected climate change relative to the current realised
+climatic niche, not to document an SDM workflow.
 
 ```{r}
 library(climniche)
@@ -29,169 +28,171 @@ if (identical(case_path, "")) {
     case_path <- file.path("inst", "extdata", "mediterranean_anchovy")
   }
 }
-summary_tab <- read.csv(file.path(case_path, "anchovy_climniche_summary.csv"))
-class_tab <- read.csv(file.path(case_path, "anchovy_climniche_classes.csv"))
-variable_tab <- read.csv(file.path(case_path, "anchovy_climniche_top_variables.csv"))
-screen_tab <- read.csv(file.path(case_path, "anchovy_predictor_screen.csv"))
-settings_tab <- read.csv(file.path(case_path, "anchovy_climniche_settings.csv"))
-records <- read.csv(file.path(case_path, "anchovy_clean_obis_records.csv"))
+
+metric_summary <- read.csv(
+  file.path(case_path, "anchovy_climniche_metric_summary.csv")
+)
+class_proportions <- read.csv(
+  file.path(case_path, "anchovy_climniche_class_proportions.csv")
+)
+variable_contributions <- read.csv(
+  file.path(case_path, "anchovy_climniche_variable_contributions.csv")
+)
+layer_manifest <- read.csv(
+  file.path(case_path, "anchovy_biooracle_layer_manifest.csv")
+)
+sdm_settings <- read.csv(
+  file.path(case_path, "anchovy_presence_background_sdm_settings.csv")
+)
+fit_settings <- read.csv(
+  file.path(case_path, "anchovy_climniche_fit_settings.csv")
+)
+predictor_screen <- read.csv(
+  file.path(case_path, "anchovy_predictor_correlation_vif_screen.csv")
+)
 ```
 
-## Case design
+## Prepared inputs
 
-Occurrence records were downloaded from OBIS and clipped to the Mediterranean
-Sea. Environmental layers were downloaded from Bio-ORACLE v3 using the
-`biooracler` interface. The current layers describe baseline surface ocean
-conditions; the future layers describe the same variables under the selected
-future scenario and year.
+The environmental data are Bio-ORACLE v3 surface layers. Baseline time layers
+were averaged for the current rasters; future rasters use the same variables
+under SSP245 at the 2050 time coordinate.
 
 ```{r}
-settings_tab[settings_tab$setting %in% c(
-  "species",
-  "region",
-  "environmental_data_source",
-  "future_scenario",
-  "future_year"
-), ]
+unique(layer_manifest[, c(
+  "depth", "current_time", "future_scenario", "future_time"
+)])
 
-nrow(records)
-```
-
-The SDM was fitted from occurrence and background cells. Its suitability
-threshold was selected by maximising test-set TSS, rather than by imposing a
-manual suitability cut-off. The continuous suitability map was then used as
-reference weights in `fit_climniche_terra()`. The threshold only removes low
-suitability cells; values above the threshold remain continuous weights.
-
-```{r}
-settings_tab[settings_tab$setting %in% c(
-  "sdm_threshold_method",
-  "sdm_threshold",
-  "sdm_test_tss",
-  "sdm_test_sensitivity",
-  "sdm_test_specificity"
-), ]
-```
-
-Nine Bio-ORACLE variables were considered before fitting. Pairwise correlation
-and VIF screening retained a multivariate climate set for both the SDM and the
-climniche exposure calculation.
-
-```{r}
-settings_tab[settings_tab$setting %in% c(
-  "predictor_correlation_cutoff",
-  "predictor_vif_limit",
-  "minimum_retained_predictors",
-  "sdm_retained_predictor_count",
-  "exposure_retained_predictor_count"
-), ]
-
-screen_tab[screen_tab$retained, c(
-  "role", "label", "vif_after_screening"
+layer_manifest[layer_manifest$retained_for_climniche, c(
+  "label", "current_dataset", "future_dataset"
 )]
 ```
 
-The fitted object stores the effective classification settings used for this
-case. These values can be supplied directly by the user or estimated from the
-fitted metrics through the quantile arguments.
+The current reference layer is a continuous suitability raster from a
+presence-background SDM. Background cells were sampled from analysable
+Mediterranean cells outside occurrence cells; they are not confirmed absences.
+The fitted suitability values above the threshold are used as continuous
+reference weights.
 
 ```{r}
-settings_tab[settings_tab$setting %in% c(
+sdm_settings[sdm_settings$setting %in% c(
+  "presence_cell_count",
+  "background_cell_count",
+  "background_to_presence_ratio",
+  "sdm_test_auc",
+  "sdm_test_tss",
+  "sdm_threshold"
+), ]
+```
+
+Predictor screening was completed before the `climniche` fit. The table below
+records the variables retained for the niche-relative exposure calculation.
+
+```{r}
+predictor_screen[
+  predictor_screen$role == "climniche exposure calculation" &
+    predictor_screen$retained,
+  c("label", "vif_after_screening")
+]
+```
+
+## Niche-relative decomposition
+
+`climniche` reports four related quantities, not four independent ecological
+processes. Climatic Displacement is the total movement from current to future
+conditions. Niche Distance Shift is the signed radial change relative to the
+current realised niche centre. Climatic Reconfiguration is the remaining
+non-radial component, calculated from the geometric identity
+`D^2 = R^2 + C^2`. Niche Boundary Exceedance is the positive distance beyond the
+weighted empirical boundary of the current realised niche.
+
+```{r}
+fit_settings[fit_settings$setting %in% c(
   "boundary_quantile",
   "tolerance",
   "stable_climate_change",
   "stable_reconfiguration",
-  "boundary_exceedance_tolerance",
-  "conflict_ratio"
+  "boundary_exceedance_tolerance"
 ), ]
-```
 
-## Outputs
-
-The summary table reports the main quantities over current reference cells.
-Niche Distance Shift is signed, so positive and negative values distinguish
-movement away from and toward the current realised niche centre. Niche Boundary
-Exceedance is a magnitude beyond the empirical boundary, not only an inside or
-outside flag.
-
-```{r}
-summary_tab[, c(
+metric_summary[, c(
   "n", "reference_weight_sum", "boundary_quantile",
   "mean_climate_change_amount", "mean_niche_distance_change",
   "prop_niche_divergence", "prop_niche_convergence",
   "prop_niche_exceedance", "prop_climate_reconfiguration"
 )]
-
-class_tab
 ```
 
-Variable contributions summarise which predictors contribute most to the fitted
-change metric. They should be read as model-derived contributions, not as
-causal attribution.
+The derived exposure classes summarise the continuous quantities. A case study
+may show fewer classes than the full set of possible classes because only
+classes observed in the fitted data are plotted and reported.
 
 ```{r}
-variable_tab
+class_proportions
+```
+
+Variable contributions summarise fitted changes in niche potential. They are
+model-derived contributions, not causal attribution.
+
+```{r}
+variable_contributions
 ```
 
 ## Mediterranean maps
 
-The first panel shows the continuous current reference weights after applying
-the SDM threshold. The second panel shows the derived exposure classes. The
-remaining panels show the four continuous metrics used by `climniche`.
+Panels (b)-(e) show the four continuous reported quantities. Panel (f) shows the
+observed derived exposure classes for this case.
 
 ```{r, echo = FALSE, out.width = "100%"}
 knitr::include_graphics("figures/anchovy-mediterranean-maps.png")
 ```
 
-Exposure classes are derived from the continuous metrics after fitting. They
-are not one class per metric.
-
 ## Summary figure
 
-`plot_climniche_showcase()` combines the binned exposure plane, exposure class
-proportions, variable contributions and metric distributions.
+The summary figure combines the exposure plane, observed class proportions,
+variable contributions and distributions of the reported quantities.
 
 ```{r, echo = FALSE, out.width = "95%"}
 knitr::include_graphics("figures/anchovy-climniche-showcase.png")
 ```
 
-The binned plane separates Climatic Displacement from Niche Distance Shift.
-Cells with similar projected climate displacement can differ in whether future
-conditions move toward or away from the realised niche centre, and only a
-subset exceeds the empirical niche boundary.
+The exposure plane separates total displacement from radial niche shift. Cells
+with similar displacement can differ in whether future conditions move toward
+or away from the realised niche centre, and only a subset exceeds the empirical
+niche boundary.
 
-## Reproducing the workflow
+## Reproducing the climniche step
 
 The raster workflow needs aligned current and future environmental layers.
-`occupied` can be a binary SDM map or a continuous SDM suitability map. With
-a continuous suitability map, `occupied_threshold` removes low suitability
-cells but does not convert the remaining values to 1.
+`occupied` can be a binary map or a continuous suitability map. With a
+continuous suitability map, `occupied_threshold` removes low suitability cells
+but does not convert the remaining values to one.
 
 ```r
 sdm_threshold <- as.numeric(
-  settings_tab$value[settings_tab$setting == "sdm_threshold"]
+  sdm_settings$value[sdm_settings$setting == "sdm_threshold"]
 )
-selected_predictors <- screen_tab$variable[
-  screen_tab$role == "climniche exposure calculation" & screen_tab$retained
+selected_predictors <- predictor_screen$variable[
+  predictor_screen$role == "climniche exposure calculation" &
+    predictor_screen$retained
 ]
 
 fit <- fit_climniche_terra(
   current = current_layers[[selected_predictors]],
   future = future_layers[[selected_predictors]],
-  occupied = anchovy_sdm_suitability,
+  occupied = anchovy_suitability,
   occupied_threshold = sdm_threshold,
-  domain = mediterranean_domain,
-  domain_threshold = sdm_threshold,
+  domain = mediterranean_mask,
   sensitivity = predictor_sensitivity,
   boundary = 0.95
 )
 
 climniche_summary(fit)
 plot_climniche_map(fit, metric = "niche_distance_change",
-                   occupied = anchovy_sdm_suitability,
+                   occupied = anchovy_suitability,
                    occupied_only = TRUE,
                    occupied_threshold = sdm_threshold)
-plot_climniche_classes(fit, occupied = anchovy_sdm_suitability,
+plot_climniche_classes(fit, occupied = anchovy_suitability,
                        occupied_only = TRUE,
                        occupied_threshold = sdm_threshold)
 plot_climniche_showcase(fit)
@@ -204,7 +205,7 @@ extracted.
 fit <- fit_climniche(
   current = current_values[, selected_predictors],
   future = future_values[, selected_predictors],
-  occupied = sdm_suitability,
+  occupied = suitability_values,
   occupied_threshold = sdm_threshold,
   sensitivity = predictor_sensitivity,
   boundary = 0.95

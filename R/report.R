@@ -5,7 +5,7 @@
 #'   evaluated cells.
 #'
 #' @return A data frame with one row per evaluated cell, including
-#'   `occupied_weight`, the four primary metrics and the old metric aliases.
+#'   `occupied_weight`, the four reported quantities and the old field aliases.
 #' @export
 climniche_table <- function(x, scope = c("current", "all")) {
   if (!inherits(x, "climniche_fit")) {
@@ -118,8 +118,8 @@ climniche_table <- function(x, scope = c("current", "all")) {
         "niche centre."
       ),
       paste(
-        "Non radial component of climatic displacement not captured by",
-        "change in distance to the niche centre."
+        "Non-radial component of climatic displacement derived from",
+        "Climatic Displacement and Niche Distance Shift."
       ),
       paste(
         "Positive excess of future niche distance beyond the empirical",
@@ -167,7 +167,7 @@ climniche_table <- function(x, scope = c("current", "all")) {
 #' @param scope `"current"` for current reference cells or `"all"` for all
 #'   evaluated cells. Current-scope summaries use reference weights.
 #'
-#' @return A one-row data frame with metric summaries and the effective
+#' @return A one-row data frame with reported quantity summaries and the effective
 #'   classification settings.
 #' @export
 climniche_summary <- function(x, scope = c("current", "all")) {
@@ -212,7 +212,7 @@ climniche_summary <- function(x, scope = c("current", "all")) {
     prop_reconfiguration = get_prop(
       "Climatic Reconfiguration with limited Niche Distance Shift"
     ),
-    prop_stable = get_prop("Limited climate niche change"),
+    prop_stable = get_prop("Limited niche relative change"),
     prop_mixed_variable_response = .weighted_prop(
       tab$mixed_variable_response, weights
     ),
@@ -346,7 +346,7 @@ print.climniche_report <- function(x, ...) {
     cat("- ", line, "\n", sep = "")
   }
 
-  cat("\nSummary\n")
+  cat("\nReported quantity summary\n")
   print(x$metric_summary, row.names = FALSE)
 
   cat("\nDerived exposure class proportions\n")
@@ -369,9 +369,9 @@ write_climniche_report <- function(report, file) {
     stop("report must be produced by climniche_report().", call. = FALSE)
   }
   title <- if (is.null(report$species)) {
-    "Niche climate exposure report"
+    "Niche relative climate exposure report"
   } else {
-    paste0("Niche climate exposure report: ",
+    paste0("Niche relative climate exposure report: ",
            report$species)
   }
 
@@ -385,7 +385,7 @@ write_climniche_report <- function(report, file) {
     "## Interpretation",
     paste0("- ", report$interpretation),
     "",
-    "## Metric definitions",
+    "## Reported quantity definitions",
     "```text",
     fmt_row(report$metric_definitions),
     "```",
@@ -400,7 +400,7 @@ write_climniche_report <- function(report, file) {
     fmt_row(report$classification_settings),
     "```",
     "",
-    "## Metric summary",
+    "## Reported quantity summary",
     "```text",
     fmt_row(report$metric_summary),
     "```",

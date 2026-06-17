@@ -14,8 +14,8 @@
 #' @param tolerance Optional Niche Distance Shift tolerance.
 #' @param tolerance_quantile Quantile of absolute Niche Distance Shift used
 #'   when `tolerance = NULL`.
-#' @param stable_climate_change Optional threshold for limited climate niche
-#'   change.
+#' @param stable_climate_change Optional Climatic Displacement threshold for
+#'   the limited niche-relative change class.
 #' @param stable_quantile Quantile of Climatic Displacement used when
 #'   `stable_climate_change = NULL`.
 #' @param stable_reconfiguration Optional threshold for low Climatic
@@ -130,7 +130,7 @@ classify_exposure <- function(climate_change_amount, niche_distance_change,
     climate_reconfiguration <= stable_reconfiguration &
     !exceeds &
     abs(niche_distance_change) <= tolerance
-  cls[stable] <- "Limited climate niche change"
+  cls[stable] <- "Limited niche relative change"
 
   out <- factor(cls, levels = .class_level_names())
   attr(out, "classification_settings") <- list(

@@ -136,7 +136,11 @@ custom_class <- fit_climniche(
 )
 stopifnot(!identical(as.character(away$classification),
                      as.character(custom_class$classification)))
-stopifnot(all(custom_class$classification == "Limited climate niche change"))
+stopifnot(all(custom_class$classification == "Limited niche relative change"))
+stopifnot(as.character(climniche:::.normalise_class("Limited climate niche change")) ==
+            "Limited niche relative change")
+stopifnot(as.character(climniche:::.normalise_class("little climate niche change")) ==
+            "Limited niche relative change")
 stopifnot(isTRUE(all.equal(custom_class$classification_settings$tolerance,
                            1e6)))
 stopifnot(isTRUE(all.equal(

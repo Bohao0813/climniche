@@ -39,7 +39,7 @@ plot.climniche_fit <- function(x, type = c("distance", "boundary", "amount",
                    xlab = "Climatic Displacement", ...)
   } else {
     graphics::barplot(table(x$classification), las = 2,
-                      main = "Climate niche change classes", ...)
+                      main = "Derived exposure classes", ...)
   }
   invisible(x)
 }

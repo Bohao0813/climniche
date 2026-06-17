@@ -1,4 +1,4 @@
-#' Fit niche climate exposure
+#' Fit niche relative climate exposure
 #'
 #' @param current Numeric matrix or data frame of current environmental values.
 #' @param future Numeric matrix or data frame of future environmental values.
@@ -40,7 +40,7 @@
 #' @return An object of class `climniche_fit`.
 #'
 #' @details
-#' The fitted object stores four primary metrics as snake_case fields:
+#' The fitted object stores four related quantities as snake_case fields:
 #' Climatic Displacement (`climate_change_amount`), Niche Distance Shift
 #' (`niche_distance_change`), Climatic Reconfiguration
 #' (`climate_reconfiguration`) and Niche Boundary Exceedance
@@ -49,7 +49,7 @@
 #' Let current and future climatic conditions at cell \eqn{i} be \eqn{c_i} and
 #' \eqn{f_i}. Let \eqn{\mu} be the centre of the current realised climatic niche,
 #' and let \eqn{d_A(x, y)} be the sensitivity weighted distance under weighting
-#' matrix \eqn{A}. The four metrics are
+#' matrix \eqn{A}. The niche-relative decomposition reports
 #'
 #' \deqn{D_i = d_A(f_i, c_i)}
 #'
@@ -62,6 +62,9 @@
 #' where \eqn{B_q} is the \eqn{q}-th weighted quantile of current reference cell
 #' distances from the realised niche centre. Positive Niche Boundary Exceedance
 #' is therefore an excess distance beyond this empirical radial boundary.
+#' Climatic Reconfiguration is derived from Climatic Displacement and Niche
+#' Distance Shift; it is a non-radial displacement component, not an independent
+#' ecological process or a measure of species composition change.
 #'
 #' All classification-related thresholds are user-settable. If a direct
 #' threshold argument is `NULL`, `climniche` calculates the effective threshold
@@ -267,7 +270,7 @@ plot_climniche_class_summary <- function(x, scope = c("current", "all"),
   .plot_climniche_class_summary(x = x, scope = scope, title = title)
 }
 
-#' Plot a climniche metric distribution
+#' Plot a climniche reported quantity distribution
 #'
 #' @param x A fitted climniche object.
 #' @param metric Metric to plot.

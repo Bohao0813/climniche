@@ -1,4 +1,4 @@
-#' Simulate a minimal climate niche change experiment
+#' Simulate a minimal niche relative exposure example
 #'
 #' @param n Number of climate cells.
 #' @param p Number of climate variables.

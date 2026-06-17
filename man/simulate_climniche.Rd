@@ -2,7 +2,7 @@
 % Please edit documentation in R/simulate.R
 \name{simulate_climniche}
 \alias{simulate_climniche}
-\title{Simulate a minimal climate niche change experiment}
+\title{Simulate a minimal niche relative exposure example}
 \usage{
 simulate_climniche(
   n = 2000,
@@ -33,5 +33,5 @@ A list with current, future_toward, future_away, occupied, center,
 sensitivity and A.
 }
 \description{
-Simulate a minimal climate niche change experiment
+Simulate a minimal niche relative exposure example
 }

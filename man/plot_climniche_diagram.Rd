@@ -2,7 +2,7 @@
 % Please edit documentation in R/diagram.R
 \name{plot_climniche_diagram}
 \alias{plot_climniche_diagram}
-\title{Plot a niche climate exposure diagram}
+\title{Plot a niche relative climate exposure diagram}
 \usage{
 plot_climniche_diagram(
   x,
@@ -36,7 +36,7 @@ exposure classes; \code{"sample"} draws sampled cell displacements and future
 points.}
 
 \item{summary_layout}{Layout used when \code{type = "summary"}. \code{"metrics"}
-draws the climate-space projection and two metric planes; \code{"ordination"}
+draws the climate-space projection and two reported-quantity planes; \code{"ordination"}
 draws class mean arrows on the climate-space projection.}
 
 \item{max_arrows}{Maximum number of current to future arrows to draw when
@@ -75,5 +75,5 @@ exposure-class legend.}
 A ggplot object.
 }
 \description{
-Plot a niche climate exposure diagram
+Plot a niche relative climate exposure diagram
 }

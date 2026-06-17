@@ -1,16 +1,22 @@
 # climniche 0.2.0
 
-* Updated figures, reports and package-site examples to use the formal metric
-  names Climatic Displacement, Niche Distance Shift, Climatic
-  Reconfiguration and Niche Boundary Exceedance.
+* Reframed user-facing documentation around a niche-relative decomposition of
+  projected climate exposure rather than four independent metrics.
+* Reworked the Mediterranean anchovy vignette to start from prepared climniche
+  inputs and to separate Bio-ORACLE layer metadata, presence-background SDM
+  metadata, predictor screening metadata and climniche fit settings.
+* Added AUC to the example SDM metadata and used equal numbers of presence and
+  background cells in the prepared example.
+* Updated figures, reports and package-site examples to use the formal names
+  Climatic Displacement, Niche Distance Shift, Climatic Reconfiguration and
+  Niche Boundary Exceedance for the reported quantities.
 * Removed the Mediterranean anchovy diagram from the vignette because the
   two-dimensional projection did not provide a clear enough explanation of the
-  four metrics.
+  niche-relative decomposition.
 * Added publication-oriented PDF outputs for the Mediterranean anchovy map and
   summary figures used in the vignette.
-* Refreshed the Mediterranean anchovy example with Bio-ORACLE v3 marine climate
-  layers, VIF-screened multivariate predictors and an SDM suitability threshold
-  selected by maximum test-set TSS.
+* Refreshed the Mediterranean anchovy example with prepared Bio-ORACLE v3
+  marine climate rasters and continuous suitability weights.
 
 # climniche 0.1.1
 

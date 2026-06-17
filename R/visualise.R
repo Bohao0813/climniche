@@ -346,7 +346,7 @@
                               seed = seed)
   dat$x_value <- dat$climate_change_amount
   dat$y_value <- dat$niche_distance_change
-  ttl <- .plot_title(title, "Niche climate exposure")
+  ttl <- .plot_title(title, "Niche relative climate exposure")
 
   ggplot2::ggplot(
     dat,
@@ -415,7 +415,7 @@
     ggplot2::theme(legend.position = "none")
 }
 
-#' Plot a climniche metric distribution
+#' Plot a climniche reported quantity distribution
 #'
 #' @param x A fitted `climniche_fit` object.
 #' @param metric One of `"climate_change_amount"`, `"niche_distance_change"`,

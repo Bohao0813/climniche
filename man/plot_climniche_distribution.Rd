@@ -2,7 +2,7 @@
 % Please edit documentation in R/aliases.R
 \name{plot_climniche_distribution}
 \alias{plot_climniche_distribution}
-\title{Plot a climniche metric distribution}
+\title{Plot a climniche reported quantity distribution}
 \usage{
 plot_climniche_distribution(
   x,
@@ -27,5 +27,5 @@ evaluated cells.}
 A ggplot object.
 }
 \description{
-Plot a climniche metric distribution
+Plot a climniche reported quantity distribution
 }

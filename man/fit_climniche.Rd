@@ -2,7 +2,7 @@
 % Please edit documentation in R/aliases.R
 \name{fit_climniche}
 \alias{fit_climniche}
-\title{Fit niche climate exposure}
+\title{Fit niche relative climate exposure}
 \usage{
 fit_climniche(
   current,
@@ -90,10 +90,10 @@ mixed variable responses. Set to NULL to disable this flag.}
 An object of class \code{climniche_fit}.
 }
 \description{
-Fit niche climate exposure
+Fit niche relative climate exposure
 }
 \details{
-The fitted object stores four primary metrics as snake_case fields:
+The fitted object stores four related quantities as snake_case fields:
 Climatic Displacement (\code{climate_change_amount}), Niche Distance Shift
 (\code{niche_distance_change}), Climatic Reconfiguration
 (\code{climate_reconfiguration}) and Niche Boundary Exceedance
@@ -102,7 +102,7 @@ Climatic Displacement (\code{climate_change_amount}), Niche Distance Shift
 Let current and future climatic conditions at cell \eqn{i} be \eqn{c_i} and
 \eqn{f_i}. Let \eqn{\mu} be the centre of the current realised climatic niche,
 and let \eqn{d_A(x, y)} be the sensitivity weighted distance under weighting
-matrix \eqn{A}. The four metrics are
+matrix \eqn{A}. The niche-relative decomposition reports
 
 \deqn{D_i = d_A(f_i, c_i)}
 
@@ -115,6 +115,9 @@ matrix \eqn{A}. The four metrics are
 where \eqn{B_q} is the \eqn{q}-th weighted quantile of current reference cell
 distances from the realised niche centre. Positive Niche Boundary Exceedance
 is therefore an excess distance beyond this empirical radial boundary.
+Climatic Reconfiguration is derived from Climatic Displacement and Niche
+Distance Shift; it is a non-radial displacement component, not an independent
+ecological process or a measure of species composition change.
 
 All classification-related thresholds are user-settable. If a direct
 threshold argument is \code{NULL}, \code{climniche} calculates the effective threshold

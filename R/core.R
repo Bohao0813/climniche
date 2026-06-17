@@ -1,4 +1,4 @@
-#' Fit niche climate exposure
+#' Fit niche relative climate exposure
 #'
 #' @param current Numeric matrix or data frame of current climate values.
 #' @param future Numeric matrix or data frame of future climate values, with the
@@ -22,8 +22,8 @@
 #' @param tolerance Optional Niche Distance Shift tolerance.
 #' @param tolerance_quantile Quantile of absolute Niche Distance Shift used
 #'   when `tolerance = NULL`.
-#' @param stable_climate_change Optional threshold for limited climate niche
-#'   change.
+#' @param stable_climate_change Optional Climatic Displacement threshold for
+#'   the limited niche-relative change class.
 #' @param stable_quantile Quantile of Climatic Displacement used when
 #'   `stable_climate_change = NULL`.
 #' @param stable_reconfiguration Optional threshold for low Climatic

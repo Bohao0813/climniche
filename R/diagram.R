@@ -44,7 +44,7 @@
   )
 }
 
-#' Build data for a niche climate exposure diagram
+#' Build data for a niche relative climate exposure diagram
 #'
 #' @param x A fitted climniche object.
 #' @param scope `"current"` for current reference cells; `"all"` for all
@@ -200,7 +200,7 @@ climniche_diagram_data <- function(x, scope = c("current", "all"),
   out
 }
 
-#' Plot a niche climate exposure diagram
+#' Plot a niche relative climate exposure diagram
 #'
 #' @noRd
 .plot_climniche_metric_diagram <- function(x, show_reference = FALSE,
@@ -360,7 +360,7 @@ climniche_diagram_data <- function(x, scope = c("current", "all"),
        reconfiguration = p_boundary)
 }
 
-#' Plot a niche climate exposure diagram
+#' Plot a niche relative climate exposure diagram
 #'
 #' @param x A fitted climniche object or data returned by
 #'   `climniche_diagram_data()`.
@@ -370,7 +370,7 @@ climniche_diagram_data <- function(x, scope = c("current", "all"),
 #'   exposure classes; `"sample"` draws sampled cell displacements and future
 #'   points.
 #' @param summary_layout Layout used when `type = "summary"`. `"metrics"`
-#'   draws the climate-space projection and two metric planes; `"ordination"`
+#'   draws the climate-space projection and two reported-quantity planes; `"ordination"`
 #'   draws class mean arrows on the climate-space projection.
 #' @param max_arrows Maximum number of current to future arrows to draw when
 #'   `type = "sample"`.
@@ -490,7 +490,7 @@ plot_climniche_diagram <- function(x, scope = c("current", "all"),
       )
   } else {
     curve_values <- c(
-      "Limited climate niche change" = -0.35,
+      "Limited niche relative change" = -0.35,
       "Closer to current niche" = -0.18,
       "Farther from current niche" = 0.18,
       "Outside current niche boundary" = 0.35,

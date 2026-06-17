@@ -13,7 +13,7 @@ climniche_summary(x, scope = c("current", "all"))
 evaluated cells. Current-scope summaries use reference weights.}
 }
 \value{
-A one-row data frame with metric summaries and the effective
+A one-row data frame with reported quantity summaries and the effective
 classification settings.
 }
 \description{

@@ -16,9 +16,10 @@ Pages: [Examples](https://bohao0813.github.io/climniche/articles/climniche-examp
 
 ![Niche climate exposure concept](man/figures/niche-climate-exposure.svg)
 
-`climniche` quantifies niche climate exposure: the amount and direction of
-projected climate change at cells currently associated with a taxon, measured
-relative to its realised climatic niche.
+`climniche` decomposes projected climate change relative to a species' current
+realised climatic niche. It turns current and future environmental layers,
+together with occurrence, range or SDM support, into niche-relative exposure
+maps, summaries and reports.
 
 ## Installation
 
@@ -35,18 +36,20 @@ install.packages("remotes")
 remotes::install_github("Bohao0813/climniche")
 ```
 
-## Metrics
+## Decomposition
 
-`climniche` separates four cell-level metrics. Field names in fitted R objects
-use snake_case; figures and reports use the metric names below.
+`climniche` reports four related quantities from one niche-relative
+decomposition. Field names in fitted R objects use snake_case; figures and
+reports use the names below.
 
 - Climatic Displacement (`climate_change_amount`): total sensitivity weighted
   climatic displacement.
 - Niche Distance Shift (`niche_distance_change`): signed change in distance
   from the current realised climatic niche centre.
 - Climatic Reconfiguration (`climate_reconfiguration`): non radial component
-  of climatic displacement not captured by change in distance to the niche
-  centre.
+  of climatic displacement. It is derived from Climatic Displacement and Niche
+  Distance Shift; it should not be read as species or community composition
+  change.
 - Niche Boundary Exceedance (`niche_boundary_exceedance`): positive excess of
   future niche distance beyond the empirical boundary of the current realised
   climatic niche.
@@ -60,11 +63,12 @@ Binary rasters are used as 0/1 reference weights. Continuous suitability values
 are used as continuous reference weights; `occupied_threshold` only removes low
 values and does not convert higher values to 1.
 
-The outputs are cell-level tables, maps, exposure classes, variable
+The outputs are cell-level tables, maps, derived exposure classes, variable
 contributions, report text, and figure data.
 
-The exposure classes are derived from the four continuous metrics. They are not
-one class per metric. Niche Distance Shift is signed, so it separates movement
+The exposure classes are derived from the continuous quantities. They are not
+one class per quantity, and a fitted case may contain only a subset of the
+possible classes. Niche Distance Shift is signed, so it separates movement
 toward and away from the realised niche centre. A separate low-change class
 identifies cells with limited Climatic Displacement, limited Climatic
 Reconfiguration and little Niche Distance Shift. Niche Boundary Exceedance is
@@ -103,12 +107,11 @@ arguments such as `tolerance`, `stable_climate_change`,
 
 The [Examples](https://bohao0813.github.io/climniche/articles/climniche-examples.html)
 page uses a Mediterranean European anchovy case study with Bio-ORACLE v3 marine
-climate layers. It shows VIF-screened multivariate predictors, an SDM
-suitability threshold selected by maximum test-set TSS, continuous suitability
-weights in the climniche fit, maps of the four metrics, and the derived exposure
-classes.
+climate layers. It starts from prepared current and future rasters plus a
+continuous suitability map, then shows how `climniche` reports the
+niche-relative decomposition, observed derived classes and summary figures.
 
 ## Contributor
 
-We are welcome any helps! Please make a pull request or reach out to
-bohao.he@polimi.it if you want to make any contribution.
+Contributions are welcome. Please make a pull request or contact
+bohao.he@polimi.it.

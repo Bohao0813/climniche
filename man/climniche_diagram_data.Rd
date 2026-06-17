@@ -2,7 +2,7 @@
 % Please edit documentation in R/diagram.R
 \name{climniche_diagram_data}
 \alias{climniche_diagram_data}
-\title{Build data for a niche climate exposure diagram}
+\title{Build data for a niche relative climate exposure diagram}
 \usage{
 climniche_diagram_data(
   x,
@@ -25,5 +25,5 @@ evaluated cells.}
 A list of data frames used by \code{plot_climniche_diagram()}.
 }
 \description{
-Build data for a niche climate exposure diagram
+Build data for a niche relative climate exposure diagram
 }

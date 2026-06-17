@@ -173,7 +173,7 @@
 
 .class_level_names <- function() {
   c(
-    "Limited climate niche change",
+    "Limited niche relative change",
     "Closer to current niche",
     "Farther from current niche",
     "Outside current niche boundary",
@@ -183,8 +183,10 @@
 
 .class_aliases <- function() {
   c(
+    "Limited climate niche change" =
+      "Limited niche relative change",
     "little climate niche change" =
-      "Limited climate niche change",
+      "Limited niche relative change",
     "closer to current niche" =
       "Closer to current niche",
     "farther from current niche" =
