@@ -266,17 +266,6 @@
   }
 }
 
-.class_colours <- function() {
-  stats::setNames(
-    c("#f0f0f0", "#4c78a8", "#c65d57", "#d99b45", "#5f9e8f"),
-    .class_level_names()
-  )
-}
-
-.class_labels <- function() {
-  stats::setNames(.class_level_names(), .class_level_names())
-}
-
 .climniche_theme <- function(base_size = 8.5) {
   ggplot2::theme_classic(base_size = base_size) +
     ggplot2::theme(
@@ -331,7 +320,6 @@
     set.seed(seed)
     dat <- dat[sample(seq_len(nrow(dat)), max_points), , drop = FALSE]
   }
-  dat$class <- .normalise_class(dat$class)
   dat
 }
 
@@ -509,23 +497,23 @@
 #' @param max_points Maximum number of points to draw.
 #' @param seed Random seed used when subsampling.
 #' @param title Optional plot title.
-#' @param colour_by Colour cells by Niche Boundary Exceedance or by the
-#'   compatibility classification.
+#' @param colour_by Colour cells by Niche Boundary Exceedance.
 #'
 #' @return A ggplot object.
 #' @noRd
 .plot_climniche_exposure <- function(x, scope = c("current", "all"),
                                      max_points = 6000, seed = 1,
                                      title = NULL,
-                                     colour_by = c("niche_boundary_exceedance",
-                                                   "classification")) {
+                                     colour_by = "niche_boundary_exceedance") {
   .need_ggplot2()
   if (!inherits(x, "climniche_fit")) {
     stop("x must be a fitted climniche object.", call. = FALSE)
   }
   dat <- .climniche_plot_data(x, scope = scope, max_points = max_points,
                               seed = seed)
-  colour_by <- match.arg(colour_by)
+  if (!identical(colour_by, "niche_boundary_exceedance")) {
+    stop("colour_by must be 'niche_boundary_exceedance'.", call. = FALSE)
+  }
   dat$x_value <- dat$climate_change_amount
   dat$y_value <- dat$niche_distance_change
   ttl <- .plot_title(title, "Niche relative climate exposure")
@@ -534,11 +522,7 @@
     ggplot2::geom_hline(yintercept = 0, colour = "grey45",
                         linewidth = 0.3, linetype = 2) +
     ggplot2::geom_point(
-      ggplot2::aes(colour = if (identical(colour_by, "classification")) {
-        class
-      } else {
-        niche_boundary_exceedance
-      }),
+      ggplot2::aes(colour = niche_boundary_exceedance),
       alpha = 0.42,
       size = 0.65
     ) +
@@ -546,66 +530,14 @@
       x = "Climatic Displacement",
       y = "Niche Distance Shift",
       title = ttl,
-      subtitle = "Positive Niche Distance Shift indicates movement away from the realised niche centre"
+    subtitle = "Positive Niche Distance Shift indicates movement away from the realised niche centre"
     ) +
     .climniche_theme()
-  if (identical(colour_by, "classification")) {
-    p <- p + ggplot2::scale_colour_manual(
-      values = .class_colours(), labels = .class_labels(), drop = FALSE,
-      name = "Optional combined exposure class"
-    )
-  } else {
-    p <- p + ggplot2::scale_colour_gradientn(
-      colours = .metric_map_colours("niche_boundary_exceedance"),
-      name = "Niche Boundary\nExceedance"
-    )
-  }
-  p
-}
-
-#' Plot climniche class proportions
-#'
-#' @param x A fitted `climniche_fit` object.
-#' @param scope `"current"` for current reference cells or `"all"` for all
-#'   evaluated cells.
-#' @param title Optional plot title.
-#'
-#' @return A ggplot object.
-#' @noRd
-.plot_climniche_class_summary <- function(x, scope = c("current", "all"),
-                                          title = NULL) {
-  .need_ggplot2()
-  if (!inherits(x, "climniche_fit")) {
-    stop("x must be a fitted climniche object.", call. = FALSE)
-  }
-  scope <- match.arg(scope)
-  tab <- climniche_table(x, scope = scope)
-  weights <- if (scope == "current") tab$occupied_weight else rep(1, nrow(tab))
-  props <- .weighted_class_prop(tab$class, weights)
-  dat <- data.frame(
-    class = names(props),
-    proportion = as.numeric(props),
-    stringsAsFactors = FALSE
+  p <- p + ggplot2::scale_colour_gradientn(
+    colours = .metric_map_colours("niche_boundary_exceedance"),
+    name = "Niche Boundary\nExceedance"
   )
-  dat <- dat[dat$proportion > 0, , drop = FALSE]
-  dat$class <- factor(dat$class, levels = names(.class_colours()))
-  dat <- dat[order(dat$proportion), , drop = FALSE]
-  dat$prop <- dat$proportion
-  ttl <- .plot_title(title, "Derived exposure class proportions")
-
-  ggplot2::ggplot(dat, ggplot2::aes(x = class, y = prop, fill = class)) +
-    ggplot2::geom_col(width = 0.68, colour = "grey25", linewidth = 0.18) +
-    ggplot2::coord_flip() +
-    ggplot2::scale_x_discrete(labels = .class_labels()) +
-    ggplot2::scale_y_continuous(labels = function(z) paste0(round(100 * z), "%")) +
-    ggplot2::scale_fill_manual(
-      values = .class_colours(),
-      labels = .class_labels(),
-      drop = FALSE
-    ) +
-    ggplot2::labs(x = NULL, y = "Proportion of analysed cells", title = ttl) +
-    .climniche_theme() +
-    ggplot2::theme(legend.position = "none")
+  p
 }
 
 #' Plot a climniche reported quantity distribution
@@ -658,119 +590,7 @@
 #' @noRd
 .plot_climniche_report <- function(x, scope = c("current", "all")) {
   scope <- match.arg(scope)
-  plot_climniche_showcase(x, scope = scope)
-}
-
-#' Plot optional combined exposure classes
-#'
-#' This compatibility plot is separate from the four continuous reported
-#' quantities.
-#'
-#' @param x A `climniche_fit` object with raster outputs.
-#' @param occupied Optional occupied-cell RasterLayer or SpatRaster to overlay.
-#' @param occupied_only If TRUE, mask the plotted classes to occupied cells.
-#' @param occupied_threshold Threshold used when `occupied` contains binary or
-#'   continuous values. Values above the threshold keep their original value
-#'   when used as an overlay or mask.
-#' @param title Optional plot title. Use `FALSE` to suppress it.
-#' @param class_display Show only observed classes or retain all possible
-#'   classes in the legend.
-#' @param class_colours Optional named vector replacing class colours.
-#' @param class_labels Optional named vector replacing class labels.
-#' @param legend_position Position passed to the ggplot theme.
-#' @param show_legend If FALSE, suppress the class legend.
-#' @param extent Optional `c(xmin, xmax, ymin, ymax)` plotting extent.
-#' @param degree_labels Use hemisphere degree labels automatically for
-#'   longitude-latitude rasters, always, or never.
-#' @param study_region Optional study-region boundary supplied as an `sf`,
-#'   `sfc`, `Spatial`, `SpatVector`, or data frame with `x` and `y` columns.
-#' @param region_colour,region_linewidth,region_linetype Appearance of the
-#'   optional study-region boundary.
-#'
-#' @return A ggplot object.
-#' @noRd
-.plot_climniche_classes <- function(x, occupied = NULL, occupied_only = FALSE,
-                                    occupied_threshold = NULL,
-                                    title = NULL,
-                                    class_display = c("observed", "all"),
-                                    class_colours = NULL,
-                                    class_labels = NULL,
-                                    legend_position = "right",
-                                    show_legend = TRUE,
-                                    extent = NULL,
-                                    degree_labels = c("auto", "none", "hemisphere"),
-                                    study_region = NULL,
-                                    region_colour = "black",
-                                    region_linewidth = 0.35,
-                                    region_linetype = 1) {
-  .need_ggplot2()
-  class_display <- match.arg(class_display)
-  if (!inherits(x, "climniche_fit") || is.null(x$rasters$classification)) {
-    stop("x must be a climniche object with a classification raster.",
-         call. = FALSE)
-  }
-  r <- x$rasters$classification
-  if (occupied_only) {
-    if (is.null(occupied)) {
-      stop("occupied must be supplied when occupied_only = TRUE.",
-           call. = FALSE)
-    }
-    r <- .mask_to_occupied(r, occupied,
-                           occupied_threshold = occupied_threshold)
-  }
-  dat <- .spatial_df(r, value = "class_id")
-  lookup <- x$class_lookup
-  dat$class <- .normalise_class(lookup$class[match(dat$class_id, lookup$id)])
-  occ <- .occupied_df(occupied, occupied_threshold = occupied_threshold)
-  lim <- .map_extent(dat, extent = extent)
-  cell_size <- .spatial_res(r)
-  axis_spec <- .map_axis_spec(r, degree_labels = degree_labels)
-  region_df <- .study_region_df(study_region, r)
-  if (is.null(class_colours)) class_colours <- .class_colours()
-  if (is.null(class_labels)) class_labels <- .class_labels()
-
-  p <- ggplot2::ggplot(dat, ggplot2::aes(x = x, y = y, fill = class)) +
-    ggplot2::geom_tile(width = cell_size[1], height = cell_size[2]) +
-    ggplot2::coord_equal(xlim = lim$xlim, ylim = lim$ylim, expand = FALSE) +
-    ggplot2::scale_x_continuous(labels = axis_spec$x) +
-    ggplot2::scale_y_continuous(labels = axis_spec$y) +
-    ggplot2::scale_fill_manual(
-      values = class_colours,
-      labels = class_labels,
-      drop = identical(class_display, "observed"),
-      na.value = NA
-    ) +
-    ggplot2::labs(x = axis_spec$xlab, y = axis_spec$ylab,
-                  fill = "Derived exposure class",
-                  title = .plot_title(title, "Derived exposure classes")) +
-    .map_theme() +
-    ggplot2::theme(
-      legend.key.height = grid::unit(4.6, "mm"),
-      legend.position = if (isTRUE(show_legend)) legend_position else "none"
-    )
-
-  if (!occupied_only && !is.null(occ) && nrow(occ) > 0) {
-    p <- p + ggplot2::geom_point(
-      data = occ,
-      ggplot2::aes(x = x, y = y),
-      inherit.aes = FALSE,
-      size = 0.05,
-      colour = "grey10",
-      alpha = 0.12
-    )
-  }
-  if (!is.null(region_df) && nrow(region_df) > 0) {
-    p <- p + ggplot2::geom_path(
-      data = region_df,
-      ggplot2::aes(x = x, y = y, group = group),
-      inherit.aes = FALSE,
-      colour = region_colour,
-      linewidth = region_linewidth,
-      linetype = region_linetype,
-      lineend = "round"
-    )
-  }
-  p
+  plot_climniche_summary_figure(x, scope = scope)
 }
 
 #' Plot the four reported climniche quantities as maps
@@ -868,24 +688,4 @@ plot_climniche_variable_contribution <- function(x, occupied_only = TRUE,
       axis.line = ggplot2::element_line(linewidth = 0.2, colour = "black"),
       axis.ticks = ggplot2::element_line(linewidth = 0.2, colour = "black")
     )
-}
-
-#' Plot mean variable contribution
-#'
-#' @param x A `climniche_fit` object.
-#' @param occupied_only If TRUE, summarize occupied cells only.
-#' @param variable_labels Optional named vector replacing variable labels.
-#' @param title Optional plot title. Use `FALSE` to suppress it.
-#'
-#' @return A ggplot object.
-#' @export
-plot_variable_contribution <- function(x, occupied_only = TRUE,
-                                       variable_labels = NULL,
-                                       title = NULL) {
-  plot_climniche_variable_contribution(
-    x = x,
-    occupied_only = occupied_only,
-    variable_labels = variable_labels,
-    title = title
-  )
 }

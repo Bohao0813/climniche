@@ -22,20 +22,8 @@
 #'   the value is calculated from `tolerance_quantile`.
 #' @param tolerance_quantile Quantile of absolute Niche Distance Shift used
 #'   when `tolerance = NULL`.
-#' @param stable_climate_change Optional user-set threshold for limited
-#'   Climatic Displacement. If `NULL`, the value is calculated from
-#'   `stable_quantile`.
-#' @param stable_quantile Quantile of Climatic Displacement used when
-#'   `stable_climate_change = NULL`.
-#' @param stable_reconfiguration Optional user-set threshold for low Climatic
-#'   Reconfiguration. If `NULL`, the value is calculated from
-#'   `stable_reconfiguration_quantile`.
-#' @param stable_reconfiguration_quantile Quantile of Climatic Reconfiguration
-#'   used when `stable_reconfiguration = NULL`.
 #' @param boundary_exceedance_tolerance User-set tolerance for deciding whether
 #'   future climate exceeds the empirical niche boundary.
-#' @param conflict_ratio Minimum minority sign contribution share used to mark
-#'   mixed variable responses. Set to NULL to disable this flag.
 #'
 #' @return An object of class `climniche_fit`.
 #'
@@ -66,23 +54,17 @@
 #' Distance Shift; it is a non radial displacement component rather than an
 #' independently estimated process.
 #'
-#' All classification-related thresholds are user-settable. If a direct
-#' threshold argument is `NULL`, `climniche` calculates the effective threshold
-#' from the corresponding quantile argument. The fitted object stores the
-#' effective values actually used in `classification_settings`.
+#' Descriptor thresholds are user-settable. If `tolerance = NULL`,
+#' `climniche` calculates the effective Niche Distance Shift tolerance from
+#' `tolerance_quantile`. The fitted object stores the effective values in
+#' `descriptor_settings`.
 #'
 #' @section User-settable thresholds:
 #' - `boundary`: quantile used to define the empirical realised niche boundary.
 #' - `tolerance`: direct Niche Distance Shift tolerance; otherwise
 #'   `tolerance_quantile`.
-#' - `stable_climate_change`: direct Climatic Displacement threshold for the
-#'   limited-change class; otherwise `stable_quantile`.
-#' - `stable_reconfiguration`: direct Climatic Reconfiguration threshold for
-#'   the limited-change class; otherwise `stable_reconfiguration_quantile`.
 #' - `boundary_exceedance_tolerance`: direct tolerance for Niche Boundary
 #'   Exceedance.
-#' - `conflict_ratio`: minority-sign contribution share used by the mixed
-#'   variable-response diagnostic.
 #' @export
 fit_climniche <- function(current, future, occupied = NULL,
                           occupied_threshold = NULL, cnfa = NULL,
@@ -92,12 +74,7 @@ fit_climniche <- function(current, future, occupied = NULL,
                           global_mean = NULL, global_sd = NULL,
                           tolerance = NULL,
                           tolerance_quantile = 0.10,
-                          stable_climate_change = NULL,
-                          stable_quantile = 0.25,
-                          stable_reconfiguration = NULL,
-                          stable_reconfiguration_quantile = 0.25,
-                          boundary_exceedance_tolerance = 0,
-                          conflict_ratio = 0.25) {
+                          boundary_exceedance_tolerance = 0) {
   .fit_climniche_matrix(
     current = current,
     future = future,
@@ -114,12 +91,7 @@ fit_climniche <- function(current, future, occupied = NULL,
     global_sd = global_sd,
     tolerance = tolerance,
     tolerance_quantile = tolerance_quantile,
-    stable_climate_change = stable_climate_change,
-    stable_quantile = stable_quantile,
-    stable_reconfiguration = stable_reconfiguration,
-    stable_reconfiguration_quantile = stable_reconfiguration_quantile,
-    boundary_exceedance_tolerance = boundary_exceedance_tolerance,
-    conflict_ratio = conflict_ratio
+    boundary_exceedance_tolerance = boundary_exceedance_tolerance
   )
 }
 
@@ -134,10 +106,8 @@ fit_climniche <- function(current, future, occupied = NULL,
 #' @param domain Optional RasterLayer limiting cells where exposure is analysed.
 #' @param domain_threshold Values greater than this threshold define the domain.
 #' @param ... Additional arguments passed to `fit_climniche()`, including
-#'   `boundary`, `tolerance`, `tolerance_quantile`, `stable_climate_change`,
-#'   `stable_quantile`, `stable_reconfiguration`,
-#'   `stable_reconfiguration_quantile`, `boundary_exceedance_tolerance` and
-#'   `conflict_ratio`.
+#'   `boundary`, `tolerance`, `tolerance_quantile`, and
+#'   `boundary_exceedance_tolerance`.
 #'
 #' @return An object of class `climniche_fit` with raster outputs.
 #' @export
@@ -163,10 +133,8 @@ fit_climniche_raster <- function(current, future, occupied = NULL,
 #'   analysed.
 #' @param domain_threshold Values greater than this threshold define the domain.
 #' @param ... Additional arguments passed to `fit_climniche()`, including
-#'   `boundary`, `tolerance`, `tolerance_quantile`, `stable_climate_change`,
-#'   `stable_quantile`, `stable_reconfiguration`,
-#'   `stable_reconfiguration_quantile`, `boundary_exceedance_tolerance` and
-#'   `conflict_ratio`.
+#'   `boundary`, `tolerance`, `tolerance_quantile`, and
+#'   `boundary_exceedance_tolerance`.
 #'
 #' @return An object of class `climniche_fit` with raster outputs.
 #' @export
@@ -258,68 +226,6 @@ plot_climniche_map <- function(x,
                       region_linetype = region_linetype)
 }
 
-#' Plot optional combined exposure classes
-#'
-#' This function retains the earlier five-class interpretation for compatible
-#' workflows. The four continuous reported quantities remain the primary
-#' climniche outputs.
-#'
-#' @param x A fitted climniche object with raster outputs.
-#' @param occupied Optional current reference RasterLayer or terra SpatRaster
-#'   to overlay.
-#' @param occupied_only If TRUE, mask the plotted classes to current occurrence
-#'   cells.
-#' @param occupied_threshold Threshold used when `occupied` contains binary or
-#'   continuous values. Values above the threshold keep their original value
-#'   when used as an overlay or mask.
-#' @param title Optional plot title. Use `FALSE` to suppress it.
-#' @param class_display Show only observed classes or retain all possible
-#'   classes in the legend.
-#' @param class_colours Optional named vector replacing class colours.
-#' @param class_labels Optional named vector replacing class labels.
-#' @param legend_position Position passed to the ggplot theme.
-#' @param show_legend If FALSE, suppress the class legend.
-#' @param extent Optional `c(xmin, xmax, ymin, ymax)` plotting extent.
-#' @param degree_labels Use hemisphere degree labels automatically for
-#'   longitude-latitude rasters, always, or never.
-#' @param study_region Optional study-region boundary supplied as an `sf`,
-#'   `sfc`, `Spatial`, `SpatVector`, or data frame with `x` and `y` columns.
-#' @param region_colour,region_linewidth,region_linetype Appearance of the
-#'   optional study-region boundary.
-#'
-#' @return A ggplot object.
-#' @export
-plot_climniche_classes <- function(x, occupied = NULL, occupied_only = FALSE,
-                                   occupied_threshold = NULL,
-                                   title = NULL,
-                                   class_display = c("observed", "all"),
-                                   class_colours = NULL,
-                                   class_labels = NULL,
-                                   legend_position = "right",
-                                   show_legend = TRUE,
-                                   extent = NULL,
-                                   degree_labels = c("auto", "none", "hemisphere"),
-                                   study_region = NULL,
-                                   region_colour = "black",
-                                   region_linewidth = 0.35,
-                                   region_linetype = 1) {
-  .plot_climniche_classes(x = x, occupied = occupied,
-                          occupied_only = occupied_only,
-                          occupied_threshold = occupied_threshold,
-                          title = title,
-                          class_display = class_display,
-                          class_colours = class_colours,
-                          class_labels = class_labels,
-                          legend_position = legend_position,
-                          show_legend = show_legend,
-                          extent = extent,
-                          degree_labels = degree_labels,
-                          study_region = study_region,
-                          region_colour = region_colour,
-                          region_linewidth = region_linewidth,
-                          region_linetype = region_linetype)
-}
-
 #' Plot the climniche exposure plane
 #'
 #' @param x A fitted climniche object.
@@ -328,35 +234,17 @@ plot_climniche_classes <- function(x, occupied = NULL, occupied_only = FALSE,
 #' @param max_points Maximum number of points to draw.
 #' @param seed Random seed used when subsampling.
 #' @param title Optional plot title.
-#' @param colour_by Colour cells by Niche Boundary Exceedance or by the
-#'   compatibility classification.
+#' @param colour_by Colour cells by Niche Boundary Exceedance.
 #'
 #' @return A ggplot object.
 #' @export
 plot_climniche_exposure <- function(x, scope = c("current", "all"),
                                     max_points = 6000, seed = 1,
                                     title = NULL,
-                                    colour_by = c("niche_boundary_exceedance",
-                                                  "classification")) {
+                                    colour_by = "niche_boundary_exceedance") {
   .plot_climniche_exposure(x = x, scope = scope, max_points = max_points,
                            seed = seed, title = title,
                            colour_by = colour_by)
-}
-
-#' Plot optional combined exposure class proportions
-#'
-#' This compatibility plot is not used by the default climniche summary figure.
-#'
-#' @param x A fitted climniche object.
-#' @param scope `"current"` for current reference cells or `"all"` for all
-#'   evaluated cells.
-#' @param title Optional plot title.
-#'
-#' @return A ggplot object.
-#' @export
-plot_climniche_class_summary <- function(x, scope = c("current", "all"),
-                                         title = NULL) {
-  .plot_climniche_class_summary(x = x, scope = scope, title = title)
 }
 
 #' Plot a climniche reported quantity distribution

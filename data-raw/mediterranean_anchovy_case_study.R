@@ -544,7 +544,6 @@ fit <- fit_climniche_terra(
   domain_threshold = 0,
   sensitivity = sensitivity,
   boundary = 0.95,
-  conflict_ratio = 0.25,
   scale = TRUE
 )
 saveRDS(fit, file.path(out_dir, "anchovy_climniche_fit.rds"))
@@ -648,12 +647,7 @@ fit_settings <- data.frame(
     "boundary_quantile",
     "tolerance",
     "tolerance_quantile",
-    "stable_climate_change",
-    "stable_quantile",
-    "stable_reconfiguration",
-    "stable_reconfiguration_quantile",
-    "boundary_exceedance_tolerance",
-    "conflict_ratio"
+    "boundary_exceedance_tolerance"
   ),
   value = c(
     species_name,
@@ -667,14 +661,9 @@ fit_settings <- data.frame(
     paste(sdm_retained, collapse = ", "),
     paste(exposure_retained, collapse = ", "),
     setting_value(fit$boundary_quantile),
-    setting_value(fit$classification_settings$tolerance),
-    setting_value(fit$classification_settings$tolerance_quantile),
-    setting_value(fit$classification_settings$stable_climate_change),
-    setting_value(fit$classification_settings$stable_quantile),
-    setting_value(fit$classification_settings$stable_reconfiguration),
-    setting_value(fit$classification_settings$stable_reconfiguration_quantile),
-    setting_value(fit$classification_settings$boundary_exceedance_tolerance),
-    setting_value(fit$classification_settings$conflict_ratio)
+    setting_value(fit$descriptor_settings$tolerance),
+    setting_value(fit$descriptor_settings$tolerance_quantile),
+    setting_value(fit$descriptor_settings$boundary_exceedance_tolerance)
   ),
   stringsAsFactors = FALSE
 )
@@ -686,9 +675,6 @@ report <- climniche_report(fit, species = species_name, scope = "current")
 write_climniche_report(report, file.path(out_dir, "anchovy_climniche_report.md"))
 utils::write.csv(climniche_summary(fit, scope = "current"),
                  file.path(out_dir, "anchovy_climniche_metric_summary.csv"),
-                 row.names = FALSE)
-utils::write.csv(report$class_summary,
-                 file.path(out_dir, "anchovy_climniche_class_proportions.csv"),
                  row.names = FALSE)
 utils::write.csv(report$descriptor_summary,
                  file.path(out_dir, "anchovy_climniche_descriptor_proportions.csv"),
@@ -730,6 +716,17 @@ distance_df <- map_df(distance_r, "value")
 composition_df <- map_df(composition_r, "value")
 exceed_df <- map_df(exceed_r, "value")
 
+suitable_mask <- suitability_df[, c("x", "y"), drop = FALSE]
+suitable_key <- paste(suitable_mask$x, suitable_mask$y, sep = ":")
+mask_suitable_df <- function(d) {
+  key <- paste(d$x, d$y, sep = ":")
+  d[key %in% suitable_key, , drop = FALSE]
+}
+amount_df <- mask_suitable_df(amount_df)
+distance_df <- mask_suitable_df(distance_df)
+composition_df <- mask_suitable_df(composition_df)
+exceed_df <- mask_suitable_df(exceed_df)
+
 world <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
 world <- sf::st_transform(world, 4326)
 region_crop_box <- sf::st_bbox(
@@ -766,7 +763,8 @@ theme_map <- function(base_size = 7.0, show_x = TRUE, show_y = TRUE) {
       panel.grid.major = element_line(linewidth = 0.12, colour = "#e2e2e2"),
       legend.position = "bottom",
       legend.direction = "horizontal",
-      legend.title = element_blank(),
+      legend.title = element_text(size = base_size - 0.9, colour = "black",
+                                  margin = margin(b = 1.0)),
       legend.text = element_text(size = base_size - 1.0, colour = "black"),
       legend.key.height = grid::unit(1.8, "mm"),
       legend.key.width = grid::unit(5.0, "mm"),
@@ -788,7 +786,9 @@ guide_metric <- function(bar_width_mm = 32) {
     barwidth = grid::unit(bar_width_mm, "mm"),
     barheight = grid::unit(1.8, "mm"),
     frame.colour = "black",
-    ticks.colour = "black"
+    ticks.colour = "black",
+    title.position = "top",
+    title.hjust = 0.5
   )
 }
 
@@ -826,7 +826,7 @@ p_sdm <- base_map() +
     name = "SDM\nsuitability"
   ) +
   guides(fill = guide_metric()) +
-  labs(title = "(a) Current suitability weights") +
+  labs(title = "Current suitability weights") +
   theme_map(show_x = FALSE, show_y = TRUE)
 
 p_amount <- base_map() +
@@ -836,10 +836,10 @@ p_amount <- base_map() +
   scale_fill_gradientn(
     colours = c("#f7fbff", "#d6e6f2", "#91b9d5", "#27658f"),
     limits = c(0, max(amount_df$value, na.rm = TRUE)),
-    name = NULL
+    name = "Distance"
   ) +
   guides(fill = guide_metric()) +
-  labs(title = "(a) Climatic Displacement") +
+  labs(title = "Climatic Displacement") +
   theme_map(show_x = FALSE, show_y = TRUE)
 
 distance_limits <- range(distance_df$value, na.rm = TRUE)
@@ -850,10 +850,10 @@ p_distance <- base_map() +
   scale_fill_gradientn(
     colours = c("#fff7f3", "#fdd0c7", "#f1695b", "#a33430"),
     limits = distance_limits, oob = scales::squish,
-    name = NULL
+    name = "Shift"
   ) +
   guides(fill = guide_metric()) +
-  labs(title = "(b) Niche Distance Shift") +
+  labs(title = "Niche Distance Shift") +
   theme_map(show_x = FALSE, show_y = FALSE)
 
 p_composition <- base_map() +
@@ -863,27 +863,37 @@ p_composition <- base_map() +
   scale_fill_gradientn(
     colours = c("#f7fcf5", "#c7e9c0", "#74c476", "#238b45"),
     limits = c(0, max(composition_df$value, na.rm = TRUE)),
-    name = NULL
+    name = "Distance"
   ) +
   guides(fill = guide_metric()) +
-  labs(title = "(c) Climatic Reconfiguration") +
+  labs(title = "Climatic Reconfiguration") +
   theme_map(show_x = TRUE, show_y = TRUE)
 
+exceed_positive_df <- exceed_df[exceed_df$value > 0, , drop = FALSE]
+exceed_upper <- max(exceed_positive_df$value, na.rm = TRUE)
+if (!is.finite(exceed_upper) || exceed_upper <= 0) {
+  exceed_upper <- 1
+}
+
 p_exceed <- base_map() +
-  geom_tile(data = exceed_df, aes(x = x, y = y, fill = value),
+  geom_tile(data = exceed_df, aes(x = x, y = y),
+            width = cell_width, height = cell_height,
+            fill = "#eeeeee", alpha = 0.95) +
+  geom_tile(data = exceed_positive_df, aes(x = x, y = y, fill = value),
             width = cell_width, height = cell_height, alpha = 0.95) +
   geography_layers() +
   scale_fill_gradientn(
-    colours = c("white", "#f3dfb8", "#d9942f", "#8a3f20"),
-    limits = c(0, max(exceed_df$value, na.rm = TRUE)),
-    name = NULL
+    colours = c("#f3dfb8", "#d9942f", "#8a3f20"),
+    limits = c(0, exceed_upper),
+    name = "Exceedance"
   ) +
   guides(fill = guide_metric()) +
-  labs(title = "(d) Niche Boundary Exceedance") +
+  labs(title = "Niche Boundary Exceedance") +
   theme_map(show_x = TRUE, show_y = FALSE)
 
 fig_main <- (p_amount | p_distance) / (p_composition | p_exceed) +
-  plot_layout(widths = c(1, 1), heights = c(1, 1))
+  plot_layout(widths = c(1, 1), heights = c(1, 1)) +
+  plot_annotation(tag_levels = "a", tag_prefix = "(", tag_suffix = ")")
 
 diagram_labels <- var_labels
 

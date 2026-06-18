@@ -4,20 +4,43 @@
 \alias{plot_climniche_summary_figure}
 \title{Plot the climniche summary figure}
 \usage{
-plot_climniche_summary_figure(x, ...)
+plot_climniche_summary_figure(
+  x,
+  scope = c("current", "all"),
+  max_points = 6000L,
+  seed = 1L,
+  plane_bins = 35L,
+  boundary_probs = seq(0.5, 0.99, 0.01),
+  top_variables = 6L,
+  variable_labels = NULL,
+  title = NULL
+)
 }
 \arguments{
 \item{x}{A fitted climniche object or data returned by
-\code{\link[=climniche_showcase_data]{climniche_showcase_data()}}.}
+\code{climniche_summary_figure_data()}.}
 
-\item{...}{Arguments passed to \code{\link[=plot_climniche_showcase]{plot_climniche_showcase()}}.}
+\item{scope}{\code{"current"} for current reference cells; \code{"all"} for all
+evaluated cells.}
+
+\item{max_points}{Maximum number of cells to draw in the exposure plane.}
+
+\item{seed}{Random seed used when subsampling cells.}
+
+\item{plane_bins}{Number of fixed bins used to summarize the exposure plane.}
+
+\item{boundary_probs}{Boundary quantiles used for the sensitivity curve.}
+
+\item{top_variables}{Number of variables to show.}
+
+\item{variable_labels}{Optional named vector replacing variable labels.}
+
+\item{title}{Optional overall title when \code{patchwork} is installed.}
 }
 \value{
 A patchwork object when \code{patchwork} is installed, otherwise a named
 list of ggplot objects.
 }
 \description{
-\code{plot_climniche_summary_figure()} is a neutral alias for
-\code{\link[=plot_climniche_showcase]{plot_climniche_showcase()}}. The older function name is retained for
-compatibility.
+Plot the climniche summary figure
 }

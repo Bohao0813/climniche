@@ -14,80 +14,14 @@
   seq(rng[1], rng[2], length.out = bins + 1L)
 }
 
-.dominant_exposure_bins <- function(tab, bins = 45L, weights = NULL) {
-  bins <- max(8L, as.integer(bins)[1])
-  x_breaks <- .showcase_breaks(tab$climate_change_amount, bins)
-  y_breaks <- .showcase_breaks(tab$niche_distance_change, bins)
-  x_id <- findInterval(tab$climate_change_amount, x_breaks,
-                       all.inside = TRUE)
-  y_id <- findInterval(tab$niche_distance_change, y_breaks,
-                       all.inside = TRUE)
-  ok <- is.finite(tab$climate_change_amount) &
-    is.finite(tab$niche_distance_change) &
-    !is.na(tab$class)
-  dat <- data.frame(
-    x_id = x_id[ok],
-    y_id = y_id[ok],
-    class = as.character(tab$class[ok]),
-    occupied_weight = if (!is.null(weights)) {
-      weights[ok]
-    } else if ("occupied_weight" %in% names(tab)) {
-      tab$occupied_weight[ok]
-    } else {
-      rep(1, sum(ok))
-    },
-    stringsAsFactors = FALSE
+.exposure_plane_bins <- function(tab, bins = 45L, weights = NULL) {
+  .weighted_quantity_bins(
+    tab,
+    x = "climate_change_amount",
+    y = "niche_distance_change",
+    bins = bins,
+    weights = weights
   )
-  if (!nrow(dat)) {
-    return(data.frame(
-      x_mid = numeric(), y_mid = numeric(), class = factor(),
-      class_count = integer(), total_count = integer(),
-      class_weight = numeric(), total_weight = numeric(),
-      proportion_in_bin = numeric(), cell_weight = numeric(),
-      stringsAsFactors = FALSE
-    ))
-  }
-
-  counts <- stats::aggregate(
-    list(class_count = rep(1L, nrow(dat))),
-    by = list(x_id = dat$x_id, y_id = dat$y_id, class = dat$class),
-    FUN = sum
-  )
-  class_weight <- stats::aggregate(
-    list(class_weight = dat$occupied_weight),
-    by = list(x_id = dat$x_id, y_id = dat$y_id, class = dat$class),
-    FUN = sum
-  )
-  counts <- merge(counts, class_weight,
-                  by = c("x_id", "y_id", "class"), sort = FALSE)
-  counts <- counts[order(counts$x_id, counts$y_id, -counts$class_weight,
-                         counts$class), , drop = FALSE]
-  bin_key <- paste(counts$x_id, counts$y_id, sep = ":")
-  total <- stats::aggregate(
-    list(total_count = counts$class_count),
-    by = list(x_id = counts$x_id, y_id = counts$y_id),
-    FUN = sum
-  )
-  total_weight <- stats::aggregate(
-    list(total_weight = counts$class_weight),
-    by = list(x_id = counts$x_id, y_id = counts$y_id),
-    FUN = sum
-  )
-  total_key <- paste(total$x_id, total$y_id, sep = ":")
-  out <- counts[!duplicated(bin_key), , drop = FALSE]
-  out_key <- paste(out$x_id, out$y_id, sep = ":")
-  out$total_count <- total$total_count[match(out_key, total_key)]
-  out$total_weight <- total_weight$total_weight[match(out_key, total_key)]
-  out$proportion_in_bin <- out$class_weight / out$total_weight
-  out$x_mid <- (x_breaks[out$x_id] + x_breaks[out$x_id + 1L]) / 2
-  out$y_mid <- (y_breaks[out$y_id] + y_breaks[out$y_id + 1L]) / 2
-  out$x_width <- diff(x_breaks)[out$x_id]
-  out$y_height <- diff(y_breaks)[out$y_id]
-  out$cell_weight <- sqrt(out$total_weight / max(out$total_weight, na.rm = TRUE))
-  out$class <- factor(out$class, levels = names(.class_colours()))
-  out[, c("x_mid", "y_mid", "class", "class_count", "total_count",
-          "class_weight", "total_weight", "proportion_in_bin",
-          "cell_weight", "x_width", "y_height")]
 }
 
 .weighted_quantity_bins <- function(tab, x, y, bins = 45L, weights = NULL) {
@@ -154,33 +88,11 @@
   bins <- max(10L, as.integer(bins)[1])
   metric_levels <- levels(metric_data$metric)
   histograms <- list()
-  zero_mass <- data.frame(
-    metric = factor(character(), levels = metric_levels),
-    proportion = numeric(),
-    label = character()
-  )
 
   for (metric_name in metric_levels) {
     dat <- metric_data[metric_data$metric == metric_name, , drop = FALSE]
     total_weight <- sum(dat$weight)
     if (!nrow(dat) || total_weight <= 0) {
-      next
-    }
-    is_boundary <- identical(metric_name, "Niche Boundary\nExceedance")
-    zero <- if (is_boundary) dat$value <= sqrt(.Machine$double.eps) else FALSE
-    if (is_boundary) {
-      proportion <- sum(dat$weight[zero]) / total_weight
-      zero_mass <- rbind(
-        zero_mass,
-        data.frame(
-          metric = factor(metric_name, levels = metric_levels),
-          proportion = proportion,
-          label = paste0("No exceedance: ", round(100 * proportion), "%")
-        )
-      )
-      dat <- dat[!zero, , drop = FALSE]
-    }
-    if (!nrow(dat)) {
       next
     }
     breaks <- .showcase_breaks(dat$value, bins)
@@ -205,10 +117,7 @@
     )
   }
 
-  list(
-    histograms = histogram_data,
-    zero_mass = zero_mass
-  )
+  histogram_data
 }
 
 #' Build data for the climniche summary figure
@@ -222,19 +131,18 @@
 #' @param boundary_probs Boundary quantiles used for the sensitivity curve.
 #' @param top_variables Number of variables to show.
 #'
-#' @return A list of data frames used by `plot_climniche_showcase()`.
+#' @return A list of data frames used by `plot_climniche_summary_figure()`.
 #' @export
-climniche_showcase_data <- function(x, scope = c("current", "all"),
-                                    max_points = 6000L, seed = 1L,
-                                    plane_bins = 35L,
-                                    boundary_probs = seq(0.50, 0.99, 0.01),
-                                    top_variables = 6L) {
+climniche_summary_figure_data <- function(x, scope = c("current", "all"),
+                                          max_points = 6000L, seed = 1L,
+                                          plane_bins = 35L,
+                                          boundary_probs = seq(0.50, 0.99, 0.01),
+                                          top_variables = 6L) {
   if (!inherits(x, "climniche_fit")) {
     stop("x must be a fitted climniche object.", call. = FALSE)
   }
   scope <- match.arg(scope)
   tab <- climniche_table(x, scope = scope)
-  tab$class <- .normalise_class(tab$class)
   tab_weight <- if (scope == "current") tab$occupied_weight else rep(1, nrow(tab))
 
   plane <- tab
@@ -243,21 +151,6 @@ climniche_showcase_data <- function(x, scope = c("current", "all"),
     plane <- plane[sample(seq_len(nrow(plane)), max_points), , drop = FALSE]
   }
 
-  class_counts <- as.data.frame(table(tab$class), stringsAsFactors = FALSE)
-  names(class_counts) <- c("class", "count")
-  class_weight <- tapply(tab_weight, tab$class, sum)
-  class_counts$weight <- as.numeric(class_weight[as.character(class_counts$class)])
-  class_counts$weight[is.na(class_counts$weight)] <- 0
-  class_counts$proportion <- class_counts$weight / sum(tab_weight)
-  class_counts$class <- factor(class_counts$class,
-                               levels = rev(as.character(class_counts$class)))
-  class_counts$label <- ifelse(
-    class_counts$proportion == 0,
-    "0%",
-    ifelse(class_counts$proportion < 0.01,
-    "<1%",
-    paste0(round(100 * class_counts$proportion), "%"))
-  )
   descriptors <- .descriptor_summary(tab, tab_weight)
   descriptor_levels <- c(
     "Away from realised niche centre",
@@ -321,11 +214,13 @@ climniche_showcase_data <- function(x, scope = c("current", "all"),
     ))
     b_radius <- sqrt(pmax(0, b_potential))
     exceed <- pmax(0, x$niche_radius_future[idx] - b_radius)
+    settings <- x$descriptor_settings %||% x$threshold_settings
+    boundary_tolerance <- settings$boundary_exceedance_tolerance %||% 0
     data.frame(
       boundary_quantile = q,
       boundary_distance = b_radius,
       prop_exceeded = .weighted_prop(
-        exceed > x$classification_settings$boundary_exceedance_tolerance,
+        exceed > boundary_tolerance,
         weights
       ),
       mean_exceedance = .weighted_mean_vector(exceed, weights)
@@ -337,8 +232,8 @@ climniche_showcase_data <- function(x, scope = c("current", "all"),
 
   out <- list(
     plane = plane,
-    plane_bins = .dominant_exposure_bins(tab, bins = plane_bins,
-                                         weights = tab_weight),
+    plane_bins = .exposure_plane_bins(tab, bins = plane_bins,
+                                      weights = tab_weight),
     reconfiguration_bins = .weighted_quantity_bins(
       tab,
       x = "climate_reconfiguration",
@@ -346,13 +241,11 @@ climniche_showcase_data <- function(x, scope = c("current", "all"),
       bins = plane_bins,
       weights = tab_weight
     ),
-    classes = class_counts,
     descriptors = descriptors,
     variables = variables,
     boundary = boundary,
     metrics = metric_data,
-    metric_histograms = metric_histograms$histograms,
-    metric_zero_mass = metric_histograms$zero_mass,
+    metric_histograms = metric_histograms,
     settings = data.frame(
       scope = scope,
       n_cells = nrow(tab),
@@ -362,29 +255,14 @@ climniche_showcase_data <- function(x, scope = c("current", "all"),
       fitted_boundary_distance = x$boundary_radius
     )
   )
-  class(out) <- "climniche_showcase_data"
+  class(out) <- "climniche_summary_figure_data"
   out
-}
-
-#' Build data for the climniche summary figure
-#'
-#' `climniche_summary_figure_data()` is a neutral alias for
-#' [climniche_showcase_data()]. The older function name is retained for
-#' compatibility.
-#'
-#' @param x A fitted climniche object.
-#' @param ... Arguments passed to [climniche_showcase_data()].
-#'
-#' @return A list of data frames used by [plot_climniche_summary_figure()].
-#' @export
-climniche_summary_figure_data <- function(x, ...) {
-  climniche_showcase_data(x, ...)
 }
 
 #' Plot the climniche summary figure
 #'
 #' @param x A fitted climniche object or data returned by
-#'   `climniche_showcase_data()`.
+#'   `climniche_summary_figure_data()`.
 #' @param scope `"current"` for current reference cells; `"all"` for all
 #'   evaluated cells.
 #' @param max_points Maximum number of cells to draw in the exposure plane.
@@ -398,16 +276,16 @@ climniche_summary_figure_data <- function(x, ...) {
 #' @return A patchwork object when `patchwork` is installed, otherwise a named
 #'   list of ggplot objects.
 #' @export
-plot_climniche_showcase <- function(x, scope = c("current", "all"),
-                                    max_points = 6000L, seed = 1L,
-                                    plane_bins = 35L,
-                                    boundary_probs = seq(0.50, 0.99, 0.01),
-                                    top_variables = 6L,
-                                    variable_labels = NULL,
-                                    title = NULL) {
+plot_climniche_summary_figure <- function(x, scope = c("current", "all"),
+                                          max_points = 6000L, seed = 1L,
+                                          plane_bins = 35L,
+                                          boundary_probs = seq(0.50, 0.99, 0.01),
+                                          top_variables = 6L,
+                                          variable_labels = NULL,
+                                          title = NULL) {
   .need_ggplot2()
-  if (!inherits(x, "climniche_showcase_data")) {
-    x <- climniche_showcase_data(
+  if (!inherits(x, "climniche_summary_figure_data")) {
+    x <- climniche_summary_figure_data(
       x,
       scope = scope,
       max_points = max_points,
@@ -440,10 +318,10 @@ plot_climniche_showcase <- function(x, scope = c("current", "all"),
     ggplot2::scale_fill_gradientn(
       colours = c("#f7fbfa", "#b7d7d1", "#4f8f86", "#1f5f58"),
       trans = "sqrt",
-      name = "Summed\nreference weight"
+      name = "Reference-cell\nsupport"
     ) +
     ggplot2::labs(
-      title = "(a) Climatic Displacement and Niche Distance Shift",
+      title = "Climatic Displacement vs Niche Distance Shift",
       x = "Climatic Displacement",
       y = "Niche Distance Shift"
     ) +
@@ -482,10 +360,10 @@ plot_climniche_showcase <- function(x, scope = c("current", "all"),
     ggplot2::scale_fill_gradientn(
       colours = c("#fffaf0", "#f2ce91", "#d99238", "#8a3f20"),
       trans = "sqrt",
-      name = "Summed\nreference weight"
+      name = "Reference-cell\nsupport"
     ) +
     ggplot2::labs(
-      title = "(b) Climatic Reconfiguration and Niche Boundary Exceedance",
+      title = "Climatic Reconfiguration vs Niche Boundary Exceedance",
       x = "Climatic Reconfiguration",
       y = "Niche Boundary Exceedance"
     ) +
@@ -534,7 +412,7 @@ plot_climniche_showcase <- function(x, scope = c("current", "all"),
       labels = function(z) paste0(round(100 * z), "%")
     ) +
     ggplot2::labs(
-      title = "(c) Variable Contributions",
+      title = "Predictor contributions",
       subtitle = direction_subtitle,
       x = "Mean absolute contribution",
       y = NULL
@@ -566,18 +444,12 @@ plot_climniche_showcase <- function(x, scope = c("current", "all"),
       ggplot2::aes(xintercept = xintercept),
       linewidth = 0.22, linetype = 2, colour = "grey45"
     ) +
-    ggplot2::geom_text(
-      data = x$metric_zero_mass,
-      ggplot2::aes(x = Inf, y = Inf, label = label),
-      inherit.aes = FALSE, hjust = 1.02, vjust = 1.15,
-      size = 1.9, colour = "black"
-    ) +
-    ggplot2::facet_wrap(~metric, scales = "free_x", nrow = 2) +
+    ggplot2::facet_wrap(~metric, scales = "free", nrow = 2) +
     ggplot2::scale_y_continuous(
       labels = function(z) paste0(round(100 * z), "%")
     ) +
     ggplot2::labs(
-      title = "(d) Metric Distributions",
+      title = "Distributions across suitable habitat",
       x = NULL,
       y = "Weighted percentage"
     ) +
@@ -601,28 +473,14 @@ plot_climniche_showcase <- function(x, scope = c("current", "all"),
       }
     }
     out <- (p_plane | p_reconfiguration) / (p_vars_layout | p_metrics) +
-      patchwork::plot_layout(widths = c(1, 1.18))
-    if (!is.null(title)) {
-      out <- out + patchwork::plot_annotation(title = title)
-    }
+      patchwork::plot_layout(widths = c(1, 1.18)) +
+      patchwork::plot_annotation(
+        title = title,
+        tag_levels = "a",
+        tag_prefix = "(",
+        tag_suffix = ")"
+      )
     return(out)
   }
   plots
-}
-
-#' Plot the climniche summary figure
-#'
-#' `plot_climniche_summary_figure()` is a neutral alias for
-#' [plot_climniche_showcase()]. The older function name is retained for
-#' compatibility.
-#'
-#' @param x A fitted climniche object or data returned by
-#'   [climniche_showcase_data()].
-#' @param ... Arguments passed to [plot_climniche_showcase()].
-#'
-#' @return A patchwork object when `patchwork` is installed, otherwise a named
-#'   list of ggplot objects.
-#' @export
-plot_climniche_summary_figure <- function(x, ...) {
-  plot_climniche_showcase(x, ...)
 }

@@ -171,39 +171,12 @@
   out
 }
 
-.class_level_names <- function() {
-  c(
-    "Limited niche relative change",
-    "Closer to current niche",
-    "Farther from current niche",
-    "Outside current niche boundary",
-    "Climatic Reconfiguration with limited Niche Distance Shift"
-  )
-}
-
-.class_aliases <- function() {
-  c(
-    "Limited climate niche change" =
-      "Limited niche relative change",
-    "little climate niche change" =
-      "Limited niche relative change",
-    "closer to current niche" =
-      "Closer to current niche",
-    "farther from current niche" =
-      "Farther from current niche",
-    "outside current niche boundary" =
-      "Outside current niche boundary",
-    "climate reconfiguration, similar niche distance" =
-      "Climatic Reconfiguration with limited Niche Distance Shift"
-  )
-}
-
-.normalise_class <- function(x) {
-  values <- as.character(x)
-  aliases <- .class_aliases()
-  hit <- match(values, names(aliases))
-  values[!is.na(hit)] <- aliases[hit[!is.na(hit)]]
-  factor(values, levels = .class_level_names())
+.check_probability <- function(x, name) {
+  x <- as.numeric(x)[1]
+  if (!is.finite(x) || x < 0 || x > 1) {
+    stop(name, " must be a finite value between 0 and 1.", call. = FALSE)
+  }
+  x
 }
 
 .fit_reference_weights <- function(x) {
@@ -229,7 +202,7 @@
       )
     ))
   }
-  settings <- x$classification_settings
+  settings <- x$descriptor_settings %||% x$threshold_settings
   tolerance <- if (is.null(settings$tolerance)) 0 else settings$tolerance
   boundary_tolerance <- if (is.null(settings$boundary_exceedance_tolerance)) {
     0
@@ -240,6 +213,7 @@
     niche_distance_change = x$niche_distance_change,
     niche_boundary_exceedance = .fit_metric(x, "niche_boundary_exceedance"),
     tolerance = tolerance,
+    tolerance_quantile = settings$tolerance_quantile %||% 0.10,
     boundary_exceedance_tolerance = boundary_tolerance
   )
 }

@@ -14,8 +14,7 @@ evaluated cells. Current-scope summaries use reference weights.}
 }
 \value{
 A one-row data frame with summaries of the four continuous reported
-quantities. Descriptor and compatibility-classification columns remain
-available for programmatic use.
+quantities, descriptor proportions and fitted descriptor thresholds.
 }
 \description{
 Summarise climniche results

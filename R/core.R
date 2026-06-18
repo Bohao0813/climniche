@@ -22,18 +22,8 @@
 #' @param tolerance Optional Niche Distance Shift tolerance.
 #' @param tolerance_quantile Quantile of absolute Niche Distance Shift used
 #'   when `tolerance = NULL`.
-#' @param stable_climate_change Optional Climatic Displacement threshold for
-#'   the limited niche-relative change class.
-#' @param stable_quantile Quantile of Climatic Displacement used when
-#'   `stable_climate_change = NULL`.
-#' @param stable_reconfiguration Optional threshold for low Climatic
-#'   Reconfiguration.
-#' @param stable_reconfiguration_quantile Quantile of Climatic Reconfiguration
-#'   used when `stable_reconfiguration = NULL`.
 #' @param boundary_exceedance_tolerance Tolerance for deciding whether future
 #'   climate exceeds the empirical niche boundary.
-#' @param conflict_ratio Minimum minority-sign variable-contribution share used
-#'   to mark mixed variable responses. Set to NULL to disable this flag.
 #'
 #' @return An object of class `climniche_fit`.
 #' @noRd
@@ -46,12 +36,7 @@
                                   global_mean = NULL, global_sd = NULL,
                                   tolerance = NULL,
                                   tolerance_quantile = 0.10,
-                                  stable_climate_change = NULL,
-                                  stable_quantile = 0.25,
-                                  stable_reconfiguration = NULL,
-                                  stable_reconfiguration_quantile = 0.25,
-                                  boundary_exceedance_tolerance = 0,
-                                  conflict_ratio = 0.25) {
+                                  boundary_exceedance_tolerance = 0) {
   metric <- match.arg(metric)
   current <- .as_numeric_matrix(current, "current")
   future <- .as_numeric_matrix(future, "future")
@@ -110,36 +95,15 @@
                                 scale = "radial")
   perc <- niche_percentile(psi0, psi1, occupied = occupied_weight)
   contrib <- variable_contribution(x0, x1, center = center, A = A)
-  mixed <- mixed_variable_response(
-    contribution = contrib,
-    niche_boundary_exceedance = exceed,
-    boundary_exceedance_tolerance = boundary_exceedance_tolerance,
-    conflict_ratio = conflict_ratio
-  )
-  class <- classify_exposure(
-    climate_change_amount = amount,
-    niche_distance_change = distance_change,
-    niche_boundary_exceedance = exceed,
-    climate_reconfiguration = reconfiguration,
-    contribution = contrib,
-    tolerance = tolerance,
-    tolerance_quantile = tolerance_quantile,
-    stable_climate_change = stable_climate_change,
-    stable_quantile = stable_quantile,
-    stable_reconfiguration = stable_reconfiguration,
-    stable_reconfiguration_quantile = stable_reconfiguration_quantile,
-    boundary_exceedance_tolerance = boundary_exceedance_tolerance,
-    conflict_ratio = conflict_ratio
-  )
-  classification_settings <- attr(class, "classification_settings")
-  attr(class, "classification_settings") <- NULL
   descriptors <- .exposure_descriptors(
     niche_distance_change = distance_change,
     niche_boundary_exceedance = exceed,
-    tolerance = classification_settings$tolerance,
-    boundary_exceedance_tolerance =
-      classification_settings$boundary_exceedance_tolerance
+    tolerance = tolerance,
+    tolerance_quantile = tolerance_quantile,
+    boundary_exceedance_tolerance = boundary_exceedance_tolerance
   )
+  descriptor_settings <- attr(descriptors, "descriptor_settings")
+  attr(descriptors, "descriptor_settings") <- NULL
 
   out <- list(
     call = match.call(),
@@ -167,11 +131,10 @@
     boundary_radius = b_radius,
     niche_percentile = perc,
     variable_contribution = contrib,
-    mixed_variable_response = mixed,
     radial_direction = descriptors$radial_direction,
     boundary_status = descriptors$boundary_status,
-    classification = class,
-    classification_settings = classification_settings,
+    descriptor_settings = descriptor_settings,
+    threshold_settings = descriptor_settings,
     standardization = list(center = scaled$center, scale = scaled$scale)
   )
   class(out) <- "climniche_fit"

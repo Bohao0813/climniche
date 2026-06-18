@@ -3,12 +3,6 @@ if (!exists("fit_climniche", mode = "function") &&
   library(climniche)
 }
 
-normalise_class_test <- if (exists(".normalise_class", mode = "function")) {
-  .normalise_class
-} else {
-  get(".normalise_class", envir = asNamespace("climniche"))
-}
-
 sim <- simulate_climniche(n = 500, seed = 10)
 
 toward <- fit_climniche(
@@ -41,6 +35,9 @@ stopifnot(identical(away$occupied, away_numeric_occupied$occupied))
 stopifnot(length(toward$climate_change_amount) == nrow(sim$current))
 stopifnot(length(toward$climate_reconfiguration) == nrow(sim$current))
 stopifnot(length(toward$niche_boundary_exceedance) == nrow(sim$current))
+stopifnot(is.null(away$classification))
+stopifnot(is.null(away$mixed_variable_response))
+stopifnot(is.null(away$classification_settings))
 stopifnot(isTRUE(all.equal(
   toward$climate_reconfiguration,
   toward$composition_change,
@@ -62,11 +59,14 @@ stopifnot(isTRUE(all.equal(
 stopifnot(mean(toward$niche_distance_change) < mean(away$niche_distance_change))
 stopifnot(sum(away$niche_boundary_exceedance > 0) >=
             sum(toward$niche_boundary_exceedance > 0))
+
+tab <- climniche_table(away)
 stopifnot(all(c("occupied_weight", "climate_reconfiguration",
                 "niche_boundary_exceedance", "composition_change",
                 "outside_niche_exceedance", "radial_direction",
-                "boundary_status") %in%
-                names(climniche_table(away))))
+                "boundary_status") %in% names(tab)))
+stopifnot(!("class" %in% names(tab)))
+stopifnot(!("mixed_variable_response" %in% names(tab)))
 stopifnot(identical(levels(away$radial_direction), c(
   "Toward realised niche centre",
   "Limited Niche Distance Shift",
@@ -75,6 +75,31 @@ stopifnot(identical(levels(away$radial_direction), c(
 stopifnot(identical(levels(away$boundary_status), c(
   "Within empirical niche boundary",
   "Beyond empirical niche boundary"
+)))
+stopifnot(is.finite(away$descriptor_settings$tolerance))
+stopifnot(isTRUE(all.equal(
+  away$descriptor_settings$tolerance,
+  away$threshold_settings$tolerance
+)))
+
+custom_descriptor <- fit_climniche(
+  current = sim$current,
+  future = sim$future_away,
+  occupied = sim$occupied,
+  center = sim$center,
+  sensitivity = sim$sensitivity,
+  tolerance = 1e6,
+  boundary_exceedance_tolerance = 1e6
+)
+stopifnot(all(custom_descriptor$radial_direction ==
+                "Limited Niche Distance Shift"))
+stopifnot(all(custom_descriptor$boundary_status ==
+                "Within empirical niche boundary"))
+stopifnot(isTRUE(all.equal(custom_descriptor$descriptor_settings$tolerance,
+                           1e6)))
+stopifnot(isTRUE(all.equal(
+  custom_descriptor$descriptor_settings$boundary_exceedance_tolerance,
+  1e6
 )))
 
 simple_current <- matrix(c(
@@ -139,50 +164,6 @@ negative_weight <- try(fit_climniche(
 ), silent = TRUE)
 stopifnot(inherits(negative_weight, "try-error"))
 
-custom_class <- fit_climniche(
-  current = sim$current,
-  future = sim$future_away,
-  occupied = sim$occupied,
-  center = sim$center,
-  sensitivity = sim$sensitivity,
-  tolerance = 1e6,
-  stable_climate_change = 1e6,
-  stable_reconfiguration = 1e6,
-  boundary_exceedance_tolerance = 1e6
-)
-stopifnot(!identical(as.character(away$classification),
-                     as.character(custom_class$classification)))
-stopifnot(all(custom_class$classification == "Limited niche relative change"))
-stopifnot(all(custom_class$radial_direction == "Limited Niche Distance Shift"))
-stopifnot(all(custom_class$boundary_status ==
-                "Within empirical niche boundary"))
-stopifnot(as.character(normalise_class_test("Limited climate niche change")) ==
-            "Limited niche relative change")
-stopifnot(as.character(normalise_class_test("little climate niche change")) ==
-            "Limited niche relative change")
-stopifnot(isTRUE(all.equal(custom_class$classification_settings$tolerance,
-                           1e6)))
-stopifnot(isTRUE(all.equal(
-  custom_class$classification_settings$stable_climate_change,
-  1e6
-)))
-stopifnot(isTRUE(all.equal(
-  custom_class$classification_settings$stable_reconfiguration,
-  1e6
-)))
-stopifnot(isTRUE(all.equal(
-  custom_class$classification_settings$boundary_exceedance_tolerance,
-  1e6
-)))
-stopifnot(is.finite(away$classification_settings$tolerance))
-stopifnot(is.finite(away$classification_settings$stable_climate_change))
-stopifnot(is.finite(away$classification_settings$stable_reconfiguration))
-limited_summary <- climniche_summary(custom_class)
-stopifnot(isTRUE(all.equal(limited_summary$prop_stable, 1)))
-stopifnot(isTRUE(all.equal(limited_summary$prop_niche_convergence, 0)))
-stopifnot(isTRUE(all.equal(limited_summary$prop_niche_divergence, 0)))
-stopifnot(isTRUE(all.equal(limited_summary$prop_niche_exceedance, 0)))
-
 A_full <- matrix(c(1, 0.25, 0.25, 1.4), 2, 2)
 fit_full <- fit_climniche(
   current = sim$current,
@@ -203,68 +184,49 @@ bad_fit <- try(fit_climniche(
   A = bad_A
 ), silent = TRUE)
 stopifnot(inherits(bad_fit, "try-error"))
-stopifnot(is.logical(away$mixed_variable_response))
-stopifnot(!("mixed variable response" %in% levels(away$classification)))
-stopifnot("Climatic Reconfiguration with limited Niche Distance Shift" %in%
-            levels(away$classification))
 
-diagram <- climniche_diagram_data(away, max_arrows = 50)
-stopifnot(inherits(diagram, "climniche_diagram_data"))
-stopifnot(nrow(diagram$cells) == length(away$occupied))
-stopifnot(nrow(diagram$arrows) <= 50)
-stopifnot(all(c("current_axis1", "future_axis1", "class",
-                "climate_reconfiguration", "niche_boundary_exceedance",
-                "occupied_weight") %in% names(diagram$cells)))
-showcase <- climniche_showcase_data(away, max_points = 80)
 summary_data <- climniche_summary_figure_data(away, max_points = 80)
-stopifnot(inherits(showcase, "climniche_showcase_data"))
-stopifnot(inherits(summary_data, "climniche_showcase_data"))
-stopifnot(nrow(showcase$plane) <= 80)
-stopifnot(all(c("x_mid", "y_mid", "cell_weight", "total_weight") %in%
-                names(showcase$plane_bins)))
+stopifnot(inherits(summary_data, "climniche_summary_figure_data"))
+stopifnot(nrow(summary_data$plane) <= 80)
 stopifnot(all(c("x_mid", "y_mid", "total_weight") %in%
-                names(showcase$reconfiguration_bins)))
-stopifnot(all(c("metric", "value", "weight") %in% names(showcase$metrics)))
-stopifnot(all(c("proportion", "count", "weight") %in%
-                names(showcase$classes)))
-stopifnot(nrow(showcase$classes) == 5L)
+                names(summary_data$plane_bins)))
+stopifnot(all(c("x_mid", "y_mid", "total_weight") %in%
+                names(summary_data$reconfiguration_bins)))
+stopifnot(all(c("metric", "value", "weight") %in% names(summary_data$metrics)))
+stopifnot(!("classes" %in% names(summary_data)))
 stopifnot(all(c("descriptor", "level", "proportion") %in%
-                names(showcase$descriptors)))
-stopifnot(nrow(showcase$descriptors) == 5L)
+                names(summary_data$descriptors)))
+stopifnot(nrow(summary_data$descriptors) == 5L)
 stopifnot(all(c("metric", "x", "width", "proportion") %in%
-                names(showcase$metric_histograms)))
-stopifnot("mean_absolute_share" %in% names(showcase$variables))
+                names(summary_data$metric_histograms)))
+stopifnot("mean_absolute_share" %in% names(summary_data$variables))
 stopifnot(all(c("boundary_quantile", "prop_exceeded") %in%
-                names(showcase$boundary)))
-report_all_classes <- climniche_report(away, scope = "current")
+                names(summary_data$boundary)))
+
+report <- climniche_report(away, scope = "current")
 formal_metric_names <- c(
   "Climatic Displacement",
   "Niche Distance Shift",
   "Climatic Reconfiguration",
   "Niche Boundary Exceedance"
 )
-stopifnot(all(formal_metric_names %in%
-                report_all_classes$metric_definitions$metric))
-stopifnot(all(formal_metric_names %in%
-                report_all_classes$metric_summary$metric))
+stopifnot(all(formal_metric_names %in% report$metric_definitions$metric))
+stopifnot(all(formal_metric_names %in% report$metric_summary$metric))
+stopifnot(is.null(report$class_summary))
+stopifnot(is.null(report$classification_settings))
+stopifnot(nrow(report$descriptor_summary) == 5L)
 tmp_report <- tempfile(fileext = ".md")
-write_climniche_report(report_all_classes, tmp_report)
+write_climniche_report(report, tmp_report)
 report_text <- paste(readLines(tmp_report, warn = FALSE), collapse = "\n")
 stopifnot(all(vapply(formal_metric_names, grepl, logical(1),
                      x = report_text, fixed = TRUE)))
-stopifnot(nrow(report_all_classes$descriptor_summary) == 5L)
-stopifnot(nrow(report_all_classes$class_summary) == 5L)
-stopifnot(all(as.character(report_all_classes$class_summary$class) ==
-                c(
-                  "Limited niche relative change",
-                  "Closer to current niche",
-                  "Farther from current niche",
-                  "Outside current niche boundary",
-                  paste(
-                    "Climatic Reconfiguration with limited",
-                    "Niche Distance Shift"
-                  )
-                )))
+
+summ <- climniche_summary(away)
+stopifnot(!("prop_stable" %in% names(summ)))
+stopifnot(!("prop_niche_exceedance" %in% names(summ)))
+stopifnot(all(c("q90_niche_distance_change",
+                "q90_climate_reconfiguration",
+                "boundary_exceedance_tolerance") %in% names(summ)))
 
 if (requireNamespace("ggplot2", quietly = TRUE)) {
   p_new <- plot_climniche_distribution(away,
@@ -277,16 +239,14 @@ if (requireNamespace("ggplot2", quietly = TRUE)) {
   stopifnot(identical(p_new$labels$x, "Climatic Reconfiguration"))
   stopifnot(isTRUE(all.equal(p_new$data$value, p_old$data$value)))
   p_exposure <- plot_climniche_exposure(away)
-  p_exposure_classes <- plot_climniche_exposure(
+  bad_colour <- try(plot_climniche_exposure(
     away, colour_by = "classification"
-  )
+  ), silent = TRUE)
   stopifnot(inherits(p_exposure, "ggplot"))
-  stopifnot(inherits(p_exposure_classes, "ggplot"))
+  stopifnot(inherits(bad_colour, "try-error"))
   stopifnot(identical(p_exposure$labels$x, "Climatic Displacement"))
   stopifnot(identical(p_exposure$labels$y, "Niche Distance Shift"))
-  showcase_plot <- plot_climniche_showcase(away, max_points = 80)
   summary_figure_plot <- plot_climniche_summary_figure(away, max_points = 80)
-  stopifnot(inherits(showcase_plot, "patchwork") || is.list(showcase_plot))
   stopifnot(inherits(summary_figure_plot, "patchwork") ||
               is.list(summary_figure_plot))
 }
@@ -314,6 +274,8 @@ if (requireNamespace("raster", quietly = TRUE)) {
   stopifnot(methods::is(rf$rasters$climate_change_amount, "RasterLayer"))
   stopifnot(!is.null(rf$rasters$climate_reconfiguration))
   stopifnot(!is.null(rf$rasters$niche_boundary_exceedance))
+  stopifnot(is.null(rf$rasters$classification))
+  stopifnot(is.null(rf$class_lookup))
   rf_domain <- fit_climniche_raster(cur, fut, occupied = occ,
                                     occupied_threshold = 0.5,
                                     domain = domain)
@@ -329,29 +291,17 @@ if (requireNamespace("raster", quietly = TRUE)) {
     p_map_old <- plot_climniche_map(rf, metric = "outside_niche_exceedance",
                                     occupied = occ, occupied_only = TRUE,
                                     occupied_threshold = 0.5)
-    p_cls <- plot_climniche_classes(rf, occupied = occ, occupied_only = TRUE,
-                                    occupied_threshold = 0.5)
-    p_cls_all <- plot_climniche_classes(
-      rf, occupied = occ, occupied_only = TRUE,
-      occupied_threshold = 0.5, class_display = "all"
-    )
     p_maps <- plot_climniche_maps(
       rf, occupied = occ, occupied_only = TRUE,
       occupied_threshold = 0.5, degree_labels = "hemisphere"
     )
     stopifnot(inherits(p_map_new, "ggplot"))
     stopifnot(inherits(p_map_old, "ggplot"))
-    stopifnot(inherits(p_cls, "ggplot"))
-    stopifnot(inherits(p_cls_all, "ggplot"))
     stopifnot(inherits(p_maps, "patchwork") || is.list(p_maps))
     stopifnot(identical(p_map_new$labels$title,
                         "Niche Boundary Exceedance"))
     stopifnot(nrow(p_map_new$data) == 8)
-    stopifnot(nrow(p_cls$data) == 8)
     stopifnot(isTRUE(all.equal(p_map_new$data$value, p_map_old$data$value)))
-    stopifnot(isTRUE(all.equal(
-      p_map_new$scales$get_scales("fill")$limits[1], 0
-    )))
     p_shift <- plot_climniche_map(rf, metric = "niche_distance_change")
     shift_limits <- p_shift$scales$get_scales("fill")$limits
     stopifnot(identical(p_shift$labels$title,
@@ -378,20 +328,6 @@ if (requireNamespace("raster", quietly = TRUE)) {
     stopifnot(any(vapply(p_region$layers, function(layer) {
       inherits(layer$geom, "GeomPath")
     }, logical(1))))
-    if (requireNamespace("sf", quietly = TRUE)) {
-      region_sf <- sf::st_sf(
-        geometry = sf::st_sfc(
-          sf::st_polygon(list(as.matrix(region_boundary[, c("x", "y")]))),
-          crs = 4326
-        )
-      )
-      p_region_sf <- plot_climniche_map(
-        rf,
-        metric = "climate_change_amount",
-        study_region = region_sf
-      )
-      stopifnot(inherits(p_region_sf, "ggplot"))
-    }
     stopifnot(inherits(plot_climniche_variable_contribution(away), "ggplot"))
   }
 }
@@ -419,6 +355,8 @@ if (requireNamespace("terra", quietly = TRUE)) {
   stopifnot(methods::is(tf$rasters$climate_change_amount, "SpatRaster"))
   stopifnot(!is.null(tf$rasters$climate_reconfiguration))
   stopifnot(!is.null(tf$rasters$niche_boundary_exceedance))
+  stopifnot(is.null(tf$rasters$classification))
+  stopifnot(is.null(tf$class_lookup))
   tf_domain <- fit_climniche_terra(cur, fut, occupied = occ,
                                    occupied_threshold = 0.5,
                                    domain = domain)
@@ -434,18 +372,14 @@ if (requireNamespace("terra", quietly = TRUE)) {
     p_map_old <- plot_climniche_map(tf, metric = "outside_niche_exceedance",
                                     occupied = occ, occupied_only = TRUE,
                                     occupied_threshold = 0.5)
-    p_cls <- plot_climniche_classes(tf, occupied = occ, occupied_only = TRUE,
-                                    occupied_threshold = 0.5)
     p_maps <- plot_climniche_maps(
       tf, occupied = occ, occupied_only = TRUE,
       occupied_threshold = 0.5
     )
     stopifnot(inherits(p_map_new, "ggplot"))
     stopifnot(inherits(p_map_old, "ggplot"))
-    stopifnot(inherits(p_cls, "ggplot"))
     stopifnot(inherits(p_maps, "patchwork") || is.list(p_maps))
     stopifnot(nrow(p_map_new$data) == 8)
-    stopifnot(nrow(p_cls$data) == 8)
     stopifnot(isTRUE(all.equal(p_map_new$data$value, p_map_old$data$value)))
   }
 }

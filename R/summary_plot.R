@@ -17,10 +17,9 @@ summary.climniche_fit <- function(object, ...) {
       base::summary(.fit_metric(object, "niche_boundary_exceedance")),
     outside_niche_exceedance =
       base::summary(.fit_metric(object, "outside_niche_exceedance")),
-    classification_settings = object$classification_settings,
+    descriptor_settings = object$descriptor_settings,
     radial_direction = table(descriptors$radial_direction),
-    boundary_status = table(descriptors$boundary_status),
-    classification = table(.normalise_class(object$classification))
+    boundary_status = table(descriptors$boundary_status)
   )
   class(out) <- "summary.climniche_fit"
   out
@@ -28,8 +27,7 @@ summary.climniche_fit <- function(object, ...) {
 
 #' @export
 plot.climniche_fit <- function(x, type = c("distance", "boundary", "amount",
-                                           "reconfiguration",
-                                           "classification"), ...) {
+                                           "reconfiguration"), ...) {
   type <- match.arg(type)
   if (type == "distance") {
     graphics::hist(x$niche_distance_change, main = "Niche Distance Shift",
@@ -45,9 +43,6 @@ plot.climniche_fit <- function(x, type = c("distance", "boundary", "amount",
     graphics::hist(.fit_metric(x, "climate_reconfiguration"),
                    main = "Climatic Reconfiguration",
                    xlab = "Climatic Reconfiguration", ...)
-  } else {
-    graphics::barplot(table(x$classification), las = 2,
-                      main = "Derived exposure classes", ...)
   }
   invisible(x)
 }

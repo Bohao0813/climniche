@@ -20,12 +20,7 @@ fit_climniche(
   global_sd = NULL,
   tolerance = NULL,
   tolerance_quantile = 0.1,
-  stable_climate_change = NULL,
-  stable_quantile = 0.25,
-  stable_reconfiguration = NULL,
-  stable_reconfiguration_quantile = 0.25,
-  boundary_exceedance_tolerance = 0,
-  conflict_ratio = 0.25
+  boundary_exceedance_tolerance = 0
 )
 }
 \arguments{
@@ -66,25 +61,8 @@ the value is calculated from \code{tolerance_quantile}.}
 \item{tolerance_quantile}{Quantile of absolute Niche Distance Shift used
 when \code{tolerance = NULL}.}
 
-\item{stable_climate_change}{Optional user-set threshold for limited
-Climatic Displacement. If \code{NULL}, the value is calculated from
-\code{stable_quantile}.}
-
-\item{stable_quantile}{Quantile of Climatic Displacement used when
-\code{stable_climate_change = NULL}.}
-
-\item{stable_reconfiguration}{Optional user-set threshold for low Climatic
-Reconfiguration. If \code{NULL}, the value is calculated from
-\code{stable_reconfiguration_quantile}.}
-
-\item{stable_reconfiguration_quantile}{Quantile of Climatic Reconfiguration
-used when \code{stable_reconfiguration = NULL}.}
-
 \item{boundary_exceedance_tolerance}{User-set tolerance for deciding whether
 future climate exceeds the empirical niche boundary.}
-
-\item{conflict_ratio}{Minimum minority sign contribution share used to mark
-mixed variable responses. Set to NULL to disable this flag.}
 }
 \value{
 An object of class \code{climniche_fit}.
@@ -119,10 +97,10 @@ Climatic Reconfiguration is derived from Climatic Displacement and Niche
 Distance Shift; it is a non radial displacement component rather than an
 independently estimated process.
 
-All classification-related thresholds are user-settable. If a direct
-threshold argument is \code{NULL}, \code{climniche} calculates the effective threshold
-from the corresponding quantile argument. The fitted object stores the
-effective values actually used in \code{classification_settings}.
+Descriptor thresholds are user-settable. If \code{tolerance = NULL},
+\code{climniche} calculates the effective Niche Distance Shift tolerance from
+\code{tolerance_quantile}. The fitted object stores the effective values in
+\code{descriptor_settings}.
 }
 \section{User-settable thresholds}{
 
@@ -130,14 +108,8 @@ effective values actually used in \code{classification_settings}.
 \item \code{boundary}: quantile used to define the empirical realised niche boundary.
 \item \code{tolerance}: direct Niche Distance Shift tolerance; otherwise
 \code{tolerance_quantile}.
-\item \code{stable_climate_change}: direct Climatic Displacement threshold for the
-limited-change class; otherwise \code{stable_quantile}.
-\item \code{stable_reconfiguration}: direct Climatic Reconfiguration threshold for
-the limited-change class; otherwise \code{stable_reconfiguration_quantile}.
 \item \code{boundary_exceedance_tolerance}: direct tolerance for Niche Boundary
 Exceedance.
-\item \code{conflict_ratio}: minority-sign contribution share used by the mixed
-variable-response diagnostic.
 }
 }
 

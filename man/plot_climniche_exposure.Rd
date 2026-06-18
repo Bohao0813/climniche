@@ -10,7 +10,7 @@ plot_climniche_exposure(
   max_points = 6000,
   seed = 1,
   title = NULL,
-  colour_by = c("niche_boundary_exceedance", "classification")
+  colour_by = "niche_boundary_exceedance"
 )
 }
 \arguments{
@@ -25,8 +25,7 @@ evaluated cells.}
 
 \item{title}{Optional plot title.}
 
-\item{colour_by}{Colour cells by Niche Boundary Exceedance or by the
-compatibility classification.}
+\item{colour_by}{Colour cells by Niche Boundary Exceedance.}
 }
 \value{
 A ggplot object.

@@ -109,16 +109,7 @@
       current,
       as.integer(fit$boundary_status),
       complete
-    ),
-    classification = .values_to_raster(
-      current,
-      as.integer(fit$classification),
-      complete
     )
-  )
-  fit$class_lookup <- data.frame(
-    id = seq_along(levels(fit$classification)),
-    class = levels(fit$classification)
   )
   fit$descriptor_lookup <- list(
     radial_direction = data.frame(
@@ -249,14 +240,7 @@
     ),
     boundary_status = .values_to_spatraster(
       current, as.integer(fit$boundary_status), complete
-    ),
-    classification = .values_to_spatraster(
-      current, as.integer(fit$classification), complete
     )
-  )
-  fit$class_lookup <- data.frame(
-    id = seq_along(levels(fit$classification)),
-    class = levels(fit$classification)
   )
   fit$descriptor_lookup <- list(
     radial_direction = data.frame(

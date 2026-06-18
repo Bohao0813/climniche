@@ -63,8 +63,7 @@ The outputs are cell-level tables, maps, weighted summaries, model-derived
 variable contributions, report text, and figure data. The four reported
 quantities are continuous. Two optional descriptors summarise whether future
 conditions move toward or away from the realised niche centre and whether the
-chosen niche boundary is exceeded. The older five-class `classification` field
-and `plot_climniche_classes()` remain available for existing workflows.
+chosen niche boundary is exceeded.
 
 ## Basic use
 
@@ -92,8 +91,7 @@ the calculation to the study region, whether it is a terrestrial range, an
 island, a catchment, a marine region, or a modelled accessible area. Map
 functions accept `study_region` as an `sf`, `Spatial`, `SpatVector`, or x-y
 boundary data frame, so terrestrial study boundaries can be drawn without
-changing the analysis. Thresholds used by the optional descriptors or legacy
-classification remain user-settable.
+changing the analysis. Thresholds used by the descriptors remain user-settable.
 
 ## Worked example
 

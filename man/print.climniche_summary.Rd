@@ -15,7 +15,5 @@
 Invisibly returns \code{x}.
 }
 \description{
-Prints the four continuous reported quantities. Compatibility columns for
-the earlier combined classification remain available in the underlying data
-frame but are not included in the default display.
+Prints the four continuous reported quantities.
 }

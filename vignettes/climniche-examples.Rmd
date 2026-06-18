@@ -118,10 +118,6 @@ metric_summary[, c(
 )]
 ```
 
-Niche Distance Shift direction and boundary status are interpreted separately.
-The older five-class field is retained for compatibility but is not used in the
-summary figure.
-
 Variable contributions are model-derived summaries of fitted change. They are
 not causal attribution.
 
@@ -131,10 +127,9 @@ variable_contributions
 
 ## Mediterranean maps
 
-The map figure shows the four continuous reported quantities in the
-Mediterranean Sea analysis domain. Land is shown in grey and is outside the
-calculation. The continuous SDM suitability raster was used only as the current
-reference weight layer.
+The map figure shows the four continuous reported quantities within current
+suitable habitat. The Mediterranean outline provides geographic context; land
+is outside the calculation.
 
 ```{r, echo = FALSE, out.width = "100%"}
 knitr::include_graphics("figures/anchovy-mediterranean-maps.png")

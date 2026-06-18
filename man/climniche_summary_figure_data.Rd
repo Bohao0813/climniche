@@ -4,18 +4,35 @@
 \alias{climniche_summary_figure_data}
 \title{Build data for the climniche summary figure}
 \usage{
-climniche_summary_figure_data(x, ...)
+climniche_summary_figure_data(
+  x,
+  scope = c("current", "all"),
+  max_points = 6000L,
+  seed = 1L,
+  plane_bins = 35L,
+  boundary_probs = seq(0.5, 0.99, 0.01),
+  top_variables = 6L
+)
 }
 \arguments{
 \item{x}{A fitted climniche object.}
 
-\item{...}{Arguments passed to \code{\link[=climniche_showcase_data]{climniche_showcase_data()}}.}
+\item{scope}{\code{"current"} for current reference cells; \code{"all"} for all
+evaluated cells.}
+
+\item{max_points}{Maximum number of cells to keep for the exposure plane.}
+
+\item{seed}{Random seed used when subsampling cells.}
+
+\item{plane_bins}{Number of fixed bins used to summarize the exposure plane.}
+
+\item{boundary_probs}{Boundary quantiles used for the sensitivity curve.}
+
+\item{top_variables}{Number of variables to show.}
 }
 \value{
-A list of data frames used by \code{\link[=plot_climniche_summary_figure]{plot_climniche_summary_figure()}}.
+A list of data frames used by \code{plot_climniche_summary_figure()}.
 }
 \description{
-\code{climniche_summary_figure_data()} is a neutral alias for
-\code{\link[=climniche_showcase_data]{climniche_showcase_data()}}. The older function name is retained for
-compatibility.
+Build data for the climniche summary figure
 }
