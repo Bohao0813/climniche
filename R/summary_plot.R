@@ -28,6 +28,7 @@ summary.climniche_fit <- function(object, ...) {
 
 #' @export
 plot.climniche_fit <- function(x, type = c("distance", "boundary", "amount",
+                                           "reconfiguration",
                                            "classification"), ...) {
   type <- match.arg(type)
   if (type == "distance") {
@@ -40,6 +41,10 @@ plot.climniche_fit <- function(x, type = c("distance", "boundary", "amount",
   } else if (type == "amount") {
     graphics::hist(x$climate_change_amount, main = "Climatic Displacement",
                    xlab = "Climatic Displacement", ...)
+  } else if (type == "reconfiguration") {
+    graphics::hist(.fit_metric(x, "climate_reconfiguration"),
+                   main = "Climatic Reconfiguration",
+                   xlab = "Climatic Reconfiguration", ...)
   } else {
     graphics::barplot(table(x$classification), las = 2,
                       main = "Derived exposure classes", ...)

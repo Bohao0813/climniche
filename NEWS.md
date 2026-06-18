@@ -1,41 +1,31 @@
+# climniche 0.3.0
+
+* Revised the Mediterranean anchovy example so the analysis domain is the
+  Mediterranean Sea mask, while the continuous SDM suitability raster is used
+  only as the current reference weight layer.
+* Updated the summary figure to use formal metric titles, clearer binned-plane
+  legends and an explicit "No exceedance" annotation for zero Niche Boundary
+  Exceedance.
+* Added `plot_climniche_summary_figure()` and
+  `climniche_summary_figure_data()` as preferred names for the summary figure.
+  The older showcase names remain available for existing code.
+* Updated map and summary figure outputs in PNG and PDF format for the prepared
+  Mediterranean example.
+* Cleaned README, vignette, report and pkgdown text to use formal metric names
+  and more direct methodological wording.
+* Added tests for formal plot/report labels, domain handling with continuous
+  reference weights and threshold values equal to `occupied_threshold`.
+
 # climniche 0.2.0
 
-* Reframed user-facing documentation around a niche-relative decomposition of
-  projected climate exposure rather than four independent metrics.
-* Reworked the Mediterranean anchovy vignette to start from prepared climniche
-  inputs and to separate Bio-ORACLE layer metadata, presence-background SDM
-  metadata, predictor screening metadata and climniche fit settings.
-* Added AUC to the example SDM metadata and used equal numbers of presence and
-  background cells in the prepared example.
-* Updated figures, reports and package-site examples to use the formal names
-  Climatic Displacement, Niche Distance Shift, Climatic Reconfiguration and
-  Niche Boundary Exceedance for the reported quantities.
-* Removed the Mediterranean anchovy diagram from the vignette because the
-  two-dimensional projection did not provide a clear enough explanation of the
-  niche-relative decomposition.
-* Added publication-oriented PDF outputs for the Mediterranean anchovy map and
-  summary figures used in the vignette.
-* Refreshed the Mediterranean anchovy example with prepared Bio-ORACLE v3
-  marine climate rasters and continuous suitability weights.
-* Reworked the summary figure to use weighted exposure-plane bins, weighted
-  quantity distributions, normalised variable contribution shares and two
-  weighted planes that display the four reported quantities without assigning
-  cells to exposure classes.
-* Retained the earlier five-class `classification` field and plotting function
-  for compatibility, but removed this threshold hierarchy from the default
-  report and summary figure.
-* Added `radial_direction` and `boundary_status` to fitted objects and cell-level
-  tables. Raster workflows also return these descriptor layers.
-* Restored the package default classification settings in the anchovy example;
-  example thresholds are no longer adjusted to produce a chosen number of
-  classes.
-* Added `plot_climniche_maps()` and extended map controls for colour limits,
-  palettes, legends, plotting extent and longitude-latitude labels.
-* Added optional `study_region` boundaries to raster maps. The same interface
-  supports terrestrial and marine study regions, while `domain` controls which
-  cells enter the calculation.
-* Revised the Mediterranean maps to use a dissolved sea boundary, a distinct
-  land mask, aligned geographic axes and horizontal legends.
+* Added the Mediterranean European anchovy example with Bio-ORACLE v3 marine
+  climate layers, prepared future projections and continuous SDM suitability
+  weights.
+* Added `radial_direction` and `boundary_status` descriptors to fitted objects,
+  cell tables and raster workflows.
+* Added `plot_climniche_maps()` and map controls for colour limits, palettes,
+  legends, plotting extent, study-region boundaries and longitude-latitude
+  labels.
 * Changed the package license to MIT.
 
 # climniche 0.1.1

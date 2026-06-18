@@ -52,24 +52,6 @@ reference:
       - print.climniche_summary
       - climniche_table
       - write_climniche_report
-  - title: Visualisation
-    contents:
-      - plot_climniche_showcase
-      - climniche_showcase_data
-      - plot_climniche_map
-      - plot_climniche_maps
-      - plot_climniche_exposure
-      - plot_climniche_distribution
-      - plot_climniche_report
-      - plot_climniche_variable_contribution
-      - plot_variable_contribution
-  - title: Compatibility classification
-    desc: Functions for the earlier five-class interpretation.
-    contents:
-      - plot_climniche_diagram
-      - climniche_diagram_data
-      - plot_climniche_classes
-      - plot_climniche_class_summary
   - title: Reported quantities
     contents:
       - niche_metric
@@ -78,7 +60,27 @@ reference:
       - boundary_exceedance
       - niche_percentile
       - variable_contribution
-  - title: Example data
+  - title: Figures and maps
+    contents:
+      - plot_climniche_summary_figure
+      - climniche_summary_figure_data
+      - plot_climniche_map
+      - plot_climniche_maps
+      - plot_climniche_exposure
+      - plot_climniche_distribution
+      - plot_climniche_report
+      - plot_climniche_variable_contribution
+  - title: Compatibility classification
+    desc: Functions for the earlier five-class interpretation.
+    contents:
+      - climniche_showcase_data
+      - plot_climniche_showcase
+      - plot_climniche_diagram
+      - climniche_diagram_data
+      - plot_climniche_classes
+      - plot_climniche_class_summary
+      - plot_variable_contribution
+  - title: Simulation helper
     contents:
       - simulate_climniche
 articles:

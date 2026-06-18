@@ -129,7 +129,10 @@ climniche_table <- function(x, scope = c("current", "all")) {
       "niche_boundary_exceedance"
     ),
     definition = c(
-      "Total sensitivity weighted climatic displacement.",
+      paste(
+        "Distance between current and future conditions in standardised,",
+        "sensitivity-weighted climatic space."
+      ),
       paste(
         "Signed change in distance from the current realised climatic",
         "niche centre."
@@ -139,8 +142,8 @@ climniche_table <- function(x, scope = c("current", "all")) {
         "Climatic Displacement and Niche Distance Shift."
       ),
       paste(
-        "Positive excess of future niche distance beyond the empirical",
-        "boundary of the current realised climatic niche."
+        "Positive excess beyond the chosen weighted quantile of current",
+        "reference-cell distances from the realised niche centre."
       )
     ),
     stringsAsFactors = FALSE
@@ -378,8 +381,8 @@ climniche_report <- function(x, species = NULL, scope = c("current", "all"),
     mean_contribution = as.numeric(vals),
     abs_mean_contribution = abs(as.numeric(vals)),
     interpretation = ifelse(vals > 0,
-                            "positive niche potential contribution",
-                            "negative niche potential contribution"),
+                            "positive fitted variable contribution",
+                            "negative fitted variable contribution"),
     stringsAsFactors = FALSE
   )
   var_tab <- var_tab[order(var_tab$abs_mean_contribution, decreasing = TRUE),
@@ -387,9 +390,15 @@ climniche_report <- function(x, species = NULL, scope = c("current", "all"),
   var_tab <- utils::head(var_tab, top_variables)
 
   direction <- if (summ$mean_niche_distance_change > 0) {
-    "positive on average"
+    paste(
+      "positive, indicating average movement farther from the current",
+      "reference niche centre"
+    )
   } else if (summ$mean_niche_distance_change < 0) {
-    "negative on average"
+    paste(
+      "negative, indicating average movement closer to the current",
+      "reference niche centre"
+    )
   } else {
     "near zero on average"
   }
@@ -516,9 +525,9 @@ write_climniche_report <- function(report, file) {
     "",
     "## Notes",
     paste(
-      "The report describes climatic exposure relative to the current realised",
-      "climatic niche. It does not estimate population growth, dispersal,",
-      "adaptation, biotic interactions or conservation priority."
+      "The report describes climatic exposure relative to the current",
+      "reference niche estimated from the supplied occurrence, range or",
+      "suitability weights."
     )
   )
   writeLines(lines, con = file)

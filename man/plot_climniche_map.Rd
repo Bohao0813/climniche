@@ -30,11 +30,13 @@ plot_climniche_map(
 )
 }
 \arguments{
-\item{x}{A fitted climniche object with raster outputs, or a RasterLayer.}
+\item{x}{A fitted climniche object with raster outputs, a RasterLayer, or a
+terra SpatRaster.}
 
 \item{metric}{Metric to plot.}
 
-\item{occupied}{Optional current reference RasterLayer to overlay.}
+\item{occupied}{Optional current reference RasterLayer or terra SpatRaster
+to overlay.}
 
 \item{occupied_only}{If TRUE, mask the plotted raster to current occurrence
 cells.}

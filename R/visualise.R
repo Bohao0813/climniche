@@ -282,7 +282,9 @@
     ggplot2::theme(
       plot.title = ggplot2::element_text(face = "bold", hjust = 0,
                                          colour = "black",
-                                         size = base_size + 0.2),
+                                         size = base_size + 0.2,
+                                         margin = ggplot2::margin(b = 0.8)),
+      plot.title.position = "plot",
       plot.subtitle = ggplot2::element_text(colour = "black",
                                             size = base_size - 0.8),
       axis.text = ggplot2::element_text(colour = "black",
@@ -788,10 +790,10 @@ plot_climniche_maps <- function(
     ncol = 2L,
     ...) {
   titles <- c(
-    climate_change_amount = "Projected climatic displacement",
-    niche_distance_change = "Shift relative to niche centre",
-    climate_reconfiguration = "Climatic reconfiguration",
-    niche_boundary_exceedance = "Exceedance beyond niche boundary"
+    climate_change_amount = "Climatic Displacement",
+    niche_distance_change = "Niche Distance Shift",
+    climate_reconfiguration = "Climatic Reconfiguration",
+    niche_boundary_exceedance = "Niche Boundary Exceedance"
   )
   metrics <- vapply(metrics, .metric_key, character(1))
   plots <- lapply(metrics, function(metric) {
@@ -853,7 +855,7 @@ plot_climniche_variable_contribution <- function(x, occupied_only = TRUE,
     ggplot2::geom_hline(yintercept = 0, linewidth = 0.3, colour = "grey35") +
     ggplot2::scale_fill_manual(values = c("TRUE" = "#c65d57",
                                           "FALSE" = "#4c78a8")) +
-    ggplot2::labs(x = NULL, y = "Mean contribution to niche potential change",
+    ggplot2::labs(x = NULL, y = "Mean fitted variable contribution",
                   title = .plot_title(title, "Variable contribution")) +
     ggplot2::theme_classic(base_size = 8.5) +
     ggplot2::theme(

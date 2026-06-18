@@ -216,7 +216,9 @@ stopifnot(all(c("current_axis1", "future_axis1", "class",
                 "climate_reconfiguration", "niche_boundary_exceedance",
                 "occupied_weight") %in% names(diagram$cells)))
 showcase <- climniche_showcase_data(away, max_points = 80)
+summary_data <- climniche_summary_figure_data(away, max_points = 80)
 stopifnot(inherits(showcase, "climniche_showcase_data"))
+stopifnot(inherits(summary_data, "climniche_showcase_data"))
 stopifnot(nrow(showcase$plane) <= 80)
 stopifnot(all(c("x_mid", "y_mid", "cell_weight", "total_weight") %in%
                 names(showcase$plane_bins)))
@@ -235,6 +237,21 @@ stopifnot("mean_absolute_share" %in% names(showcase$variables))
 stopifnot(all(c("boundary_quantile", "prop_exceeded") %in%
                 names(showcase$boundary)))
 report_all_classes <- climniche_report(away, scope = "current")
+formal_metric_names <- c(
+  "Climatic Displacement",
+  "Niche Distance Shift",
+  "Climatic Reconfiguration",
+  "Niche Boundary Exceedance"
+)
+stopifnot(all(formal_metric_names %in%
+                report_all_classes$metric_definitions$metric))
+stopifnot(all(formal_metric_names %in%
+                report_all_classes$metric_summary$metric))
+tmp_report <- tempfile(fileext = ".md")
+write_climniche_report(report_all_classes, tmp_report)
+report_text <- paste(readLines(tmp_report, warn = FALSE), collapse = "\n")
+stopifnot(all(vapply(formal_metric_names, grepl, logical(1),
+                     x = report_text, fixed = TRUE)))
 stopifnot(nrow(report_all_classes$descriptor_summary) == 5L)
 stopifnot(nrow(report_all_classes$class_summary) == 5L)
 stopifnot(all(as.character(report_all_classes$class_summary$class) ==
@@ -256,6 +273,8 @@ if (requireNamespace("ggplot2", quietly = TRUE)) {
                                        metric = "composition_change")
   stopifnot(inherits(p_new, "ggplot"))
   stopifnot(inherits(p_old, "ggplot"))
+  stopifnot(identical(p_new$labels$title, "Climatic Reconfiguration"))
+  stopifnot(identical(p_new$labels$x, "Climatic Reconfiguration"))
   stopifnot(isTRUE(all.equal(p_new$data$value, p_old$data$value)))
   p_exposure <- plot_climniche_exposure(away)
   p_exposure_classes <- plot_climniche_exposure(
@@ -263,6 +282,13 @@ if (requireNamespace("ggplot2", quietly = TRUE)) {
   )
   stopifnot(inherits(p_exposure, "ggplot"))
   stopifnot(inherits(p_exposure_classes, "ggplot"))
+  stopifnot(identical(p_exposure$labels$x, "Climatic Displacement"))
+  stopifnot(identical(p_exposure$labels$y, "Niche Distance Shift"))
+  showcase_plot <- plot_climniche_showcase(away, max_points = 80)
+  summary_figure_plot <- plot_climniche_summary_figure(away, max_points = 80)
+  stopifnot(inherits(showcase_plot, "patchwork") || is.list(showcase_plot))
+  stopifnot(inherits(summary_figure_plot, "patchwork") ||
+              is.list(summary_figure_plot))
 }
 
 if (requireNamespace("raster", quietly = TRUE)) {
@@ -274,7 +300,7 @@ if (requireNamespace("raster", quietly = TRUE)) {
   cur <- raster::stack(r1, r2)
   fut <- raster::stack(r1 + 0.5, r2 + 1)
   occ <- r1
-  raster::values(occ) <- c(rep(0, 8), rep(0.7, 4), rep(1, 4))
+  raster::values(occ) <- c(rep(0, 7), 0.5, rep(0.7, 4), rep(1, 4))
   domain <- r1
   raster::values(domain) <- c(rep(0, 4), rep(1, 12))
 
@@ -282,6 +308,7 @@ if (requireNamespace("raster", quietly = TRUE)) {
                              occupied_threshold = 0.5)
   stopifnot(inherits(rf, "climniche_fit"))
   stopifnot(length(rf$occupied) == 8)
+  stopifnot(!any(rf$occupied_weight == 0.5))
   stopifnot(isTRUE(all.equal(sort(unique(rf$occupied_weight[rf$occupied])),
                              c(0.7, 1))))
   stopifnot(methods::is(rf$rasters$climate_change_amount, "RasterLayer"))
@@ -291,6 +318,7 @@ if (requireNamespace("raster", quietly = TRUE)) {
                                     occupied_threshold = 0.5,
                                     domain = domain)
   stopifnot(length(rf_domain$climate_change_amount) == 12)
+  stopifnot(length(rf_domain$occupied) == 8)
   stopifnot(isTRUE(all.equal(sort(unique(rf_domain$occupied_weight[rf_domain$occupied])),
                              c(0.7, 1))))
 
@@ -316,6 +344,8 @@ if (requireNamespace("raster", quietly = TRUE)) {
     stopifnot(inherits(p_cls, "ggplot"))
     stopifnot(inherits(p_cls_all, "ggplot"))
     stopifnot(inherits(p_maps, "patchwork") || is.list(p_maps))
+    stopifnot(identical(p_map_new$labels$title,
+                        "Niche Boundary Exceedance"))
     stopifnot(nrow(p_map_new$data) == 8)
     stopifnot(nrow(p_cls$data) == 8)
     stopifnot(isTRUE(all.equal(p_map_new$data$value, p_map_old$data$value)))
@@ -324,6 +354,8 @@ if (requireNamespace("raster", quietly = TRUE)) {
     )))
     p_shift <- plot_climniche_map(rf, metric = "niche_distance_change")
     shift_limits <- p_shift$scales$get_scales("fill")$limits
+    stopifnot(identical(p_shift$labels$title,
+                        "Niche Distance Shift"))
     stopifnot(isTRUE(all.equal(abs(shift_limits[1]), abs(shift_limits[2]))))
     p_custom <- plot_climniche_map(
       rf, metric = "climate_change_amount", limits = c(0, 3),
@@ -373,7 +405,7 @@ if (requireNamespace("terra", quietly = TRUE)) {
   cur <- c(r1, r2)
   fut <- c(r1 + 0.5, r2 + 1)
   occ <- r1
-  terra::values(occ) <- c(rep(0, 8), rep(0.7, 4), rep(1, 4))
+  terra::values(occ) <- c(rep(0, 7), 0.5, rep(0.7, 4), rep(1, 4))
   domain <- r1
   terra::values(domain) <- c(rep(0, 4), rep(1, 12))
 
@@ -381,6 +413,7 @@ if (requireNamespace("terra", quietly = TRUE)) {
                             occupied_threshold = 0.5)
   stopifnot(inherits(tf, "climniche_fit"))
   stopifnot(length(tf$occupied) == 8)
+  stopifnot(!any(tf$occupied_weight == 0.5))
   stopifnot(isTRUE(all.equal(sort(unique(tf$occupied_weight[tf$occupied])),
                              c(0.7, 1))))
   stopifnot(methods::is(tf$rasters$climate_change_amount, "SpatRaster"))
@@ -390,6 +423,7 @@ if (requireNamespace("terra", quietly = TRUE)) {
                                    occupied_threshold = 0.5,
                                    domain = domain)
   stopifnot(length(tf_domain$climate_change_amount) == 12)
+  stopifnot(length(tf_domain$occupied) == 8)
   stopifnot(isTRUE(all.equal(sort(unique(tf_domain$occupied_weight[tf_domain$occupied])),
                              c(0.7, 1))))
 

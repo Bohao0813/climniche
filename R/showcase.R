@@ -175,7 +175,7 @@
         data.frame(
           metric = factor(metric_name, levels = metric_levels),
           proportion = proportion,
-          label = paste0("Zero: ", round(100 * proportion), "%")
+          label = paste0("No exceedance: ", round(100 * proportion), "%")
         )
       )
       dat <- dat[!zero, , drop = FALSE]
@@ -366,6 +366,21 @@ climniche_showcase_data <- function(x, scope = c("current", "all"),
   out
 }
 
+#' Build data for the climniche summary figure
+#'
+#' `climniche_summary_figure_data()` is a neutral alias for
+#' [climniche_showcase_data()]. The older function name is retained for
+#' compatibility.
+#'
+#' @param x A fitted climniche object.
+#' @param ... Arguments passed to [climniche_showcase_data()].
+#'
+#' @return A list of data frames used by [plot_climniche_summary_figure()].
+#' @export
+climniche_summary_figure_data <- function(x, ...) {
+  climniche_showcase_data(x, ...)
+}
+
 #' Plot the climniche summary figure
 #'
 #' @param x A fitted climniche object or data returned by
@@ -411,6 +426,7 @@ plot_climniche_showcase <- function(x, scope = c("current", "all"),
     )] <- unname(variable_labels[idx[replace]])
   }
 
+  base_size <- 7.0
   tile_width <- if (nrow(x$plane_bins)) x$plane_bins$x_width[1] else 1
   tile_height <- if (nrow(x$plane_bins)) x$plane_bins$y_height[1] else 1
   p_plane <- ggplot2::ggplot(
@@ -424,14 +440,14 @@ plot_climniche_showcase <- function(x, scope = c("current", "all"),
     ggplot2::scale_fill_gradientn(
       colours = c("#f7fbfa", "#b7d7d1", "#4f8f86", "#1f5f58"),
       trans = "sqrt",
-      name = "Weighted reference\nsupport"
+      name = "Summed\nreference weight"
     ) +
     ggplot2::labs(
-      title = "Displacement and niche distance shift",
+      title = "(a) Climatic Displacement and Niche Distance Shift",
       x = "Climatic Displacement",
       y = "Niche Distance Shift"
     ) +
-    .climniche_theme(base_size = 8.2) +
+    .climniche_theme(base_size = base_size) +
     ggplot2::theme(
       legend.position = "right",
       legend.direction = "vertical"
@@ -466,14 +482,14 @@ plot_climniche_showcase <- function(x, scope = c("current", "all"),
     ggplot2::scale_fill_gradientn(
       colours = c("#fffaf0", "#f2ce91", "#d99238", "#8a3f20"),
       trans = "sqrt",
-      name = "Weighted reference\nsupport"
+      name = "Summed\nreference weight"
     ) +
     ggplot2::labs(
-      title = "Reconfiguration and boundary exceedance",
+      title = "(b) Climatic Reconfiguration and Niche Boundary Exceedance",
       x = "Climatic Reconfiguration",
       y = "Niche Boundary Exceedance"
     ) +
-    .climniche_theme(base_size = 8.2) +
+    .climniche_theme(base_size = base_size) +
     ggplot2::theme(
       legend.position = "right",
       legend.direction = "vertical"
@@ -485,23 +501,6 @@ plot_climniche_showcase <- function(x, scope = c("current", "all"),
         barheight = grid::unit(23, "mm")
       )
     )
-
-  p_classes_compatibility <- ggplot2::ggplot(
-    x$classes,
-    ggplot2::aes(x = proportion, y = class, fill = class)
-  ) +
-    ggplot2::geom_col(width = 0.66, colour = "grey25", linewidth = 0.15) +
-    ggplot2::scale_x_continuous(
-      labels = function(z) paste0(round(100 * z), "%")
-    ) +
-    ggplot2::scale_fill_manual(values = .class_colours(), drop = FALSE) +
-    ggplot2::labs(
-      title = "Optional combined exposure classes",
-      x = "Proportion of analysed cells",
-      y = NULL
-    ) +
-    .climniche_theme(base_size = 8.2) +
-    ggplot2::theme(legend.position = "none")
 
   contribution_direction <- x$variables$mean_contribution >= 0
   mixed_direction <- length(unique(contribution_direction)) > 1L
@@ -526,7 +525,7 @@ plot_climniche_showcase <- function(x, scope = c("current", "all"),
     )
   }
   direction_subtitle <- if (mixed_direction) {
-    "Colour indicates the direction of mean niche potential change"
+    "Colour indicates the direction of the fitted variable contribution"
   } else {
     NULL
   }
@@ -535,12 +534,12 @@ plot_climniche_showcase <- function(x, scope = c("current", "all"),
       labels = function(z) paste0(round(100 * z), "%")
     ) +
     ggplot2::labs(
-      title = "Variable contributions",
+      title = "(c) Variable Contributions",
       subtitle = direction_subtitle,
       x = "Mean absolute contribution",
       y = NULL
     ) +
-    .climniche_theme(base_size = 8.2) +
+    .climniche_theme(base_size = base_size) +
     ggplot2::theme(
       legend.position = if (mixed_direction) "bottom" else "none",
       legend.direction = "horizontal",
@@ -548,7 +547,7 @@ plot_climniche_showcase <- function(x, scope = c("current", "all"),
       legend.key.height = grid::unit(3.0, "mm")
     )
   if (mixed_direction) {
-    p_vars <- p_vars + ggplot2::labs(fill = "Mean niche potential change")
+    p_vars <- p_vars + ggplot2::labs(fill = "Fitted contribution")
   }
 
   p_metrics <- ggplot2::ggplot(
@@ -569,28 +568,27 @@ plot_climniche_showcase <- function(x, scope = c("current", "all"),
     ) +
     ggplot2::geom_text(
       data = x$metric_zero_mass,
-      ggplot2::aes(x = -Inf, y = Inf, label = label),
-      inherit.aes = FALSE, hjust = -0.05, vjust = 1.2,
-      size = 2.1, colour = "black"
+      ggplot2::aes(x = Inf, y = Inf, label = label),
+      inherit.aes = FALSE, hjust = 1.02, vjust = 1.15,
+      size = 1.9, colour = "black"
     ) +
     ggplot2::facet_wrap(~metric, scales = "free_x", nrow = 2) +
     ggplot2::scale_y_continuous(
       labels = function(z) paste0(round(100 * z), "%")
     ) +
     ggplot2::labs(
-      title = "Reported quantity distributions",
+      title = "(d) Metric Distributions",
       x = NULL,
       y = "Weighted percentage"
     ) +
-    .climniche_theme(base_size = 8.2) +
+    .climniche_theme(base_size = base_size) +
     ggplot2::theme(legend.position = "none")
 
   plots <- list(
     exposure = p_plane,
     reconfiguration = p_reconfiguration,
     variables = p_vars,
-    metrics = p_metrics,
-    classes = p_classes_compatibility
+    metrics = p_metrics
   )
   if (requireNamespace("patchwork", quietly = TRUE)) {
     p_vars_layout <- p_vars
@@ -604,13 +602,27 @@ plot_climniche_showcase <- function(x, scope = c("current", "all"),
     }
     out <- (p_plane | p_reconfiguration) / (p_vars_layout | p_metrics) +
       patchwork::plot_layout(widths = c(1, 1.18))
-    out <- out + patchwork::plot_annotation(
-      title = title,
-      tag_levels = "a",
-      tag_prefix = "(",
-      tag_suffix = ")"
-    )
+    if (!is.null(title)) {
+      out <- out + patchwork::plot_annotation(title = title)
+    }
     return(out)
   }
   plots
+}
+
+#' Plot the climniche summary figure
+#'
+#' `plot_climniche_summary_figure()` is a neutral alias for
+#' [plot_climniche_showcase()]. The older function name is retained for
+#' compatibility.
+#'
+#' @param x A fitted climniche object or data returned by
+#'   [climniche_showcase_data()].
+#' @param ... Arguments passed to [plot_climniche_showcase()].
+#'
+#' @return A patchwork object when `patchwork` is installed, otherwise a named
+#'   list of ggplot objects.
+#' @export
+plot_climniche_summary_figure <- function(x, ...) {
+  plot_climniche_showcase(x, ...)
 }

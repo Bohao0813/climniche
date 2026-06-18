@@ -26,7 +26,8 @@ plot_climniche_classes(
 \arguments{
 \item{x}{A fitted climniche object with raster outputs.}
 
-\item{occupied}{Optional current reference RasterLayer to overlay.}
+\item{occupied}{Optional current reference RasterLayer or terra SpatRaster
+to overlay.}
 
 \item{occupied_only}{If TRUE, mask the plotted classes to current occurrence
 cells.}

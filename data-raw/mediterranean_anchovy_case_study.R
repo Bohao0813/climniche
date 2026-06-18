@@ -134,15 +134,15 @@ candidate_specs <- data.frame(
     "o2_mean", "ph_mean", "chl_mean", "sws_mean", "sws_range"
   ),
   label = c(
-    "Mean ocean temperature",
-    "Ocean temperature range",
+    "Mean temperature",
+    "Temperature range",
     "Mean salinity",
     "Salinity range",
     "Mean dissolved oxygen",
     "Mean pH",
     "Mean chlorophyll",
-    "Mean sea water speed",
-    "Sea water speed range"
+    "Mean current speed",
+    "Current speed range"
   ),
   stringsAsFactors = FALSE
 )
@@ -520,8 +520,10 @@ make_sdm <- function(current, presence_cells, complete_cells,
 
 sdm <- make_sdm(sdm_current, presence_cells, complete_cells)
 suitability_r <- sdm$suitability
-domain_r <- suitability_r
-names(domain_r) <- "sdm_analysis_domain"
+domain_r <- current[[1]]
+terra::values(domain_r) <- ifelse(complete, 1, NA_real_)
+domain_r <- terra::mask(domain_r, med_vect)
+names(domain_r) <- "mediterranean_analysis_domain"
 
 current_mat <- terra::values(current)[complete_cells, , drop = FALSE]
 presence_idx <- which(complete_cells %in% presence_cells)
@@ -539,7 +541,7 @@ fit <- fit_climniche_terra(
   occupied = suitability_r,
   occupied_threshold = sdm$threshold,
   domain = domain_r,
-  domain_threshold = sdm$threshold,
+  domain_threshold = 0,
   sensitivity = sensitivity,
   boundary = 0.95,
   conflict_ratio = 0.25,
@@ -885,7 +887,7 @@ fig_main <- (p_amount | p_distance) / (p_composition | p_exceed) +
 
 diagram_labels <- var_labels
 
-fig_report <- plot_climniche_showcase(
+fig_report <- plot_climniche_summary_figure(
   fit,
   scope = "current",
   plane_bins = 45,
@@ -915,7 +917,7 @@ save_plot(fig_main,
           file.path(out_dir, "figure_anchovy_mediterranean_climniche_maps"),
           width_mm = 183, height_mm = 102)
 save_plot(fig_report,
-          file.path(out_dir, "figure_anchovy_mediterranean_climniche_report"),
+          file.path(out_dir, "figure_anchovy_mediterranean_climniche_summary"),
           width_mm = 183, height_mm = 128)
 
 cat("\nOutput directory:", normalizePath(out_dir, winslash = "/"), "\n")

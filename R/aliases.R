@@ -182,9 +182,11 @@ fit_climniche_terra <- function(current, future, occupied = NULL,
 
 #' Plot a climniche map
 #'
-#' @param x A fitted climniche object with raster outputs, or a RasterLayer.
+#' @param x A fitted climniche object with raster outputs, a RasterLayer, or a
+#'   terra SpatRaster.
 #' @param metric Metric to plot.
-#' @param occupied Optional current reference RasterLayer to overlay.
+#' @param occupied Optional current reference RasterLayer or terra SpatRaster
+#'   to overlay.
 #' @param occupied_only If TRUE, mask the plotted raster to current occurrence
 #'   cells.
 #' @param occupied_threshold Threshold used when `occupied` contains binary or
@@ -263,7 +265,8 @@ plot_climniche_map <- function(x,
 #' climniche outputs.
 #'
 #' @param x A fitted climniche object with raster outputs.
-#' @param occupied Optional current reference RasterLayer to overlay.
+#' @param occupied Optional current reference RasterLayer or terra SpatRaster
+#'   to overlay.
 #' @param occupied_only If TRUE, mask the plotted classes to current occurrence
 #'   cells.
 #' @param occupied_threshold Threshold used when `occupied` contains binary or
