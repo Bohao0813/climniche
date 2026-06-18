@@ -751,38 +751,40 @@ format_degree <- function(x, positive, negative) {
 format_lon <- function(x) format_degree(x, "E", "W")
 format_lat <- function(x) format_degree(x, "N", "S")
 
-theme_map <- function(base_size = 7.2, show_x = TRUE, show_y = TRUE) {
+theme_map <- function(base_size = 7.0, show_x = TRUE, show_y = TRUE) {
   theme_classic(base_size = base_size, base_family = "Arial") +
     theme(
       plot.title = element_text(face = "bold", size = base_size + 0.2,
-                                colour = "black", hjust = 0),
+                                colour = "black", hjust = 0,
+                                margin = margin(b = 0.8)),
       axis.title = element_blank(),
-      axis.text = element_text(size = base_size - 0.4, colour = "black"),
-      axis.ticks = element_line(linewidth = 0.25, colour = "black"),
-      axis.line = element_line(linewidth = 0.25, colour = "black"),
+      axis.text = element_text(size = base_size - 0.6, colour = "black"),
+      axis.ticks = element_line(linewidth = 0.22, colour = "black"),
+      axis.line = element_line(linewidth = 0.22, colour = "black"),
       panel.grid.major = element_line(linewidth = 0.12, colour = "#e2e2e2"),
       legend.position = "bottom",
       legend.direction = "horizontal",
-      legend.title = element_text(size = base_size - 0.2, colour = "black"),
-      legend.text = element_text(size = base_size - 0.7, colour = "black"),
-      legend.key.height = grid::unit(2.6, "mm"),
-      legend.key.width = grid::unit(7.0, "mm"),
-      legend.margin = margin(1, 0, 0, 0),
-      plot.margin = margin(2, 3, 2, 2),
+      legend.title = element_blank(),
+      legend.text = element_text(size = base_size - 1.0, colour = "black"),
+      legend.key.height = grid::unit(1.8, "mm"),
+      legend.key.width = grid::unit(5.0, "mm"),
+      legend.margin = margin(1.2, 0, 0, 0),
+      legend.box.margin = margin(0, 0, 0, 0),
+      legend.box.spacing = grid::unit(1.4, "mm"),
+      legend.spacing.y = grid::unit(0, "mm"),
+      plot.margin = margin(0.4, 0.8, 0.4, 0.8),
       axis.text.x = if (show_x) element_text(colour = "black") else element_blank(),
-      axis.ticks.x = if (show_x) element_line(linewidth = 0.25, colour = "black") else element_blank(),
+      axis.ticks.x = if (show_x) element_line(linewidth = 0.22, colour = "black") else element_blank(),
       axis.text.y = if (show_y) element_text(colour = "black") else element_blank(),
-      axis.ticks.y = if (show_y) element_line(linewidth = 0.25, colour = "black") else element_blank()
+      axis.ticks.y = if (show_y) element_line(linewidth = 0.22, colour = "black") else element_blank()
     )
 }
 
-guide_metric <- function(bar_width_mm = 31) {
+guide_metric <- function(bar_width_mm = 32) {
   guide_colourbar(
-    title.position = "top",
-    title.hjust = 0.5,
     direction = "horizontal",
     barwidth = grid::unit(bar_width_mm, "mm"),
-    barheight = grid::unit(2.6, "mm"),
+    barheight = grid::unit(1.8, "mm"),
     frame.colour = "black",
     ticks.colour = "black"
   )
@@ -832,25 +834,24 @@ p_amount <- base_map() +
   scale_fill_gradientn(
     colours = c("#f7fbff", "#d6e6f2", "#91b9d5", "#27658f"),
     limits = c(0, max(amount_df$value, na.rm = TRUE)),
-    name = "Climatic Displacement"
+    name = NULL
   ) +
   guides(fill = guide_metric()) +
-  labs(title = "(b) Magnitude of projected change") +
-  theme_map(show_x = FALSE, show_y = FALSE)
+  labs(title = "(a) Climatic Displacement") +
+  theme_map(show_x = FALSE, show_y = TRUE)
 
-distance_limit <- max(abs(distance_df$value), na.rm = TRUE)
+distance_limits <- range(distance_df$value, na.rm = TRUE)
 p_distance <- base_map() +
   geom_tile(data = distance_df, aes(x = x, y = y, fill = value),
             width = cell_width, height = cell_height, alpha = 0.95) +
   geography_layers() +
-  scale_fill_gradient2(
-    low = "#386fa4", mid = "white", high = "#c7514a",
-    midpoint = 0, limits = c(-distance_limit, distance_limit),
-    oob = scales::squish,
-    name = "Niche Distance Shift"
+  scale_fill_gradientn(
+    colours = c("#fff7f3", "#fdd0c7", "#f1695b", "#a33430"),
+    limits = distance_limits, oob = scales::squish,
+    name = NULL
   ) +
   guides(fill = guide_metric()) +
-  labs(title = "(c) Change in niche distance") +
+  labs(title = "(b) Niche Distance Shift") +
   theme_map(show_x = FALSE, show_y = FALSE)
 
 p_composition <- base_map() +
@@ -860,10 +861,10 @@ p_composition <- base_map() +
   scale_fill_gradientn(
     colours = c("#f7fcf5", "#c7e9c0", "#74c476", "#238b45"),
     limits = c(0, max(composition_df$value, na.rm = TRUE)),
-    name = "Climatic Reconfiguration"
+    name = NULL
   ) +
   guides(fill = guide_metric()) +
-  labs(title = "(d) Non radial displacement") +
+  labs(title = "(c) Climatic Reconfiguration") +
   theme_map(show_x = TRUE, show_y = TRUE)
 
 p_exceed <- base_map() +
@@ -873,16 +874,14 @@ p_exceed <- base_map() +
   scale_fill_gradientn(
     colours = c("white", "#f3dfb8", "#d9942f", "#8a3f20"),
     limits = c(0, max(exceed_df$value, na.rm = TRUE)),
-    name = "Niche Boundary Exceedance"
+    name = NULL
   ) +
-  guides(fill = guide_metric(24)) +
-  labs(title = "(e) Boundary exceedance") +
+  guides(fill = guide_metric()) +
+  labs(title = "(d) Niche Boundary Exceedance") +
   theme_map(show_x = TRUE, show_y = FALSE)
 
-fig_main <- wrap_plots(
-  p_sdm, p_amount, p_distance, p_composition, p_exceed,
-  design = "AABBCC\n#DDEE#"
-)
+fig_main <- (p_amount | p_distance) / (p_composition | p_exceed) +
+  plot_layout(widths = c(1, 1), heights = c(1, 1))
 
 diagram_labels <- var_labels
 
@@ -914,7 +913,7 @@ save_plot <- function(plot, file_base, width_mm, height_mm, dpi = 600) {
 
 save_plot(fig_main,
           file.path(out_dir, "figure_anchovy_mediterranean_climniche_maps"),
-          width_mm = 183, height_mm = 88)
+          width_mm = 183, height_mm = 102)
 save_plot(fig_report,
           file.path(out_dir, "figure_anchovy_mediterranean_climniche_report"),
           width_mm = 183, height_mm = 128)

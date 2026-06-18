@@ -135,9 +135,10 @@ variable_contributions
 
 ## Mediterranean maps
 
-Panel (a) shows the continuous suitability values retained as current reference
-weights. Panels (b)-(e) show the four continuous reported quantities. Land is
-shown in grey and is not part of the calculation.
+The map figure shows the four continuous reported quantities in the
+Mediterranean analysis domain. Land is shown in grey and is not part of the
+calculation. The continuous SDM suitability raster was used as the current
+reference weight layer but is not included in this figure.
 
 ```{r, echo = FALSE, out.width = "100%"}
 knitr::include_graphics("figures/anchovy-mediterranean-maps.png")
