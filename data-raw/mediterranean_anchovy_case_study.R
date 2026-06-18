@@ -763,8 +763,7 @@ theme_map <- function(base_size = 7.0, show_x = TRUE, show_y = TRUE) {
       panel.grid.major = element_line(linewidth = 0.12, colour = "#e2e2e2"),
       legend.position = "bottom",
       legend.direction = "horizontal",
-      legend.title = element_text(size = base_size - 0.9, colour = "black",
-                                  margin = margin(b = 1.0)),
+      legend.title = element_blank(),
       legend.text = element_text(size = base_size - 1.0, colour = "black"),
       legend.key.height = grid::unit(1.8, "mm"),
       legend.key.width = grid::unit(5.0, "mm"),
@@ -786,9 +785,7 @@ guide_metric <- function(bar_width_mm = 32) {
     barwidth = grid::unit(bar_width_mm, "mm"),
     barheight = grid::unit(1.8, "mm"),
     frame.colour = "black",
-    ticks.colour = "black",
-    title.position = "top",
-    title.hjust = 0.5
+    ticks.colour = "black"
   )
 }
 
@@ -823,7 +820,7 @@ p_sdm <- base_map() +
   geography_layers() +
   scale_fill_gradientn(
     colours = c("#eef7f2", "#b9dfcf", "#5aa68f", "#1e6e66"),
-    name = "SDM\nsuitability"
+    name = NULL
   ) +
   guides(fill = guide_metric()) +
   labs(title = "Current suitability weights") +
@@ -836,10 +833,10 @@ p_amount <- base_map() +
   scale_fill_gradientn(
     colours = c("#f7fbff", "#d6e6f2", "#91b9d5", "#27658f"),
     limits = c(0, max(amount_df$value, na.rm = TRUE)),
-    name = "Distance"
+    name = NULL
   ) +
   guides(fill = guide_metric()) +
-  labs(title = "Climatic Displacement") +
+  labs(title = "(a) Climatic Displacement") +
   theme_map(show_x = FALSE, show_y = TRUE)
 
 distance_limits <- range(distance_df$value, na.rm = TRUE)
@@ -850,10 +847,10 @@ p_distance <- base_map() +
   scale_fill_gradientn(
     colours = c("#fff7f3", "#fdd0c7", "#f1695b", "#a33430"),
     limits = distance_limits, oob = scales::squish,
-    name = "Shift"
+    name = NULL
   ) +
   guides(fill = guide_metric()) +
-  labs(title = "Niche Distance Shift") +
+  labs(title = "(b) Niche Distance Shift") +
   theme_map(show_x = FALSE, show_y = FALSE)
 
 p_composition <- base_map() +
@@ -863,37 +860,27 @@ p_composition <- base_map() +
   scale_fill_gradientn(
     colours = c("#f7fcf5", "#c7e9c0", "#74c476", "#238b45"),
     limits = c(0, max(composition_df$value, na.rm = TRUE)),
-    name = "Distance"
+    name = NULL
   ) +
   guides(fill = guide_metric()) +
-  labs(title = "Climatic Reconfiguration") +
+  labs(title = "(c) Climatic Reconfiguration") +
   theme_map(show_x = TRUE, show_y = TRUE)
 
-exceed_positive_df <- exceed_df[exceed_df$value > 0, , drop = FALSE]
-exceed_upper <- max(exceed_positive_df$value, na.rm = TRUE)
-if (!is.finite(exceed_upper) || exceed_upper <= 0) {
-  exceed_upper <- 1
-}
-
 p_exceed <- base_map() +
-  geom_tile(data = exceed_df, aes(x = x, y = y),
-            width = cell_width, height = cell_height,
-            fill = "#eeeeee", alpha = 0.95) +
-  geom_tile(data = exceed_positive_df, aes(x = x, y = y, fill = value),
+  geom_tile(data = exceed_df, aes(x = x, y = y, fill = value),
             width = cell_width, height = cell_height, alpha = 0.95) +
   geography_layers() +
   scale_fill_gradientn(
-    colours = c("#f3dfb8", "#d9942f", "#8a3f20"),
-    limits = c(0, exceed_upper),
-    name = "Exceedance"
+    colours = c("white", "#f3dfb8", "#d9942f", "#8a3f20"),
+    limits = c(0, max(exceed_df$value, na.rm = TRUE)),
+    name = NULL
   ) +
   guides(fill = guide_metric()) +
-  labs(title = "Niche Boundary Exceedance") +
+  labs(title = "(d) Niche Boundary Exceedance") +
   theme_map(show_x = TRUE, show_y = FALSE)
 
 fig_main <- (p_amount | p_distance) / (p_composition | p_exceed) +
-  plot_layout(widths = c(1, 1), heights = c(1, 1)) +
-  plot_annotation(tag_levels = "a", tag_prefix = "(", tag_suffix = ")")
+  plot_layout(widths = c(1, 1), heights = c(1, 1))
 
 diagram_labels <- var_labels
 

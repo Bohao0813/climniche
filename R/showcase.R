@@ -318,10 +318,10 @@ plot_climniche_summary_figure <- function(x, scope = c("current", "all"),
     ggplot2::scale_fill_gradientn(
       colours = c("#f7fbfa", "#b7d7d1", "#4f8f86", "#1f5f58"),
       trans = "sqrt",
-      name = "Reference-cell\nsupport"
+      name = "Weight"
     ) +
     ggplot2::labs(
-      title = "Climatic Displacement vs Niche Distance Shift",
+      title = "(a) Climatic Displacement vs Niche Distance Shift",
       x = "Climatic Displacement",
       y = "Niche Distance Shift"
     ) +
@@ -360,10 +360,10 @@ plot_climniche_summary_figure <- function(x, scope = c("current", "all"),
     ggplot2::scale_fill_gradientn(
       colours = c("#fffaf0", "#f2ce91", "#d99238", "#8a3f20"),
       trans = "sqrt",
-      name = "Reference-cell\nsupport"
+      name = "Weight"
     ) +
     ggplot2::labs(
-      title = "Climatic Reconfiguration vs Niche Boundary Exceedance",
+      title = "(b) Climatic Reconfiguration vs Niche Boundary Exceedance",
       x = "Climatic Reconfiguration",
       y = "Niche Boundary Exceedance"
     ) +
@@ -412,7 +412,7 @@ plot_climniche_summary_figure <- function(x, scope = c("current", "all"),
       labels = function(z) paste0(round(100 * z), "%")
     ) +
     ggplot2::labs(
-      title = "Predictor contributions",
+      title = "(c) Predictor contributions",
       subtitle = direction_subtitle,
       x = "Mean absolute contribution",
       y = NULL
@@ -449,7 +449,7 @@ plot_climniche_summary_figure <- function(x, scope = c("current", "all"),
       labels = function(z) paste0(round(100 * z), "%")
     ) +
     ggplot2::labs(
-      title = "Distributions across suitable habitat",
+      title = "(d) Distributions across suitable habitat",
       x = NULL,
       y = "Weighted percentage"
     ) +
@@ -474,12 +474,7 @@ plot_climniche_summary_figure <- function(x, scope = c("current", "all"),
     }
     out <- (p_plane | p_reconfiguration) / (p_vars_layout | p_metrics) +
       patchwork::plot_layout(widths = c(1, 1.18)) +
-      patchwork::plot_annotation(
-        title = title,
-        tag_levels = "a",
-        tag_prefix = "(",
-        tag_suffix = ")"
-      )
+      patchwork::plot_annotation(title = title)
     return(out)
   }
   plots

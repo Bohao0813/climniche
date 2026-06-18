@@ -1,27 +1,14 @@
-# climniche 0.4.0
+# climniche 0.3.0
 
 * Focused fitted objects, reports and figures on the four continuous exposure
   metrics and the two descriptor fields.
-* Updated the Mediterranean anchovy maps so metric panels are drawn only within
-  current suitable habitat while retaining the Mediterranean Sea as the
-  analysis domain.
-* Revised the summary figure labels, panel tags and metric distributions for
-  manuscript use.
-* Added PDF outputs for the prepared Mediterranean maps and summary figure.
-
-# climniche 0.3.0
-
-* Revised the Mediterranean anchovy example so the analysis domain is the
-  Mediterranean Sea mask, while the continuous SDM suitability raster is used
-  only as the current reference weight layer.
 * Added `plot_climniche_summary_figure()` and
   `climniche_summary_figure_data()`.
-* Updated map and summary figure outputs in PNG and PDF format for the prepared
-  Mediterranean example.
-* Cleaned README, vignette, report and pkgdown text to use formal metric names
-  and more direct methodological wording.
-* Added tests for formal plot/report labels, domain handling with continuous
-  reference weights and threshold values equal to `occupied_threshold`.
+* Added map controls for binary and continuous SDM reference rasters, study
+  region boundaries and longitude-latitude labels.
+* Updated report, summary, map and vignette outputs to use formal metric names.
+* Added tests for descriptor thresholds, continuous reference weights and
+  raster domain handling.
 
 # climniche 0.2.0
 
