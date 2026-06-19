@@ -4,8 +4,8 @@
   raster workflows. The preprocessing removes near-zero variance variables and
   highly correlated variables before standardisation and metric fitting.
 * Added preprocessing metadata to fitted objects.
-* Added `CENFA` to suggested packages because `cnfa` objects are accepted as an
-  optional input.
+* Documented compatibility with CENFA-style `cnfa` objects without requiring
+  the CENFA package at installation time.
 * Refreshed the Mediterranean anchovy example outputs under the current
   standardisation and preprocessing workflow.
 * Revised the `fit_climniche()` formula documentation for clearer pkgdown
