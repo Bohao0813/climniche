@@ -14,8 +14,9 @@ knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.align = "center")
 This example uses European anchovy (*Engraulis encrasicolus*) in the
 Mediterranean Sea. The package includes prepared tables and figures generated
 from Bio-ORACLE v3 surface layers, OBIS occurrence records, and a continuous
-presence-background SDM suitability map. The example starts from these prepared
-inputs and focuses on the `climniche` calculation.
+presence-background SDM suitability map. The SDM threshold is selected by
+maximum test-set TSS. The `climniche` step uses the remaining suitability
+values as continuous reference weights.
 
 ```{r}
 library(climniche)
@@ -65,9 +66,9 @@ subset(layer_table, retained_for_climniche, c(
 
 The current reference layer is a continuous suitability raster from a
 presence-background SDM. Background cells are sampled Mediterranean cells
-outside occurrence cells; they are not confirmed absences. The TSS threshold is
-used as a screening cutoff for reference weights. Suitability values above the
-cutoff remain continuous weights.
+outside occurrence cells; they are not confirmed absences. The maximum TSS
+threshold removes low suitability cells from the reference set. Suitability
+values above the threshold remain continuous weights.
 
 ```{r}
 subset(
@@ -99,12 +100,10 @@ This example uses `fit_climniche_terra()` because the prepared Bio-ORACLE
 layers are terra rasters. The current and future layers must be aligned, and
 the suitability map is passed to `occupied` as a continuous reference layer.
 `occupied_threshold` removes low suitability cells without converting the
-remaining values to one. The example uses Z-score standardisation and keeps the
-default preprocessing step that removes near-constant and highly correlated
-climate variables before the distance calculation.
+remaining values to one.
 
 ```{r fit-code, eval = FALSE}
-# Use the TSS threshold only to remove very low suitability cells.
+# Use the maximum TSS threshold to remove low suitability cells.
 threshold_row <- subset(sdm_settings, setting == "sdm_threshold")
 sdm_threshold <- as.numeric(threshold_row[["value"]])
 
@@ -126,11 +125,7 @@ fit <- fit_climniche_terra(
   occupied = anchovy_suitability,
   occupied_threshold = sdm_threshold,
   domain = mediterranean_sea_mask,
-  sensitivity = predictor_sensitivity,
-  scale = TRUE,
-  preprocess = TRUE,
-  preprocess_correlation = 0.95,
-  preprocess_min_sd = 1e-08
+  sensitivity = predictor_sensitivity
 )
 
 climniche_summary(fit)
@@ -139,24 +134,17 @@ climniche_summary(fit)
 ## Niche-relative decomposition
 
 `climniche` reports four related quantities. Climatic Displacement is the
-distance from current to future conditions in standardised, sensitivity-weighted
+distance from current to future conditions in the fitted sensitivity weighted
 climatic space. Niche Distance Shift is the signed change in distance from the
 current realised niche centre. Climatic Reconfiguration is the remaining
 non-radial component, calculated from the identity \(D_i^2 = R_i^2 + C_i^2\).
 Niche Boundary Exceedance is the positive excess beyond the chosen weighted
 quantile of current reference-cell distances from the realised niche centre.
-All four quantities are dimensionless distances in the standardised,
-sensitivity weighted climatic space.
 
 ```{r}
 subset(
   fit_settings,
-  setting == "standardisation" |
-    setting == "preprocess" |
-    setting == "preprocess_correlation" |
-    setting == "preprocess_retained_predictor_count" |
-    setting == "preprocess_removed_predictor_count" |
-    setting == "boundary_quantile" |
+  setting == "boundary_quantile" |
     setting == "tolerance" |
     setting == "boundary_exceedance_tolerance"
 )
@@ -178,8 +166,7 @@ variable_contributions
 ## Mediterranean maps
 
 The map figure shows the four continuous reported quantities within current
-suitable habitat. The Mediterranean outline provides geographic context; land
-is outside the calculation.
+suitable habitat.
 
 ```{r mediterranean-maps-code, eval = FALSE}
 metric_maps <- plot_climniche_maps(

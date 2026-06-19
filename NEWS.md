@@ -2,12 +2,12 @@
 
 * Added default climate-variable preprocessing in `fit_climniche()` and the
   raster workflows. The preprocessing removes near-zero variance variables and
-  highly correlated variables before standardisation and metric fitting.
+  highly correlated variables before metric fitting.
 * Added preprocessing metadata to fitted objects.
 * Documented compatibility with CENFA-style `cnfa` objects without requiring
   the CENFA package at installation time.
 * Refreshed the Mediterranean anchovy example outputs under the current
-  standardisation and preprocessing workflow.
+  analysis workflow.
 * Revised the `fit_climniche()` formula documentation for clearer pkgdown
   rendering.
 

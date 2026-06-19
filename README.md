@@ -4,11 +4,11 @@
 
 # climniche
 
-`climniche` measures projected climate exposure relative to a species' current
-reference niche estimated from occurrence records, range maps, or SDM
-suitability weights. It separates the amount of local climatic displacement
-from the direction of change relative to the fitted niche centre and the degree
-to which future conditions exceed the current empirical niche boundary.
+Climate change is not equally meaningful across a species' range. A large
+change may still move a site toward the realised niche centre, while a smaller
+change may push another site beyond the current niche boundary. `climniche`
+quantifies this niche-relative exposure from occurrence records, range maps,
+binary SDMs or continuous suitability maps.
 
 [![R-CMD-check](https://github.com/Bohao0813/climniche/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/Bohao0813/climniche/actions/workflows/R-CMD-check.yaml)
 [![CRAN status](https://www.r-pkg.org/badges/version/climniche)](https://CRAN.R-project.org/package=climniche)
@@ -40,7 +40,7 @@ Field names in fitted R objects use snake_case; figures and reports use the
 formal names below.
 
 - Climatic Displacement (`climate_change_amount`): distance between current
-  and future conditions in standardised, sensitivity-weighted climatic space.
+  and future conditions in the fitted sensitivity weighted climatic space.
 - Niche Distance Shift (`niche_distance_change`): signed change in distance
   from the current realised climatic niche centre.
 - Climatic Reconfiguration (`climate_reconfiguration`): non radial component
@@ -49,27 +49,6 @@ formal names below.
 - Niche Boundary Exceedance (`niche_boundary_exceedance`): positive excess
   beyond the chosen weighted quantile of current reference-cell distances from
   the realised niche centre.
-
-## Inputs and outputs
-
-`climniche` accepts extracted environmental matrices and aligned `raster` or
-`terra` layers. The current reference cells can be supplied as occurrences,
-a range raster, a binary SDM raster, or a continuous SDM suitability raster.
-Binary rasters are used as 0/1 reference weights. Continuous suitability values
-are used as continuous reference weights; `occupied_threshold` only removes low
-values and does not convert higher values to 1.
-
-By default, `fit_climniche()` standardises climate variables and screens out
-near-zero variance or highly correlated variables before fitting the distance
-metric. The fitted object records retained and removed variables in
-`preprocessing`. The preprocessing does not whiten or rotate variables, so
-variable contributions remain attached to the retained climate variables.
-
-The outputs are cell-level tables, maps, weighted summaries, model-derived
-variable contributions, report text, and figure data. The four reported
-quantities are continuous. Two optional descriptors summarise whether future
-conditions move toward or away from the realised niche centre and whether the
-chosen niche boundary is exceeded.
 
 ## Basic use
 
@@ -91,21 +70,23 @@ climniche_report(fit, species = "example species")
 plot_climniche_summary_figure(fit)
 ```
 
-For spatial data, use `fit_climniche_raster()` or `fit_climniche_terra()`.
-Both functions accept binary and continuous reference rasters. `domain` limits
-the calculation to the study region, whether it is a terrestrial range, an
-island, a catchment, a marine region, or a modelled accessible area. Map
-functions accept `study_region` as an `sf`, `Spatial`, `SpatVector`, or x-y
-boundary data frame, so terrestrial study boundaries can be drawn without
-changing the analysis. Thresholds used by the descriptors remain user-settable.
+For raster workflows, use `fit_climniche_raster()` or `fit_climniche_terra()`.
+The reference layer can be binary or continuous. Continuous SDM suitability
+values are treated as weights; `occupied_threshold` removes low-suitability
+cells but keeps the remaining suitability values continuous. Use `domain` to
+restrict the analysis to the accessible area or study region. Map functions can
+draw `sf`, `Spatial`, `SpatVector` or x-y boundary objects through
+`study_region`.
 
 ## Worked example
 
 The [Examples](https://bohao0813.github.io/climniche/articles/climniche-examples.html)
-page uses a Mediterranean European anchovy case study with Bio-ORACLE v3 marine
-climate layers, prepared future projections, and a continuous SDM suitability
-map used as reference weights. The fitted example uses Z-score standardisation
-and records the variables retained after preprocessing.
+page uses European anchovy in the Mediterranean Sea. OBIS occurrences and
+Bio-ORACLE v3 predictors are used to prepare a presence-background SDM. The
+SDM cutoff is selected by maximum test-set TSS; cells below the cutoff are
+removed from the reference set, and cells above the cutoff keep their
+continuous suitability values as reference weights. The example then maps the
+four exposure metrics inside current suitable habitat under SSP2-4.5.
 
 ## Contributor
 
