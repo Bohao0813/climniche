@@ -116,8 +116,8 @@ climniche_table <- function(x, scope = c("current", "all")) {
     ),
     definition = c(
       paste(
-        "Distance between current and future conditions in standardised,",
-        "sensitivity-weighted climatic space."
+        "Distance between current and future conditions in the fitted",
+        "sensitivity weighted climatic space."
       ),
       paste(
         "Signed change in distance from the current realised climatic",

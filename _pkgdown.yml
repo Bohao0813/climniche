@@ -2,6 +2,7 @@ url: https://bohao0813.github.io/climniche/
 template:
   bootstrap: 5
   bootswatch: flatly
+  math-rendering: mathjax
   bslib:
     primary: "#3f6f68"
     base_font:

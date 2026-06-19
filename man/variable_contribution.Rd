@@ -7,9 +7,9 @@
 variable_contribution(current, future, center, A)
 }
 \arguments{
-\item{current}{Current standardized climate matrix.}
+\item{current}{Current climate matrix in the fitted climate space.}
 
-\item{future}{Future standardized climate matrix.}
+\item{future}{Future climate matrix in the fitted climate space.}
 
 \item{center}{Realised niche centre.}
 

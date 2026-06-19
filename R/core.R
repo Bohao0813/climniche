@@ -10,21 +10,21 @@
 #'   with one value per row.
 #' @param cnfa Optional CENFA `cnfa` object. When supplied, its `mf` and `sf`
 #'   slots are used unless `center`, `sensitivity`, or `A` are provided.
-#' @param center Optional realised niche centre in standardized climate space.
+#' @param center Optional realised niche centre in the fitted climate space.
 #' @param sensitivity Optional climate-variable sensitivity weights.
 #' @param A Optional niche metric matrix.
 #' @param metric `"diag"` or `"factor"`. Used only when `A` is missing.
 #' @param boundary Quantile for the empirical occupied niche boundary.
-#' @param scale Logical. If TRUE, standardize current and future values using
-#'   means and standard deviations of current values.
+#' @param scale Logical. If TRUE, center and scale current and future values
+#'   using means and standard deviations of current values.
 #' @param preprocess Logical. If TRUE, remove near-zero variance variables and
-#'   highly correlated variables before standardisation and metric fitting.
+#'   highly correlated variables before scaling and metric fitting.
 #' @param preprocess_correlation Maximum absolute current-climate correlation
 #'   retained during preprocessing.
 #' @param preprocess_min_sd Minimum current-climate standard deviation retained
 #'   during preprocessing.
-#' @param global_mean Optional means used for standardization.
-#' @param global_sd Optional standard deviations used for standardization.
+#' @param global_mean Optional means used for centering.
+#' @param global_sd Optional standard deviations used for scaling.
 #' @param tolerance Optional Niche Distance Shift tolerance.
 #' @param tolerance_quantile Quantile of absolute Niche Distance Shift used
 #'   when `tolerance = NULL`.
@@ -176,7 +176,7 @@
 
 #' Niche potential
 #'
-#' @param x Standardised climate matrix.
+#' @param x Climate matrix in the fitted climate space.
 #' @param center Realised niche centre.
 #' @param A Niche metric matrix.
 #'
@@ -260,8 +260,8 @@ niche_percentile <- function(psi_current, psi_future, occupied) {
 
 #' Variable contribution to change in niche potential
 #'
-#' @param current Current standardized climate matrix.
-#' @param future Future standardized climate matrix.
+#' @param current Current climate matrix in the fitted climate space.
+#' @param future Future climate matrix in the fitted climate space.
 #' @param center Realised niche centre.
 #' @param A Niche metric matrix.
 #'

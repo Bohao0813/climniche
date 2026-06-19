@@ -24,19 +24,18 @@
 #'   available from a compatible CENFA object.
 #' @param boundary Quantile used to define the empirical boundary of the current
 #'   realised niche. Must be between 0 and 1.
-#' @param scale Logical. If `TRUE`, current and future values are standardised
-#'   before distances are calculated.
+#' @param scale Logical. If `TRUE`, current and future values are centred and
+#'   scaled with the current-layer mean and standard deviation before distances
+#'   are calculated.
 #' @param preprocess Logical. If `TRUE`, remove near-zero variance variables
-#'   and highly correlated variables before standardisation and metric fitting.
-#'   This keeps the distance calculation on a stable climate-variable set while
-#'   preserving the Euclidean decomposition used by the four metrics.
+#'   and highly correlated variables before metric fitting.
 #' @param preprocess_correlation Maximum absolute pairwise correlation retained
 #'   among current climate variables during preprocessing.
 #' @param preprocess_min_sd Minimum current-climate standard deviation retained
 #'   during preprocessing.
-#' @param global_mean Optional means used for standardisation. If omitted,
+#' @param global_mean Optional means used for centering. If omitted,
 #'   column means of `current` are used.
-#' @param global_sd Optional standard deviations used for standardisation. If
+#' @param global_sd Optional standard deviations used for scaling. If
 #'   omitted, column standard deviations of `current` are used.
 #' @param tolerance Optional tolerance around zero for Niche Distance Shift. If
 #'   `NULL`, the fitted object uses `tolerance_quantile`.
@@ -48,26 +47,18 @@
 #' @return An object of class `climniche_fit`.
 #'
 #' @details
-#' The fitted object stores four related quantities as snake_case fields:
-#' Climatic Displacement (`climate_change_amount`), Niche Distance Shift
-#' (`niche_distance_change`), Climatic Reconfiguration
-#' (`climate_reconfiguration`) and Niche Boundary Exceedance
-#' (`niche_boundary_exceedance`).
-#'
 #' Let current and future climatic conditions at cell \eqn{i} be \eqn{c_i} and
 #' \eqn{f_i}. Let \eqn{\mu} be the centre of the current realised climatic niche,
 #' and let \eqn{d_A(x, y)} be the sensitivity weighted distance under weighting
-#' matrix \eqn{A}. Climatic Displacement is \eqn{D_i = d_A(f_i, c_i)}. Niche
-#' Distance Shift is \eqn{R_i = d_A(f_i, \mu) - d_A(c_i, \mu)}. Climatic
-#' Reconfiguration is \eqn{C_i = \sqrt{\max(0, D_i^2 - R_i^2)}}; it is the
-#' non radial part of Climatic Displacement after Niche Distance Shift has been
-#' accounted for. Niche Boundary Exceedance is \eqn{E_i = \max(0, d_A(f_i, \mu)
-#' - B_q)}, where \eqn{B_q} is the \eqn{q}-th weighted quantile of current
-#' reference cell distances from the realised niche centre.
+#' matrix \eqn{A}. The four metrics are:
 #'
-#' Descriptor thresholds are user-settable. If `tolerance = NULL`, the effective
-#' Niche Distance Shift tolerance is calculated from `tolerance_quantile`. The
-#' fitted object stores the effective descriptor values in `descriptor_settings`.
+#' \deqn{D_i = d_A(f_i, c_i)}
+#' \deqn{R_i = d_A(f_i, \mu) - d_A(c_i, \mu)}
+#' \deqn{C_i = \sqrt{\max(0, D_i^2 - R_i^2)}}
+#' \deqn{E_i = \max(0, d_A(f_i, \mu) - B_q)}
+#'
+#' where \eqn{B_q} is the \eqn{q}-th weighted quantile of current reference-cell
+#' distances from the realised niche centre.
 #'
 #' @section Metric fields:
 #' The primary fitted fields are `climate_change_amount`,
@@ -77,23 +68,14 @@
 #'
 #' @section User-settable thresholds:
 #' `boundary` controls the empirical niche boundary. `tolerance` controls the
-#' zero band for Niche Distance Shift; when it is not supplied,
-#' `tolerance_quantile` sets it from the fitted values.
-#' `boundary_exceedance_tolerance` controls the boundary descriptor. These
-#' settings affect descriptor summaries and reports. They do not change the four
-#' continuous metric values.
+#' zero band for Niche Distance Shift. `boundary_exceedance_tolerance` controls
+#' the boundary descriptor. The fitted values are stored in
+#' `descriptor_settings`.
 #'
-#' @section Preprocessing:
-#' With `preprocess = TRUE`, `climniche` screens the current climate variables
-#' before fitting. Variables with near-zero current variance are removed first.
-#' Among pairs with absolute correlation above `preprocess_correlation`, the
-#' variable with the larger average absolute correlation to the remaining
-#' variables is removed. Standardisation addresses differences in scale and
-#' variance; preprocessing addresses near-zero variance and collinearity. These
-#' steps do not whiten or rotate the variables, so variable contributions remain
-#' tied to the retained climate variables. They do not change the identity used
-#' to derive Climatic Reconfiguration from Climatic Displacement and Niche
-#' Distance Shift.
+#' @section Scaling and preprocessing:
+#' `scale` centres and scales retained variables. `preprocess` screens the
+#' variable set before fitting. The two steps are independent and are enabled by
+#' default.
 #'
 #' @section Choosing a fit function:
 #' Use `fit_climniche()` when current and future climate values have already

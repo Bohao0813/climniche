@@ -64,13 +64,12 @@ available from a compatible CENFA object.}
 \item{boundary}{Quantile used to define the empirical boundary of the current
 realised niche. Must be between 0 and 1.}
 
-\item{scale}{Logical. If \code{TRUE}, current and future values are standardised
-before distances are calculated.}
+\item{scale}{Logical. If \code{TRUE}, current and future values are centred and
+scaled with the current-layer mean and standard deviation before distances
+are calculated.}
 
 \item{preprocess}{Logical. If \code{TRUE}, remove near-zero variance variables
-and highly correlated variables before standardisation and metric fitting.
-This keeps the distance calculation on a stable climate-variable set while
-preserving the Euclidean decomposition used by the four metrics.}
+and highly correlated variables before metric fitting.}
 
 \item{preprocess_correlation}{Maximum absolute pairwise correlation retained
 among current climate variables during preprocessing.}
@@ -78,10 +77,10 @@ among current climate variables during preprocessing.}
 \item{preprocess_min_sd}{Minimum current-climate standard deviation retained
 during preprocessing.}
 
-\item{global_mean}{Optional means used for standardisation. If omitted,
+\item{global_mean}{Optional means used for centering. If omitted,
 column means of \code{current} are used.}
 
-\item{global_sd}{Optional standard deviations used for standardisation. If
+\item{global_sd}{Optional standard deviations used for scaling. If
 omitted, column standard deviations of \code{current} are used.}
 
 \item{tolerance}{Optional tolerance around zero for Niche Distance Shift. If
