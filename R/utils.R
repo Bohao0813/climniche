@@ -272,6 +272,173 @@
   A
 }
 
+.preprocess_climate_pair <- function(current, future, preprocess = TRUE,
+                                     correlation = 0.95,
+                                     min_sd = 1e-08) {
+  p <- ncol(current)
+  variable <- colnames(current)
+  if (is.null(variable)) {
+    variable <- paste0("V", seq_len(p))
+    colnames(current) <- variable
+    colnames(future) <- variable
+  }
+  settings <- list(
+    enabled = isTRUE(preprocess),
+    correlation = correlation,
+    min_sd = min_sd
+  )
+  if (!isTRUE(preprocess)) {
+    return(list(
+      current = current,
+      future = future,
+      keep = rep(TRUE, p),
+      original_variables = variable,
+      retained_variables = variable,
+      removed_variables = data.frame(
+        variable = character(),
+        reason = character(),
+        value = numeric(),
+        stringsAsFactors = FALSE
+      ),
+      settings = settings
+    ))
+  }
+  correlation <- as.numeric(correlation)[1]
+  if (!is.finite(correlation) || correlation <= 0 || correlation > 1) {
+    stop("preprocess_correlation must be greater than 0 and no larger than 1.",
+         call. = FALSE)
+  }
+  min_sd <- as.numeric(min_sd)[1]
+  if (!is.finite(min_sd) || min_sd < 0) {
+    stop("preprocess_min_sd must be a finite non-negative number.",
+         call. = FALSE)
+  }
+  settings$correlation <- correlation
+  settings$min_sd <- min_sd
+
+  sd_current <- apply(current, 2L, stats::sd)
+  keep <- is.finite(sd_current) & sd_current > min_sd
+  removed <- data.frame(
+    variable = variable[!keep],
+    reason = rep("near-zero current variance", sum(!keep)),
+    value = sd_current[!keep],
+    stringsAsFactors = FALSE
+  )
+  if (!any(keep)) {
+    stop("No climate variables remain after preprocessing.", call. = FALSE)
+  }
+
+  active <- which(keep)
+  if (length(active) > 1L) {
+    cor_current <- stats::cor(current[, active, drop = FALSE])
+    cor_current[!is.finite(cor_current)] <- 0
+    diag(cor_current) <- 0
+    active_keep <- rep(TRUE, length(active))
+    repeat {
+      ids <- which(active_keep)
+      if (length(ids) <= 1L) {
+        break
+      }
+      abs_cor <- abs(cor_current[ids, ids, drop = FALSE])
+      diag(abs_cor) <- 0
+      max_cor <- max(abs_cor, na.rm = TRUE)
+      if (!is.finite(max_cor) || max_cor <= correlation) {
+        break
+      }
+      pair <- which(abs_cor == max_cor, arr.ind = TRUE)[1, ]
+      i <- ids[pair[1]]
+      j <- ids[pair[2]]
+      others_i <- setdiff(ids, i)
+      others_j <- setdiff(ids, j)
+      mean_i <- mean(abs(cor_current[i, others_i]), na.rm = TRUE)
+      mean_j <- mean(abs(cor_current[j, others_j]), na.rm = TRUE)
+      drop_local <- if (is.finite(mean_i) && is.finite(mean_j) &&
+                        mean_i > mean_j) {
+        i
+      } else {
+        j
+      }
+      active_keep[drop_local] <- FALSE
+      removed <- rbind(
+        removed,
+        data.frame(
+          variable = variable[active[drop_local]],
+          reason = "high current correlation",
+          value = max_cor,
+          stringsAsFactors = FALSE
+        )
+      )
+    }
+    keep[active] <- active_keep
+  }
+  if (!any(keep)) {
+    stop("No climate variables remain after preprocessing.", call. = FALSE)
+  }
+  list(
+    current = current[, keep, drop = FALSE],
+    future = future[, keep, drop = FALSE],
+    keep = keep,
+    original_variables = variable,
+    retained_variables = variable[keep],
+    removed_variables = removed,
+    settings = settings
+  )
+}
+
+.subset_fit_vector <- function(x, keep, p_old, arg) {
+  if (is.null(x)) {
+    return(NULL)
+  }
+  x <- as.numeric(x)
+  if (length(x) == p_old) {
+    return(x[keep])
+  }
+  if (length(x) == sum(keep)) {
+    return(x)
+  }
+  stop(arg, " must have length equal to the original or preprocessed number of variables.",
+       call. = FALSE)
+}
+
+.subset_fit_matrix <- function(x, keep, p_old, arg) {
+  if (is.null(x)) {
+    return(NULL)
+  }
+  x <- as.matrix(x)
+  p_new <- sum(keep)
+  if (identical(dim(x), c(p_old, p_old))) {
+    return(x[keep, keep, drop = FALSE])
+  }
+  if (identical(dim(x), c(p_new, p_new))) {
+    return(x)
+  }
+  stop(arg, " must match the original or preprocessed number of variables.",
+       call. = FALSE)
+}
+
+.subset_cnfa_object <- function(cnfa, keep, p_old) {
+  if (is.null(cnfa)) {
+    return(NULL)
+  }
+  out <- list(
+    mf = .subset_fit_vector(.extract_slot(cnfa, "mf"), keep, p_old, "cnfa mf"),
+    sf = .subset_fit_vector(.extract_slot(cnfa, "sf"), keep, p_old, "cnfa sf"),
+    eig = .extract_slot(cnfa, "eig")
+  )
+  co <- .extract_slot(cnfa, "co")
+  if (!is.null(co)) {
+    co <- as.matrix(co)
+    if (nrow(co) == p_old) {
+      co <- co[keep, , drop = FALSE]
+    } else if (nrow(co) != sum(keep)) {
+      stop("cnfa co must have rows equal to the original or preprocessed number of variables.",
+           call. = FALSE)
+    }
+  }
+  out$co <- co
+  out
+}
+
 .standardize_pair <- function(current, future, scale, global_mean, global_sd) {
   if (!scale) {
     return(list(current = current, future = future, center = rep(0, ncol(current)),

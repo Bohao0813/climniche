@@ -59,6 +59,12 @@ Binary rasters are used as 0/1 reference weights. Continuous suitability values
 are used as continuous reference weights; `occupied_threshold` only removes low
 values and does not convert higher values to 1.
 
+By default, `fit_climniche()` standardises climate variables and screens out
+near-zero variance or highly correlated variables before fitting the distance
+metric. The fitted object records retained and removed variables in
+`preprocessing`. The preprocessing does not whiten or rotate variables, so
+variable contributions remain attached to the retained climate variables.
+
 The outputs are cell-level tables, maps, weighted summaries, model-derived
 variable contributions, report text, and figure data. The four reported
 quantities are continuous. Two optional descriptors summarise whether future
@@ -98,7 +104,8 @@ changing the analysis. Thresholds used by the descriptors remain user-settable.
 The [Examples](https://bohao0813.github.io/climniche/articles/climniche-examples.html)
 page uses a Mediterranean European anchovy case study with Bio-ORACLE v3 marine
 climate layers, prepared future projections, and a continuous SDM suitability
-map used as reference weights.
+map used as reference weights. The fitted example uses Z-score standardisation
+and records the variables retained after preprocessing.
 
 ## Contributor
 

@@ -99,7 +99,9 @@ This example uses `fit_climniche_terra()` because the prepared Bio-ORACLE
 layers are terra rasters. The current and future layers must be aligned, and
 the suitability map is passed to `occupied` as a continuous reference layer.
 `occupied_threshold` removes low suitability cells without converting the
-remaining values to one.
+remaining values to one. The example uses Z-score standardisation and keeps the
+default preprocessing step that removes near-constant and highly correlated
+climate variables before the distance calculation.
 
 ```{r fit-code, eval = FALSE}
 # Use the TSS threshold only to remove very low suitability cells.
@@ -124,7 +126,11 @@ fit <- fit_climniche_terra(
   occupied = anchovy_suitability,
   occupied_threshold = sdm_threshold,
   domain = mediterranean_sea_mask,
-  sensitivity = predictor_sensitivity
+  sensitivity = predictor_sensitivity,
+  scale = TRUE,
+  preprocess = TRUE,
+  preprocess_correlation = 0.95,
+  preprocess_min_sd = 1e-08
 )
 
 climniche_summary(fit)
@@ -145,7 +151,12 @@ sensitivity weighted climatic space.
 ```{r}
 subset(
   fit_settings,
-  setting == "boundary_quantile" |
+  setting == "standardisation" |
+    setting == "preprocess" |
+    setting == "preprocess_correlation" |
+    setting == "preprocess_retained_predictor_count" |
+    setting == "preprocess_removed_predictor_count" |
+    setting == "boundary_quantile" |
     setting == "tolerance" |
     setting == "boundary_exceedance_tolerance"
 )

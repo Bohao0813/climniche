@@ -18,6 +18,9 @@ fit_climniche_terra(
   metric = c("diag", "factor"),
   boundary = 0.95,
   scale = TRUE,
+  preprocess = TRUE,
+  preprocess_correlation = 0.95,
+  preprocess_min_sd = 1e-08,
   global_mean = NULL,
   global_sd = NULL,
   tolerance = NULL,
@@ -63,6 +66,17 @@ realised niche. Must be between 0 and 1.}
 
 \item{scale}{Logical. If \code{TRUE}, current and future values are standardised
 before distances are calculated.}
+
+\item{preprocess}{Logical. If \code{TRUE}, remove near-zero variance variables
+and highly correlated variables before standardisation and metric fitting.
+This keeps the distance calculation on a stable climate-variable set while
+preserving the Euclidean decomposition used by the four metrics.}
+
+\item{preprocess_correlation}{Maximum absolute pairwise correlation retained
+among current climate variables during preprocessing.}
+
+\item{preprocess_min_sd}{Minimum current-climate standard deviation retained
+during preprocessing.}
 
 \item{global_mean}{Optional means used for standardisation. If omitted,
 column means of \code{current} are used.}

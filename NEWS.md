@@ -1,3 +1,16 @@
+# climniche 0.3.1
+
+* Added default climate-variable preprocessing in `fit_climniche()` and the
+  raster workflows. The preprocessing removes near-zero variance variables and
+  highly correlated variables before standardisation and metric fitting.
+* Added preprocessing metadata to fitted objects.
+* Added `CENFA` to suggested packages because `cnfa` objects are accepted as an
+  optional input.
+* Refreshed the Mediterranean anchovy example outputs under the current
+  standardisation and preprocessing workflow.
+* Revised the `fit_climniche()` formula documentation for clearer pkgdown
+  rendering.
+
 # climniche 0.3.0
 
 * Focused fitted objects, reports and figures on the four continuous exposure

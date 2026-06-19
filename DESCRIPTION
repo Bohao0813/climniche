@@ -1,7 +1,7 @@
 Package: climniche
 Type: Package
 Title: Niche Relative Climate Exposure
-Version: 0.3.0
+Version: 0.3.1
 Authors@R: c(
     person("Bohao", "He", role = c("aut", "cre"), email = "bohao.he@polimi.it")
     )
@@ -20,6 +20,7 @@ Imports:
     grid,
     methods
 Suggests:
+    CENFA,
     ggplot2,
     knitr,
     patchwork,

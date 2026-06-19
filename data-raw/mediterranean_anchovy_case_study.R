@@ -111,6 +111,10 @@ if (!requireNamespace("usdm", quietly = TRUE)) {
 future_scenario <- Sys.getenv("BIOORACLE_SCENARIO", "SSP245")
 future_year <- as.integer(Sys.getenv("BIOORACLE_YEAR", "2050"))
 future_dataset_tag <- tolower(future_scenario)
+climniche_scale <- TRUE
+climniche_preprocess <- TRUE
+climniche_preprocess_correlation <- 0.95
+climniche_preprocess_min_sd <- 1e-08
 candidate_specs <- data.frame(
   variable = c(
     "temperature_mean", "temperature_range",
@@ -544,7 +548,10 @@ fit <- fit_climniche_terra(
   domain_threshold = 0,
   sensitivity = sensitivity,
   boundary = 0.95,
-  scale = TRUE
+  scale = climniche_scale,
+  preprocess = climniche_preprocess,
+  preprocess_correlation = climniche_preprocess_correlation,
+  preprocess_min_sd = climniche_preprocess_min_sd
 )
 saveRDS(fit, file.path(out_dir, "anchovy_climniche_fit.rds"))
 
@@ -553,6 +560,23 @@ setting_value <- function(x) {
     return(NA_character_)
   }
   as.character(x[[1]])
+}
+
+collapse_setting <- function(x) {
+  x <- as.character(x)
+  x <- x[!is.na(x) & nzchar(x)]
+  if (!length(x)) {
+    return("none")
+  }
+  paste(x, collapse = ", ")
+}
+
+preprocess_removed <- fit$preprocessing$removed_variables
+removed_predictors <- if (is.null(preprocess_removed) ||
+                          !nrow(preprocess_removed)) {
+  character()
+} else {
+  preprocess_removed$variable
 }
 
 layer_manifest <- data.frame(
@@ -644,6 +668,14 @@ fit_settings <- data.frame(
     "exposure_retained_predictor_count",
     "sdm_retained_predictors",
     "exposure_retained_predictors",
+    "standardisation",
+    "preprocess",
+    "preprocess_correlation",
+    "preprocess_min_sd",
+    "preprocess_retained_predictor_count",
+    "preprocess_removed_predictor_count",
+    "preprocess_retained_predictors",
+    "preprocess_removed_predictors",
     "boundary_quantile",
     "tolerance",
     "tolerance_quantile",
@@ -660,6 +692,18 @@ fit_settings <- data.frame(
     as.character(length(exposure_retained)),
     paste(sdm_retained, collapse = ", "),
     paste(exposure_retained, collapse = ", "),
+    if (isTRUE(climniche_scale)) {
+      "Z-score using current-layer means and standard deviations"
+    } else {
+      "not standardised"
+    },
+    as.character(fit$preprocessing$settings$enabled),
+    setting_value(fit$preprocessing$settings$correlation),
+    setting_value(fit$preprocessing$settings$min_sd),
+    as.character(length(fit$preprocessing$retained_variables)),
+    as.character(length(removed_predictors)),
+    collapse_setting(fit$preprocessing$retained_variables),
+    collapse_setting(removed_predictors),
     setting_value(fit$boundary_quantile),
     setting_value(fit$descriptor_settings$tolerance),
     setting_value(fit$descriptor_settings$tolerance_quantile),

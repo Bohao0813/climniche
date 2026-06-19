@@ -164,6 +164,77 @@ negative_weight <- try(fit_climniche(
 ), silent = TRUE)
 stopifnot(inherits(negative_weight, "try-error"))
 
+pre_current <- cbind(
+  mean_temperature = c(0, 1, 2, 3, 4, 5),
+  duplicate_temperature = c(0, 2, 4, 6, 8, 10),
+  salinity_range = c(2, 1, 2, 1, 2, 1),
+  constant_layer = rep(7, 6)
+)
+pre_future <- pre_current + cbind(
+  mean_temperature = rep(0.2, 6),
+  duplicate_temperature = rep(0.4, 6),
+  salinity_range = rep(0.1, 6),
+  constant_layer = rep(0, 6)
+)
+pre_fit <- fit_climniche(
+  pre_current,
+  pre_future,
+  occupied = rep(1, 6),
+  sensitivity = c(1, 1, 1, 1),
+  preprocess_correlation = 0.95
+)
+stopifnot(isTRUE(pre_fit$preprocessing$settings$enabled))
+stopifnot(sum(pre_fit$preprocessing$retained_variables %in%
+                c("mean_temperature", "duplicate_temperature")) == 1L)
+stopifnot("salinity_range" %in% pre_fit$preprocessing$retained_variables)
+stopifnot("constant_layer" %in%
+            pre_fit$preprocessing$removed_variables$variable)
+stopifnot(ncol(pre_fit$current) == 2L)
+stopifnot(is.null(pre_fit$preprocessing$current))
+stopifnot(is.null(pre_fit$preprocessing$future))
+stopifnot(isTRUE(all.equal(
+  pre_fit$climate_change_amount^2,
+  pre_fit$niche_distance_change^2 + pre_fit$climate_reconfiguration^2,
+  tolerance = 1e-7
+)))
+
+pre_off <- fit_climniche(
+  pre_current,
+  pre_future,
+  occupied = rep(1, 6),
+  sensitivity = c(1, 1, 1, 1),
+  scale = FALSE,
+  preprocess = FALSE
+)
+stopifnot(!isTRUE(pre_off$preprocessing$settings$enabled))
+stopifnot(ncol(pre_off$current) == 4L)
+
+pre_A <- fit_climniche(
+  pre_current,
+  pre_future,
+  occupied = rep(1, 6),
+  A = diag(c(1, 2, 3, 4)),
+  preprocess_correlation = 0.95
+)
+stopifnot(identical(dim(pre_A$A), c(2L, 2L)))
+
+cnfa_like <- list(
+  mf = rep(0, 4),
+  sf = c(1, 1, 1, 1),
+  co = diag(4),
+  eig = rep(1, 4)
+)
+pre_cnfa <- fit_climniche(
+  pre_current,
+  pre_future,
+  occupied = rep(1, 6),
+  cnfa = cnfa_like,
+  metric = "factor",
+  preprocess_correlation = 0.95
+)
+stopifnot(inherits(pre_cnfa, "climniche_fit"))
+stopifnot(ncol(pre_cnfa$current) == 2L)
+
 A_full <- matrix(c(1, 0.25, 0.25, 1.4), 2, 2)
 fit_full <- fit_climniche(
   current = sim$current,

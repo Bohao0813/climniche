@@ -17,6 +17,12 @@
 #' @param boundary Quantile for the empirical occupied niche boundary.
 #' @param scale Logical. If TRUE, standardize current and future values using
 #'   means and standard deviations of current values.
+#' @param preprocess Logical. If TRUE, remove near-zero variance variables and
+#'   highly correlated variables before standardisation and metric fitting.
+#' @param preprocess_correlation Maximum absolute current-climate correlation
+#'   retained during preprocessing.
+#' @param preprocess_min_sd Minimum current-climate standard deviation retained
+#'   during preprocessing.
 #' @param global_mean Optional means used for standardization.
 #' @param global_sd Optional standard deviations used for standardization.
 #' @param tolerance Optional Niche Distance Shift tolerance.
@@ -33,6 +39,9 @@
                                   sensitivity = NULL, A = NULL,
                                   metric = c("diag", "factor"),
                                   boundary = 0.95, scale = TRUE,
+                                  preprocess = TRUE,
+                                  preprocess_correlation = 0.95,
+                                  preprocess_min_sd = 1e-08,
                                   global_mean = NULL, global_sd = NULL,
                                   tolerance = NULL,
                                   tolerance_quantile = 0.10,
@@ -50,6 +59,29 @@
   occupied_weight <- .reference_weights(occupied, nrow(current),
                                         threshold = occupied_threshold)
   occ <- .positive_reference_indices(occupied_weight)
+  p_original <- ncol(current)
+  preprocessed <- .preprocess_climate_pair(
+    current = current,
+    future = future,
+    preprocess = preprocess,
+    correlation = preprocess_correlation,
+    min_sd = preprocess_min_sd
+  )
+  current <- preprocessed$current
+  future <- preprocessed$future
+  keep <- preprocessed$keep
+  preprocessing_record <- preprocessed[
+    c("keep", "original_variables", "retained_variables",
+      "removed_variables", "settings")
+  ]
+  center <- .subset_fit_vector(center, keep, p_original, "center")
+  sensitivity <- .subset_fit_vector(sensitivity, keep, p_original,
+                                    "sensitivity")
+  global_mean <- .subset_fit_vector(global_mean, keep, p_original,
+                                    "global_mean")
+  global_sd <- .subset_fit_vector(global_sd, keep, p_original, "global_sd")
+  A <- .subset_fit_matrix(A, keep, p_original, "A")
+  cnfa <- .subset_cnfa_object(cnfa, keep, p_original)
   scaled <- .standardize_pair(current, future, scale, global_mean, global_sd)
   x0 <- scaled$current
   x1 <- scaled$future
@@ -135,6 +167,7 @@
     boundary_status = descriptors$boundary_status,
     descriptor_settings = descriptor_settings,
     threshold_settings = descriptor_settings,
+    preprocessing = preprocessing_record,
     standardization = list(center = scaled$center, scale = scaled$scale)
   )
   class(out) <- "climniche_fit"

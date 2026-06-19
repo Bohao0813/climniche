@@ -16,6 +16,9 @@ fit_climniche(
   metric = c("diag", "factor"),
   boundary = 0.95,
   scale = TRUE,
+  preprocess = TRUE,
+  preprocess_correlation = 0.95,
+  preprocess_min_sd = 1e-08,
   global_mean = NULL,
   global_sd = NULL,
   tolerance = NULL,
@@ -61,6 +64,17 @@ realised niche. Must be between 0 and 1.}
 \item{scale}{Logical. If \code{TRUE}, current and future values are standardised
 before distances are calculated.}
 
+\item{preprocess}{Logical. If \code{TRUE}, remove near-zero variance variables
+and highly correlated variables before standardisation and metric fitting.
+This keeps the distance calculation on a stable climate-variable set while
+preserving the Euclidean decomposition used by the four metrics.}
+
+\item{preprocess_correlation}{Maximum absolute pairwise correlation retained
+among current climate variables during preprocessing.}
+
+\item{preprocess_min_sd}{Minimum current-climate standard deviation retained
+during preprocessing.}
+
 \item{global_mean}{Optional means used for standardisation. If omitted,
 column means of \code{current} are used.}
 
@@ -92,20 +106,13 @@ Climatic Displacement (\code{climate_change_amount}), Niche Distance Shift
 Let current and future climatic conditions at cell \eqn{i} be \eqn{c_i} and
 \eqn{f_i}. Let \eqn{\mu} be the centre of the current realised climatic niche,
 and let \eqn{d_A(x, y)} be the sensitivity weighted distance under weighting
-matrix \eqn{A}. The four quantities are:
-
-\describe{
-\item{Climatic Displacement}{\eqn{D_i = d_A(f_i, c_i)}.}
-\item{Niche Distance Shift}{\eqn{R_i = d_A(f_i, \mu) -
-d_A(c_i, \mu)}.}
-\item{Climatic Reconfiguration}{\eqn{C_i =
-\sqrt{\max(0, D_i^2 - R_i^2)}}. This is the non radial part of Climatic
-Displacement after Niche Distance Shift has been accounted for.}
-\item{Niche Boundary Exceedance}{\eqn{E_i =
-\max(0, d_A(f_i, \mu) - B_q)}, where \eqn{B_q} is the \eqn{q}-th weighted
-quantile of current reference cell distances from the realised niche
-centre.}
-}
+matrix \eqn{A}. Climatic Displacement is \eqn{D_i = d_A(f_i, c_i)}. Niche
+Distance Shift is \eqn{R_i = d_A(f_i, \mu) - d_A(c_i, \mu)}. Climatic
+Reconfiguration is \eqn{C_i = \sqrt{\max(0, D_i^2 - R_i^2)}}; it is the
+non radial part of Climatic Displacement after Niche Distance Shift has been
+accounted for. Niche Boundary Exceedance is \eqn{E_i = \max(0, d_A(f_i, \mu)
+- B_q)}, where \eqn{B_q} is the \eqn{q}-th weighted quantile of current
+reference cell distances from the realised niche centre.
 
 Descriptor thresholds are user-settable. If \code{tolerance = NULL}, the effective
 Niche Distance Shift tolerance is calculated from \code{tolerance_quantile}. The
@@ -127,6 +134,20 @@ zero band for Niche Distance Shift; when it is not supplied,
 \code{boundary_exceedance_tolerance} controls the boundary descriptor. These
 settings affect descriptor summaries and reports. They do not change the four
 continuous metric values.
+}
+
+\section{Preprocessing}{
+
+With \code{preprocess = TRUE}, \code{climniche} screens the current climate variables
+before fitting. Variables with near-zero current variance are removed first.
+Among pairs with absolute correlation above \code{preprocess_correlation}, the
+variable with the larger average absolute correlation to the remaining
+variables is removed. Standardisation addresses differences in scale and
+variance; preprocessing addresses near-zero variance and collinearity. These
+steps do not whiten or rotate the variables, so variable contributions remain
+tied to the retained climate variables. They do not change the identity used
+to derive Climatic Reconfiguration from Climatic Displacement and Niche
+Distance Shift.
 }
 
 \section{Choosing a fit function}{
