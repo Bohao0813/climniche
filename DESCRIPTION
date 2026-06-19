@@ -20,7 +20,6 @@ Imports:
     grid,
     methods
 Suggests:
-    CENFA,
     ggplot2,
     knitr,
     patchwork,
