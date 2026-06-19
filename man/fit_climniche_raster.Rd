@@ -85,3 +85,9 @@ An object of class \code{climniche_fit} with RasterLayer outputs stored in
 \description{
 Fit climniche to raster data
 }
+\details{
+\code{fit_climniche_raster()} is the Raster* workflow for users working with the
+\code{raster} package. It extracts aligned cell values, applies \code{domain} and
+\code{occupied} rasters, calls the matrix workflow, and writes the fitted
+quantities back to RasterLayer outputs.
+}

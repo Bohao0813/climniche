@@ -49,22 +49,20 @@
 #' Let current and future climatic conditions at cell \eqn{i} be \eqn{c_i} and
 #' \eqn{f_i}. Let \eqn{\mu} be the centre of the current realised climatic niche,
 #' and let \eqn{d_A(x, y)} be the sensitivity weighted distance under weighting
-#' matrix \eqn{A}. The niche-relative decomposition reports
+#' matrix \eqn{A}. The four quantities are:
 #'
-#' \deqn{D_i = d_A(f_i, c_i)}
-#'
-#' \deqn{R_i = d_A(f_i, \mu) - d_A(c_i, \mu)}
-#'
-#' \deqn{C_i = \sqrt{\max(0, D_i^2 - R_i^2)}}
-#'
-#' \deqn{E_i = \max(0, d_A(f_i, \mu) - B_q)}
-#'
-#' where \eqn{B_q} is the \eqn{q}-th weighted quantile of current reference cell
-#' distances from the realised niche centre. Positive Niche Boundary Exceedance
-#' is therefore an excess distance beyond this empirical radial boundary.
-#' Climatic Reconfiguration is derived from Climatic Displacement and Niche
-#' Distance Shift; it is a non radial displacement component rather than an
-#' independently estimated process.
+#' \describe{
+#' \item{Climatic Displacement}{\eqn{D_i = d_A(f_i, c_i)}.}
+#' \item{Niche Distance Shift}{\eqn{R_i = d_A(f_i, \mu) -
+#' d_A(c_i, \mu)}.}
+#' \item{Climatic Reconfiguration}{\eqn{C_i =
+#' \sqrt{\max(0, D_i^2 - R_i^2)}}. This is the non radial part of Climatic
+#' Displacement after Niche Distance Shift has been accounted for.}
+#' \item{Niche Boundary Exceedance}{\eqn{E_i =
+#' \max(0, d_A(f_i, \mu) - B_q)}, where \eqn{B_q} is the \eqn{q}-th weighted
+#' quantile of current reference cell distances from the realised niche
+#' centre.}
+#' }
 #'
 #' Descriptor thresholds are user-settable. If `tolerance = NULL`, the effective
 #' Niche Distance Shift tolerance is calculated from `tolerance_quantile`. The
@@ -83,6 +81,14 @@
 #' `boundary_exceedance_tolerance` controls the boundary descriptor. These
 #' settings affect descriptor summaries and reports. They do not change the four
 #' continuous metric values.
+#'
+#' @section Choosing a fit function:
+#' Use `fit_climniche()` when current and future climate values have already
+#' been extracted to matrices or data frames. Use `fit_climniche_raster()` for
+#' objects from the `raster` package. Use `fit_climniche_terra()` for
+#' `terra::SpatRaster` objects. The three functions calculate the same metrics;
+#' the raster and terra methods add spatial masking and return map layers in
+#' `x$rasters`.
 #' @export
 fit_climniche <- function(current, future, occupied = NULL,
                           occupied_threshold = NULL, cnfa = NULL,
@@ -128,6 +134,12 @@ fit_climniche <- function(current, future, occupied = NULL,
 #'
 #' @return An object of class `climniche_fit` with RasterLayer outputs stored in
 #'   `x$rasters`.
+#'
+#' @details
+#' `fit_climniche_raster()` is the Raster* workflow for users working with the
+#' `raster` package. It extracts aligned cell values, applies `domain` and
+#' `occupied` rasters, calls the matrix workflow, and writes the fitted
+#' quantities back to RasterLayer outputs.
 #' @export
 fit_climniche_raster <- function(current, future, occupied = NULL,
                                  occupied_threshold = NULL, domain = NULL,
@@ -176,6 +188,12 @@ fit_climniche_raster <- function(current, future, occupied = NULL,
 #'
 #' @return An object of class `climniche_fit` with SpatRaster outputs stored in
 #'   `x$rasters`.
+#'
+#' @details
+#' `fit_climniche_terra()` is the SpatRaster workflow for users working with
+#' `terra`. It extracts aligned cell values, applies `domain` and `occupied`
+#' rasters, calls the matrix workflow, and writes the fitted quantities back to
+#' SpatRaster outputs.
 #' @export
 fit_climniche_terra <- function(current, future, occupied = NULL,
                                 occupied_threshold = NULL, domain = NULL,

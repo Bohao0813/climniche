@@ -14,14 +14,15 @@ knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.align = "center")
 This example uses European anchovy (*Engraulis encrasicolus*) in the
 Mediterranean Sea. The package includes prepared tables and figures generated
 from Bio-ORACLE v3 surface layers, OBIS occurrence records, and a continuous
-presence-background SDM suitability map. The code below starts from these
-prepared inputs and focuses on the `climniche` calculation.
+presence-background SDM suitability map. The example starts from these prepared
+inputs and focuses on the `climniche` calculation.
 
 ```{r}
 library(climniche)
 
 case_path <- system.file("extdata/mediterranean_anchovy", package = "climniche")
 
+# Prepared tables stored with the package.
 metric_summary <- read.csv(
   file.path(case_path, "anchovy_climniche_metric_summary.csv")
 )
@@ -46,16 +47,20 @@ predictor_screen <- read.csv(
 
 The environmental data are Bio-ORACLE v3 surface layers. Baseline time layers
 were averaged for current conditions; future rasters use the same variables
-under SSP245 at the 2050 time coordinate.
+under SSP2-4.5 at the 2050 time coordinate.
 
 ```{r}
-unique(layer_manifest[, c(
+# Use readable scenario labels in the printed table.
+layer_table <- layer_manifest
+layer_table[["future_scenario"]] <- "SSP2-4.5"
+
+unique(layer_table[, c(
   "depth", "current_time", "future_scenario", "future_time"
 )])
 
-layer_manifest[layer_manifest$retained_for_climniche, c(
-  "label", "current_dataset", "future_dataset"
-)]
+subset(layer_table, retained_for_climniche, c(
+  "label", "depth", "current_time", "future_scenario", "future_time"
+))
 ```
 
 The current reference layer is a continuous suitability raster from a
@@ -65,49 +70,54 @@ used as a screening cutoff for reference weights. Suitability values above the
 cutoff remain continuous weights.
 
 ```{r}
-sdm_settings[sdm_settings$setting %in% c(
-  "presence_cell_count",
-  "background_cell_count",
-  "background_to_presence_ratio",
-  "sdm_test_auc",
-  "sdm_test_tss",
-  "sdm_threshold"
-), ]
+subset(
+  sdm_settings,
+  setting == "presence_cell_count" |
+    setting == "background_cell_count" |
+    setting == "background_to_presence_ratio" |
+    setting == "sdm_test_auc" |
+    setting == "sdm_test_tss" |
+    setting == "sdm_threshold"
+)
 ```
 
 Predictor screening was completed before the `climniche` fit. The table below
 records the variables retained for the niche-relative exposure calculation.
 
 ```{r}
-predictor_screen[
-  predictor_screen$role == "climniche exposure calculation" &
-    predictor_screen$retained,
-  c("label", "vif_after_screening")
-]
+climniche_predictors <- subset(
+  predictor_screen,
+  role == "climniche exposure calculation" & retained
+)
+
+subset(climniche_predictors, retained, c("label", "vif_after_screening"))
 ```
 
 ## Reproducing the climniche step
 
-The raster workflow needs aligned current and future environmental layers.
-`occupied` can be a binary map or a continuous suitability map. With a
-continuous suitability map, `occupied_threshold` removes low suitability cells
-but does not convert the remaining values to one.
+This example uses `fit_climniche_terra()` because the prepared Bio-ORACLE
+layers are terra rasters. The current and future layers must be aligned, and
+the suitability map is passed to `occupied` as a continuous reference layer.
+`occupied_threshold` removes low suitability cells without converting the
+remaining values to one.
 
 ```{r fit-code, eval = FALSE}
-sdm_threshold <- as.numeric(
-  sdm_settings$value[sdm_settings$setting == "sdm_threshold"]
+# Use the TSS threshold only to remove very low suitability cells.
+threshold_row <- subset(sdm_settings, setting == "sdm_threshold")
+sdm_threshold <- as.numeric(threshold_row[["value"]])
+
+# Keep the Bio-ORACLE variables retained after predictor screening.
+climniche_predictors <- subset(
+  predictor_screen,
+  role == "climniche exposure calculation" & retained
 )
-selected_predictors <- predictor_screen$variable[
-  predictor_screen$role == "climniche exposure calculation" &
-    predictor_screen$retained
-]
-label_rows <- predictor_screen$role == "climniche exposure calculation" &
-  predictor_screen$retained
+selected_predictors <- climniche_predictors[["variable"]]
 predictor_labels <- setNames(
-  predictor_screen$label[label_rows],
-  predictor_screen$variable[label_rows]
+  climniche_predictors[["label"]],
+  selected_predictors
 )
 
+# The suitability raster supplies continuous reference weights.
 fit <- fit_climniche_terra(
   current = current_layers[[selected_predictors]],
   future = future_layers[[selected_predictors]],
@@ -120,37 +130,25 @@ fit <- fit_climniche_terra(
 climniche_summary(fit)
 ```
 
-The same calculation can be run from matrices after raster values have been
-extracted.
-
-```{r matrix-fit-code, eval = FALSE}
-fit <- fit_climniche(
-  current = current_values[, selected_predictors],
-  future = future_values[, selected_predictors],
-  occupied = suitability_values,
-  occupied_threshold = sdm_threshold,
-  sensitivity = predictor_sensitivity
-)
-```
-
 ## Niche-relative decomposition
 
 `climniche` reports four related quantities. Climatic Displacement is the
 distance from current to future conditions in standardised, sensitivity-weighted
 climatic space. Niche Distance Shift is the signed change in distance from the
 current realised niche centre. Climatic Reconfiguration is the remaining
-non-radial component, calculated from the geometric identity `D^2 = R^2 + C^2`.
+non-radial component, calculated from the identity \(D_i^2 = R_i^2 + C_i^2\).
 Niche Boundary Exceedance is the positive excess beyond the chosen weighted
 quantile of current reference-cell distances from the realised niche centre.
 All four quantities are dimensionless distances in the standardised,
 sensitivity weighted climatic space.
 
 ```{r}
-fit_settings[fit_settings$setting %in% c(
-  "boundary_quantile",
-  "tolerance",
-  "boundary_exceedance_tolerance"
-), ]
+subset(
+  fit_settings,
+  setting == "boundary_quantile" |
+    setting == "tolerance" |
+    setting == "boundary_exceedance_tolerance"
+)
 
 metric_summary[, c(
   "n", "reference_weight_sum", "boundary_quantile",
@@ -212,26 +210,4 @@ summary_figure
 
 ```{r summary-figure-output, echo = FALSE, out.width = "95%"}
 knitr::include_graphics("figures/anchovy-climniche-summary.png")
-```
-
-## Terrestrial study regions
-
-The raster workflow is not tied to marine systems. For a terrestrial species,
-use a land or study-area raster as `domain`; cells outside it are excluded from
-the fit. The same boundary can be added to maps for geographic context.
-
-```r
-fit_land <- fit_climniche_terra(
-  current = current_land_climate,
-  future = future_land_climate,
-  occupied = binary_or_continuous_sdm,
-  domain = terrestrial_study_mask,
-  sensitivity = predictor_sensitivity
-)
-
-plot_climniche_maps(
-  fit_land,
-  study_region = terrestrial_study_boundary,
-  degree_labels = "auto"
-)
 ```

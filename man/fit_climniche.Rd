@@ -92,22 +92,20 @@ Climatic Displacement (\code{climate_change_amount}), Niche Distance Shift
 Let current and future climatic conditions at cell \eqn{i} be \eqn{c_i} and
 \eqn{f_i}. Let \eqn{\mu} be the centre of the current realised climatic niche,
 and let \eqn{d_A(x, y)} be the sensitivity weighted distance under weighting
-matrix \eqn{A}. The niche-relative decomposition reports
+matrix \eqn{A}. The four quantities are:
 
-\deqn{D_i = d_A(f_i, c_i)}
-
-\deqn{R_i = d_A(f_i, \mu) - d_A(c_i, \mu)}
-
-\deqn{C_i = \sqrt{\max(0, D_i^2 - R_i^2)}}
-
-\deqn{E_i = \max(0, d_A(f_i, \mu) - B_q)}
-
-where \eqn{B_q} is the \eqn{q}-th weighted quantile of current reference cell
-distances from the realised niche centre. Positive Niche Boundary Exceedance
-is therefore an excess distance beyond this empirical radial boundary.
-Climatic Reconfiguration is derived from Climatic Displacement and Niche
-Distance Shift; it is a non radial displacement component rather than an
-independently estimated process.
+\describe{
+\item{Climatic Displacement}{\eqn{D_i = d_A(f_i, c_i)}.}
+\item{Niche Distance Shift}{\eqn{R_i = d_A(f_i, \mu) -
+d_A(c_i, \mu)}.}
+\item{Climatic Reconfiguration}{\eqn{C_i =
+\sqrt{\max(0, D_i^2 - R_i^2)}}. This is the non radial part of Climatic
+Displacement after Niche Distance Shift has been accounted for.}
+\item{Niche Boundary Exceedance}{\eqn{E_i =
+\max(0, d_A(f_i, \mu) - B_q)}, where \eqn{B_q} is the \eqn{q}-th weighted
+quantile of current reference cell distances from the realised niche
+centre.}
+}
 
 Descriptor thresholds are user-settable. If \code{tolerance = NULL}, the effective
 Niche Distance Shift tolerance is calculated from \code{tolerance_quantile}. The
@@ -129,5 +127,15 @@ zero band for Niche Distance Shift; when it is not supplied,
 \code{boundary_exceedance_tolerance} controls the boundary descriptor. These
 settings affect descriptor summaries and reports. They do not change the four
 continuous metric values.
+}
+
+\section{Choosing a fit function}{
+
+Use \code{fit_climniche()} when current and future climate values have already
+been extracted to matrices or data frames. Use \code{fit_climniche_raster()} for
+objects from the \code{raster} package. Use \code{fit_climniche_terra()} for
+\code{terra::SpatRaster} objects. The three functions calculate the same metrics;
+the raster and terra methods add spatial masking and return map layers in
+\code{x$rasters}.
 }
 

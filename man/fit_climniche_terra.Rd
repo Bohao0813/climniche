@@ -86,3 +86,9 @@ An object of class \code{climniche_fit} with SpatRaster outputs stored in
 \description{
 Fit climniche to terra raster data
 }
+\details{
+\code{fit_climniche_terra()} is the SpatRaster workflow for users working with
+\code{terra}. It extracts aligned cell values, applies \code{domain} and \code{occupied}
+rasters, calls the matrix workflow, and writes the fitted quantities back to
+SpatRaster outputs.
+}
