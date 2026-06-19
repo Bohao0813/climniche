@@ -16,7 +16,10 @@ plot_climniche_distribution(
 \arguments{
 \item{x}{A fitted climniche object.}
 
-\item{metric}{Metric to plot.}
+\item{metric}{Quantity to plot. Accepted values are
+\code{"climate_change_amount"}, \code{"niche_distance_change"},
+\code{"climate_reconfiguration"}, and \code{"niche_boundary_exceedance"}. Legacy
+aliases \code{"composition_change"} and \code{"outside_niche_exceedance"} still work.}
 
 \item{scope}{\code{"current"} for current reference cells or \code{"all"} for all
 evaluated cells.}

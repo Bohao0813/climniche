@@ -11,13 +11,25 @@ fit_climniche_raster(
   occupied_threshold = NULL,
   domain = NULL,
   domain_threshold = 0,
-  ...
+  cnfa = NULL,
+  center = NULL,
+  sensitivity = NULL,
+  A = NULL,
+  metric = c("diag", "factor"),
+  boundary = 0.95,
+  scale = TRUE,
+  global_mean = NULL,
+  global_sd = NULL,
+  tolerance = NULL,
+  tolerance_quantile = 0.1,
+  boundary_exceedance_tolerance = 0
 )
 }
 \arguments{
-\item{current}{Raster* object of current environmental layers.}
+\item{current}{Raster* object of current climate layers.}
 
-\item{future}{Raster* object of future environmental layers.}
+\item{future}{Raster* object of future climate layers with the same geometry
+and layer order as \code{current}.}
 
 \item{occupied}{Optional RasterLayer with binary or continuous occurrence,
 range, or SDM suitability values.}
@@ -29,12 +41,46 @@ reference weight. Values above it keep their original value.}
 
 \item{domain_threshold}{Values greater than this threshold define the domain.}
 
-\item{...}{Additional arguments passed to \code{fit_climniche()}, including
-\code{boundary}, \code{tolerance}, \code{tolerance_quantile}, and
-\code{boundary_exceedance_tolerance}.}
+\item{cnfa}{Optional CENFA \code{cnfa} object. Its marginality and sensitivity
+slots are used when \code{center}, \code{sensitivity}, or \code{A} are not supplied.}
+
+\item{center}{Optional realised niche centre in the climate space used by the
+fit. If omitted, the centre is the weighted mean of current reference rows.}
+
+\item{sensitivity}{Optional non-negative variable weights. Used to build a
+diagonal metric when \code{A} is not supplied.}
+
+\item{A}{Optional square metric matrix. When supplied, it overrides
+\code{sensitivity}, \code{cnfa}, and \code{metric} for distance calculations.}
+
+\item{metric}{Method used to build \code{A} when \code{A} is missing. \code{"diag"} uses
+variable-level sensitivity weights. \code{"factor"} uses the factor metric
+available from a compatible CENFA object.}
+
+\item{boundary}{Quantile used to define the empirical boundary of the current
+realised niche. Must be between 0 and 1.}
+
+\item{scale}{Logical. If \code{TRUE}, current and future values are standardised
+before distances are calculated.}
+
+\item{global_mean}{Optional means used for standardisation. If omitted,
+column means of \code{current} are used.}
+
+\item{global_sd}{Optional standard deviations used for standardisation. If
+omitted, column standard deviations of \code{current} are used.}
+
+\item{tolerance}{Optional tolerance around zero for Niche Distance Shift. If
+\code{NULL}, the fitted object uses \code{tolerance_quantile}.}
+
+\item{tolerance_quantile}{Quantile of absolute Niche Distance Shift used to
+set \code{tolerance} when \code{tolerance = NULL}.}
+
+\item{boundary_exceedance_tolerance}{Tolerance used to label whether Niche
+Boundary Exceedance is greater than zero for descriptor summaries.}
 }
 \value{
-An object of class \code{climniche_fit} with raster outputs.
+An object of class \code{climniche_fit} with RasterLayer outputs stored in
+\code{x$rasters}.
 }
 \description{
 Fit climniche to raster data

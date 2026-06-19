@@ -33,13 +33,19 @@ plot_climniche_map(
 \item{x}{A fitted climniche object with raster outputs, a RasterLayer, or a
 terra SpatRaster.}
 
-\item{metric}{Metric to plot.}
+\item{metric}{Quantity to plot. Accepted values are
+\code{"climate_change_amount"} for Climatic Displacement,
+\code{"niche_distance_change"} for Niche Distance Shift,
+\code{"climate_reconfiguration"} for Climatic Reconfiguration,
+\code{"niche_boundary_exceedance"} for Niche Boundary Exceedance, and
+\code{"change_alignment"} for the signed ratio used internally. Legacy aliases
+\code{"composition_change"} and \code{"outside_niche_exceedance"} still work.}
 
 \item{occupied}{Optional current reference RasterLayer or terra SpatRaster
-to overlay.}
+used for masking or overlaying the current reference distribution.}
 
 \item{occupied_only}{If TRUE, mask the plotted raster to current occurrence
-cells.}
+or suitability cells with positive reference weight.}
 
 \item{occupied_threshold}{Threshold used when \code{occupied} contains binary or
 continuous values. Values above the threshold keep their original value
@@ -57,7 +63,8 @@ when used as an overlay or mask.}
 
 \item{legend_title}{Optional colour legend title.}
 
-\item{legend_position}{Position passed to the ggplot theme.}
+\item{legend_position}{Position passed to the ggplot theme. Common values
+are \code{"right"}, \code{"bottom"}, and \code{"none"}.}
 
 \item{show_legend}{If FALSE, suppress the colour legend.}
 
@@ -65,8 +72,9 @@ when used as an overlay or mask.}
 
 \item{extent}{Optional \code{c(xmin, xmax, ymin, ymax)} plotting extent.}
 
-\item{degree_labels}{Use hemisphere degree labels automatically for
-longitude-latitude rasters, always, or never.}
+\item{degree_labels}{\code{"auto"} uses hemisphere degree labels for
+longitude-latitude rasters, \code{"hemisphere"} always uses them, and \code{"none"}
+uses the default ggplot labels.}
 
 \item{study_region}{Optional study-region boundary supplied as an \code{sf},
 \code{sfc}, \code{Spatial}, \code{SpatVector}, or data frame with \code{x} and \code{y} columns.}

@@ -598,7 +598,10 @@
 #' @param x A fitted `climniche_fit` object with raster outputs.
 #' @param metrics Character vector of reported quantity field names.
 #' @param ncol Number of map columns when patchwork is available.
-#' @param ... Additional arguments passed to `plot_climniche_map()`.
+#' @param ... Map options passed to `plot_climniche_map()`. Commonly used
+#'   arguments are `occupied`, `occupied_only`, `occupied_threshold`, `extent`,
+#'   `degree_labels`, `study_region`, `legend_position`, `legend_title`,
+#'   `limits`, `breaks`, `colours`, and `show_legend`.
 #'
 #' @return A patchwork object when patchwork is installed, otherwise a named
 #'   list of ggplot objects.

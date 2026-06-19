@@ -25,7 +25,8 @@ evaluated cells.}
 
 \item{title}{Optional plot title.}
 
-\item{colour_by}{Colour cells by Niche Boundary Exceedance.}
+\item{colour_by}{Quantity used for point colour. The current plotting method
+uses \code{"niche_boundary_exceedance"}.}
 }
 \value{
 A ggplot object.

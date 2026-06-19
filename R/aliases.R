@@ -1,29 +1,41 @@
-#' Fit niche relative climate exposure
+#' Fit niche relative climate exposure from matrices
 #'
-#' @param current Numeric matrix or data frame of current environmental values.
-#' @param future Numeric matrix or data frame of future environmental values.
-#' @param occupied NULL, logical vector, row indices, or a numeric vector with
-#'   one value per row identifying current occurrence, range, or continuous SDM
-#'   suitability weights.
-#' @param occupied_threshold Threshold used when `occupied` contains binary or
-#'   continuous values. Values at or below the threshold receive zero reference
-#'   weight; values above it keep their original value.
-#' @param cnfa Optional CENFA model object.
-#' @param center Optional realised niche centre in standardised climate space.
-#' @param sensitivity Optional environmental sensitivity weights.
-#' @param A Optional niche metric matrix.
-#' @param metric Metric construction when `A` is not supplied.
-#' @param boundary User-set quantile defining the empirical realised niche
-#'   boundary. The default is `0.95`.
-#' @param scale Logical. If TRUE, standardise current and future values.
-#' @param global_mean Optional means used for standardisation.
-#' @param global_sd Optional standard deviations used for standardisation.
-#' @param tolerance Optional user-set Niche Distance Shift tolerance. If `NULL`,
-#'   the value is calculated from `tolerance_quantile`.
-#' @param tolerance_quantile Quantile of absolute Niche Distance Shift used
-#'   when `tolerance = NULL`.
-#' @param boundary_exceedance_tolerance User-set tolerance for deciding whether
-#'   future climate exceeds the empirical niche boundary.
+#' @param current Numeric matrix or data frame of current climate values. Rows
+#'   are cells, sites, or samples. Columns are climate variables.
+#' @param future Numeric matrix or data frame of future climate values with the
+#'   same rows and columns as `current`.
+#' @param occupied Reference information used to estimate the current realised
+#'   niche. Use `NULL` to give every row weight 1, a logical vector to mark
+#'   reference rows, a numeric vector of length `nrow(current)` for continuous
+#'   reference weights, or positive integer row indices for 0/1 reference cells.
+#' @param occupied_threshold Optional cutoff for numeric reference weights.
+#'   Values at or below the cutoff are set to 0. Values above it keep their
+#'   original continuous value.
+#' @param cnfa Optional CENFA `cnfa` object. Its marginality and sensitivity
+#'   slots are used when `center`, `sensitivity`, or `A` are not supplied.
+#' @param center Optional realised niche centre in the climate space used by the
+#'   fit. If omitted, the centre is the weighted mean of current reference rows.
+#' @param sensitivity Optional non-negative variable weights. Used to build a
+#'   diagonal metric when `A` is not supplied.
+#' @param A Optional square metric matrix. When supplied, it overrides
+#'   `sensitivity`, `cnfa`, and `metric` for distance calculations.
+#' @param metric Method used to build `A` when `A` is missing. `"diag"` uses
+#'   variable-level sensitivity weights. `"factor"` uses the factor metric
+#'   available from a compatible CENFA object.
+#' @param boundary Quantile used to define the empirical boundary of the current
+#'   realised niche. Must be between 0 and 1.
+#' @param scale Logical. If `TRUE`, current and future values are standardised
+#'   before distances are calculated.
+#' @param global_mean Optional means used for standardisation. If omitted,
+#'   column means of `current` are used.
+#' @param global_sd Optional standard deviations used for standardisation. If
+#'   omitted, column standard deviations of `current` are used.
+#' @param tolerance Optional tolerance around zero for Niche Distance Shift. If
+#'   `NULL`, the fitted object uses `tolerance_quantile`.
+#' @param tolerance_quantile Quantile of absolute Niche Distance Shift used to
+#'   set `tolerance` when `tolerance = NULL`.
+#' @param boundary_exceedance_tolerance Tolerance used to label whether Niche
+#'   Boundary Exceedance is greater than zero for descriptor summaries.
 #'
 #' @return An object of class `climniche_fit`.
 #'
@@ -54,17 +66,23 @@
 #' Distance Shift; it is a non radial displacement component rather than an
 #' independently estimated process.
 #'
-#' Descriptor thresholds are user-settable. If `tolerance = NULL`,
-#' `climniche` calculates the effective Niche Distance Shift tolerance from
-#' `tolerance_quantile`. The fitted object stores the effective values in
-#' `descriptor_settings`.
+#' Descriptor thresholds are user-settable. If `tolerance = NULL`, the effective
+#' Niche Distance Shift tolerance is calculated from `tolerance_quantile`. The
+#' fitted object stores the effective descriptor values in `descriptor_settings`.
+#'
+#' @section Metric fields:
+#' The primary fitted fields are `climate_change_amount`,
+#' `niche_distance_change`, `climate_reconfiguration`, and
+#' `niche_boundary_exceedance`. The legacy names `composition_change` and
+#' `outside_niche_exceedance` are retained as aliases for old code.
 #'
 #' @section User-settable thresholds:
-#' - `boundary`: quantile used to define the empirical realised niche boundary.
-#' - `tolerance`: direct Niche Distance Shift tolerance; otherwise
-#'   `tolerance_quantile`.
-#' - `boundary_exceedance_tolerance`: direct tolerance for Niche Boundary
-#'   Exceedance.
+#' `boundary` controls the empirical niche boundary. `tolerance` controls the
+#' zero band for Niche Distance Shift; when it is not supplied,
+#' `tolerance_quantile` sets it from the fitted values.
+#' `boundary_exceedance_tolerance` controls the boundary descriptor. These
+#' settings affect descriptor summaries and reports. They do not change the four
+#' continuous metric values.
 #' @export
 fit_climniche <- function(current, future, occupied = NULL,
                           occupied_threshold = NULL, cnfa = NULL,
@@ -97,34 +115,56 @@ fit_climniche <- function(current, future, occupied = NULL,
 
 #' Fit climniche to raster data
 #'
-#' @param current Raster* object of current environmental layers.
-#' @param future Raster* object of future environmental layers.
+#' @param current Raster* object of current climate layers.
+#' @param future Raster* object of future climate layers with the same geometry
+#'   and layer order as `current`.
 #' @param occupied Optional RasterLayer with binary or continuous occurrence,
 #'   range, or SDM suitability values.
 #' @param occupied_threshold Values at or below this threshold receive zero
 #'   reference weight. Values above it keep their original value.
 #' @param domain Optional RasterLayer limiting cells where exposure is analysed.
 #' @param domain_threshold Values greater than this threshold define the domain.
-#' @param ... Additional arguments passed to `fit_climniche()`, including
-#'   `boundary`, `tolerance`, `tolerance_quantile`, and
-#'   `boundary_exceedance_tolerance`.
+#' @inheritParams fit_climniche
 #'
-#' @return An object of class `climniche_fit` with raster outputs.
+#' @return An object of class `climniche_fit` with RasterLayer outputs stored in
+#'   `x$rasters`.
 #' @export
 fit_climniche_raster <- function(current, future, occupied = NULL,
                                  occupied_threshold = NULL, domain = NULL,
-                                 domain_threshold = 0, ...) {
+                                 domain_threshold = 0,
+                                 cnfa = NULL, center = NULL,
+                                 sensitivity = NULL, A = NULL,
+                                 metric = c("diag", "factor"),
+                                 boundary = 0.95, scale = TRUE,
+                                 global_mean = NULL, global_sd = NULL,
+                                 tolerance = NULL,
+                                 tolerance_quantile = 0.10,
+                                 boundary_exceedance_tolerance = 0) {
   .fit_climniche_raster(current = current, future = future,
                         occupied = occupied,
                         occupied_threshold = occupied_threshold,
                         domain = domain,
-                        domain_threshold = domain_threshold, ...)
+                        domain_threshold = domain_threshold,
+                        cnfa = cnfa,
+                        center = center,
+                        sensitivity = sensitivity,
+                        A = A,
+                        metric = metric,
+                        boundary = boundary,
+                        scale = scale,
+                        global_mean = global_mean,
+                        global_sd = global_sd,
+                        tolerance = tolerance,
+                        tolerance_quantile = tolerance_quantile,
+                        boundary_exceedance_tolerance =
+                          boundary_exceedance_tolerance)
 }
 
 #' Fit climniche to terra raster data
 #'
-#' @param current terra SpatRaster of current environmental layers.
-#' @param future terra SpatRaster of future environmental layers.
+#' @param current terra SpatRaster of current climate layers.
+#' @param future terra SpatRaster of future climate layers with the same
+#'   geometry and layer order as `current`.
 #' @param occupied Optional one layer SpatRaster with binary or continuous
 #'   occurrence, range, or SDM suitability values.
 #' @param occupied_threshold Values at or below this threshold receive zero
@@ -132,31 +172,57 @@ fit_climniche_raster <- function(current, future, occupied = NULL,
 #' @param domain Optional one layer SpatRaster limiting cells where exposure is
 #'   analysed.
 #' @param domain_threshold Values greater than this threshold define the domain.
-#' @param ... Additional arguments passed to `fit_climniche()`, including
-#'   `boundary`, `tolerance`, `tolerance_quantile`, and
-#'   `boundary_exceedance_tolerance`.
+#' @inheritParams fit_climniche
 #'
-#' @return An object of class `climniche_fit` with raster outputs.
+#' @return An object of class `climniche_fit` with SpatRaster outputs stored in
+#'   `x$rasters`.
 #' @export
 fit_climniche_terra <- function(current, future, occupied = NULL,
                                 occupied_threshold = NULL, domain = NULL,
-                                domain_threshold = 0, ...) {
+                                domain_threshold = 0,
+                                cnfa = NULL, center = NULL,
+                                sensitivity = NULL, A = NULL,
+                                metric = c("diag", "factor"),
+                                boundary = 0.95, scale = TRUE,
+                                global_mean = NULL, global_sd = NULL,
+                                tolerance = NULL,
+                                tolerance_quantile = 0.10,
+                                boundary_exceedance_tolerance = 0) {
   .fit_climniche_terra(current = current, future = future,
                        occupied = occupied,
                        occupied_threshold = occupied_threshold,
                        domain = domain,
-                       domain_threshold = domain_threshold, ...)
+                       domain_threshold = domain_threshold,
+                       cnfa = cnfa,
+                       center = center,
+                       sensitivity = sensitivity,
+                       A = A,
+                       metric = metric,
+                       boundary = boundary,
+                       scale = scale,
+                       global_mean = global_mean,
+                       global_sd = global_sd,
+                       tolerance = tolerance,
+                       tolerance_quantile = tolerance_quantile,
+                       boundary_exceedance_tolerance =
+                         boundary_exceedance_tolerance)
 }
 
 #' Plot a climniche map
 #'
 #' @param x A fitted climniche object with raster outputs, a RasterLayer, or a
 #'   terra SpatRaster.
-#' @param metric Metric to plot.
+#' @param metric Quantity to plot. Accepted values are
+#'   `"climate_change_amount"` for Climatic Displacement,
+#'   `"niche_distance_change"` for Niche Distance Shift,
+#'   `"climate_reconfiguration"` for Climatic Reconfiguration,
+#'   `"niche_boundary_exceedance"` for Niche Boundary Exceedance, and
+#'   `"change_alignment"` for the signed ratio used internally. Legacy aliases
+#'   `"composition_change"` and `"outside_niche_exceedance"` still work.
 #' @param occupied Optional current reference RasterLayer or terra SpatRaster
-#'   to overlay.
+#'   used for masking or overlaying the current reference distribution.
 #' @param occupied_only If TRUE, mask the plotted raster to current occurrence
-#'   cells.
+#'   or suitability cells with positive reference weight.
 #' @param occupied_threshold Threshold used when `occupied` contains binary or
 #'   continuous values. Values above the threshold keep their original value
 #'   when used as an overlay or mask.
@@ -166,12 +232,14 @@ fit_climniche_terra <- function(current, future, occupied = NULL,
 #' @param breaks Optional colour scale breaks.
 #' @param colours Optional colour vector replacing the metric palette.
 #' @param legend_title Optional colour legend title.
-#' @param legend_position Position passed to the ggplot theme.
+#' @param legend_position Position passed to the ggplot theme. Common values
+#'   are `"right"`, `"bottom"`, and `"none"`.
 #' @param show_legend If FALSE, suppress the colour legend.
 #' @param symmetric If TRUE, use limits symmetric around `midpoint`.
 #' @param extent Optional `c(xmin, xmax, ymin, ymax)` plotting extent.
-#' @param degree_labels Use hemisphere degree labels automatically for
-#'   longitude-latitude rasters, always, or never.
+#' @param degree_labels `"auto"` uses hemisphere degree labels for
+#'   longitude-latitude rasters, `"hemisphere"` always uses them, and `"none"`
+#'   uses the default ggplot labels.
 #' @param study_region Optional study-region boundary supplied as an `sf`,
 #'   `sfc`, `Spatial`, `SpatVector`, or data frame with `x` and `y` columns.
 #' @param region_colour,region_linewidth,region_linetype Appearance of the
@@ -234,7 +302,8 @@ plot_climniche_map <- function(x,
 #' @param max_points Maximum number of points to draw.
 #' @param seed Random seed used when subsampling.
 #' @param title Optional plot title.
-#' @param colour_by Colour cells by Niche Boundary Exceedance.
+#' @param colour_by Quantity used for point colour. The current plotting method
+#'   uses `"niche_boundary_exceedance"`.
 #'
 #' @return A ggplot object.
 #' @export
@@ -250,7 +319,10 @@ plot_climniche_exposure <- function(x, scope = c("current", "all"),
 #' Plot a climniche reported quantity distribution
 #'
 #' @param x A fitted climniche object.
-#' @param metric Metric to plot.
+#' @param metric Quantity to plot. Accepted values are
+#'   `"climate_change_amount"`, `"niche_distance_change"`,
+#'   `"climate_reconfiguration"`, and `"niche_boundary_exceedance"`. Legacy
+#'   aliases `"composition_change"` and `"outside_niche_exceedance"` still work.
 #' @param scope `"current"` for current reference cells or `"all"` for all
 #'   evaluated cells.
 #' @param title Optional plot title.

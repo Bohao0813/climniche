@@ -2,7 +2,7 @@
 % Please edit documentation in R/aliases.R
 \name{fit_climniche}
 \alias{fit_climniche}
-\title{Fit niche relative climate exposure}
+\title{Fit niche relative climate exposure from matrices}
 \usage{
 fit_climniche(
   current,
@@ -24,51 +24,63 @@ fit_climniche(
 )
 }
 \arguments{
-\item{current}{Numeric matrix or data frame of current environmental values.}
+\item{current}{Numeric matrix or data frame of current climate values. Rows
+are cells, sites, or samples. Columns are climate variables.}
 
-\item{future}{Numeric matrix or data frame of future environmental values.}
+\item{future}{Numeric matrix or data frame of future climate values with the
+same rows and columns as \code{current}.}
 
-\item{occupied}{NULL, logical vector, row indices, or a numeric vector with
-one value per row identifying current occurrence, range, or continuous SDM
-suitability weights.}
+\item{occupied}{Reference information used to estimate the current realised
+niche. Use \code{NULL} to give every row weight 1, a logical vector to mark
+reference rows, a numeric vector of length \code{nrow(current)} for continuous
+reference weights, or positive integer row indices for 0/1 reference cells.}
 
-\item{occupied_threshold}{Threshold used when \code{occupied} contains binary or
-continuous values. Values at or below the threshold receive zero reference
-weight; values above it keep their original value.}
+\item{occupied_threshold}{Optional cutoff for numeric reference weights.
+Values at or below the cutoff are set to 0. Values above it keep their
+original continuous value.}
 
-\item{cnfa}{Optional CENFA model object.}
+\item{cnfa}{Optional CENFA \code{cnfa} object. Its marginality and sensitivity
+slots are used when \code{center}, \code{sensitivity}, or \code{A} are not supplied.}
 
-\item{center}{Optional realised niche centre in standardised climate space.}
+\item{center}{Optional realised niche centre in the climate space used by the
+fit. If omitted, the centre is the weighted mean of current reference rows.}
 
-\item{sensitivity}{Optional environmental sensitivity weights.}
+\item{sensitivity}{Optional non-negative variable weights. Used to build a
+diagonal metric when \code{A} is not supplied.}
 
-\item{A}{Optional niche metric matrix.}
+\item{A}{Optional square metric matrix. When supplied, it overrides
+\code{sensitivity}, \code{cnfa}, and \code{metric} for distance calculations.}
 
-\item{metric}{Metric construction when \code{A} is not supplied.}
+\item{metric}{Method used to build \code{A} when \code{A} is missing. \code{"diag"} uses
+variable-level sensitivity weights. \code{"factor"} uses the factor metric
+available from a compatible CENFA object.}
 
-\item{boundary}{User-set quantile defining the empirical realised niche
-boundary. The default is \code{0.95}.}
+\item{boundary}{Quantile used to define the empirical boundary of the current
+realised niche. Must be between 0 and 1.}
 
-\item{scale}{Logical. If TRUE, standardise current and future values.}
+\item{scale}{Logical. If \code{TRUE}, current and future values are standardised
+before distances are calculated.}
 
-\item{global_mean}{Optional means used for standardisation.}
+\item{global_mean}{Optional means used for standardisation. If omitted,
+column means of \code{current} are used.}
 
-\item{global_sd}{Optional standard deviations used for standardisation.}
+\item{global_sd}{Optional standard deviations used for standardisation. If
+omitted, column standard deviations of \code{current} are used.}
 
-\item{tolerance}{Optional user-set Niche Distance Shift tolerance. If \code{NULL},
-the value is calculated from \code{tolerance_quantile}.}
+\item{tolerance}{Optional tolerance around zero for Niche Distance Shift. If
+\code{NULL}, the fitted object uses \code{tolerance_quantile}.}
 
-\item{tolerance_quantile}{Quantile of absolute Niche Distance Shift used
-when \code{tolerance = NULL}.}
+\item{tolerance_quantile}{Quantile of absolute Niche Distance Shift used to
+set \code{tolerance} when \code{tolerance = NULL}.}
 
-\item{boundary_exceedance_tolerance}{User-set tolerance for deciding whether
-future climate exceeds the empirical niche boundary.}
+\item{boundary_exceedance_tolerance}{Tolerance used to label whether Niche
+Boundary Exceedance is greater than zero for descriptor summaries.}
 }
 \value{
 An object of class \code{climniche_fit}.
 }
 \description{
-Fit niche relative climate exposure
+Fit niche relative climate exposure from matrices
 }
 \details{
 The fitted object stores four related quantities as snake_case fields:
@@ -97,19 +109,25 @@ Climatic Reconfiguration is derived from Climatic Displacement and Niche
 Distance Shift; it is a non radial displacement component rather than an
 independently estimated process.
 
-Descriptor thresholds are user-settable. If \code{tolerance = NULL},
-\code{climniche} calculates the effective Niche Distance Shift tolerance from
-\code{tolerance_quantile}. The fitted object stores the effective values in
-\code{descriptor_settings}.
+Descriptor thresholds are user-settable. If \code{tolerance = NULL}, the effective
+Niche Distance Shift tolerance is calculated from \code{tolerance_quantile}. The
+fitted object stores the effective descriptor values in \code{descriptor_settings}.
 }
+\section{Metric fields}{
+
+The primary fitted fields are \code{climate_change_amount},
+\code{niche_distance_change}, \code{climate_reconfiguration}, and
+\code{niche_boundary_exceedance}. The legacy names \code{composition_change} and
+\code{outside_niche_exceedance} are retained as aliases for old code.
+}
+
 \section{User-settable thresholds}{
 
-\itemize{
-\item \code{boundary}: quantile used to define the empirical realised niche boundary.
-\item \code{tolerance}: direct Niche Distance Shift tolerance; otherwise
-\code{tolerance_quantile}.
-\item \code{boundary_exceedance_tolerance}: direct tolerance for Niche Boundary
-Exceedance.
-}
+\code{boundary} controls the empirical niche boundary. \code{tolerance} controls the
+zero band for Niche Distance Shift; when it is not supplied,
+\code{tolerance_quantile} sets it from the fitted values.
+\code{boundary_exceedance_tolerance} controls the boundary descriptor. These
+settings affect descriptor summaries and reports. They do not change the four
+continuous metric values.
 }
 

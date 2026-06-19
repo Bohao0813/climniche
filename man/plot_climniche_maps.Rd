@@ -19,7 +19,10 @@ plot_climniche_maps(
 
 \item{ncol}{Number of map columns when patchwork is available.}
 
-\item{...}{Additional arguments passed to \code{plot_climniche_map()}.}
+\item{...}{Map options passed to \code{plot_climniche_map()}. Commonly used
+arguments are \code{occupied}, \code{occupied_only}, \code{occupied_threshold}, \code{extent},
+\code{degree_labels}, \code{study_region}, \code{legend_position}, \code{legend_title},
+\code{limits}, \code{breaks}, \code{colours}, and \code{show_legend}.}
 }
 \value{
 A patchwork object when patchwork is installed, otherwise a named
