@@ -1,22 +1,23 @@
 r_files <- list.files("R", pattern = "[.]R$", full.names = TRUE)
 invisible(lapply(r_files, source))
 
-library(terra)
-library(sf)
-library(ggplot2)
-library(patchwork)
+suppressPackageStartupMessages({
+  library(terra)
+  library(sf)
+  library(ggplot2)
+  library(patchwork)
+  library(jsonlite)
+  library(biooracler)
+  library(usdm)
+  library(maxnet)
+})
 
 sf::sf_use_s2(FALSE)
 
 species_name <- "Engraulis encrasicolus"
 region_name <- "Mediterranean Sea"
 
-input_root <- "data-raw"
-external_input_root <- file.path("..", "..", "data-raw")
-if (!dir.exists(file.path(input_root, "marine_regions")) &&
-    dir.exists(file.path(external_input_root, "marine_regions"))) {
-  input_root <- external_input_root
-}
+input_root <- file.path("..", "..", "data-raw")
 data_dir <- file.path(input_root, "mediterranean_anchovy")
 biooracle_dir <- file.path(input_root, "biooracle_v3")
 region_file <- file.path(
@@ -32,8 +33,7 @@ dir.create(biooracle_dir, showWarnings = FALSE, recursive = TRUE)
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
 if (!file.exists(region_file)) {
-  stop("Mediterranean Marine Regions boundary was not found: ",
-       region_file, call. = FALSE)
+  stop("Missing input file: ", region_file, call. = FALSE)
 }
 
 med_boundary <- sf::st_read(region_file, quiet = TRUE)
@@ -57,10 +57,6 @@ region_wkt <- paste0(
 download_obis_occurrences <- function(file, max_records = 7000) {
   if (file.exists(file)) {
     return(utils::read.csv(file, stringsAsFactors = FALSE))
-  }
-  if (!requireNamespace("jsonlite", quietly = TRUE)) {
-    stop("The jsonlite package is required to download OBIS records.",
-         call. = FALSE)
   }
   base <- "https://api.obis.org/v3/occurrence"
   query <- paste(
@@ -98,15 +94,6 @@ inside_med <- lengths(sf::st_intersects(occ_sf, med_boundary)) > 0
 occ <- occ[inside_med, , drop = FALSE]
 utils::write.csv(occ, file.path(out_dir, "anchovy_obis_presence_records.csv"),
                  row.names = FALSE)
-
-if (!requireNamespace("biooracler", quietly = TRUE)) {
-  stop("The biooracler package is required to download Bio-ORACLE layers.",
-       call. = FALSE)
-}
-if (!requireNamespace("usdm", quietly = TRUE)) {
-  stop("The usdm package is required for VIF screening in this example.",
-       call. = FALSE)
-}
 
 future_scenario <- Sys.getenv("BIOORACLE_SCENARIO", "SSP245")
 future_year <- as.integer(Sys.getenv("BIOORACLE_YEAR", "2050"))
@@ -200,18 +187,11 @@ download_biooracle_stack <- function(specs, dataset_col, variable_col,
       directory = biooracle_dir,
       verbose = FALSE
     )
-    if (!inherits(r, "SpatRaster")) {
-      r <- terra::rast(r)
-    }
+    r <- terra::rast(r)
     r <- collapse_time_layers(r)
     pieces[[dataset_id]] <- r[[vars]]
   }
-  out <- pieces[[1]]
-  if (length(pieces) > 1) {
-    for (i in seq.int(2, length(pieces))) {
-      out <- c(out, pieces[[i]])
-    }
-  }
+  out <- do.call(c, pieces)
   names(out) <- specs$variable[match(names(out), specs[[variable_col]])]
   out <- terra::crop(out, region_extent)
   terra::crs(out) <- "EPSG:4326"
@@ -289,21 +269,6 @@ screen_predictors <- function(x, labels, role, priority = names(x),
       notes[nm] <- paste0("removed: absolute correlation > ", cor_cutoff)
     }
   }
-  if (length(retained) < min_retained) {
-    remaining <- setdiff(priority, retained)
-    while (length(retained) < min_retained && length(remaining) > 0) {
-      add <- remaining[which.min(vapply(remaining, function(nm) {
-        if (length(retained) == 0) {
-          return(0)
-        }
-        max(abs(cor_mat[nm, retained]), na.rm = TRUE)
-      }, numeric(1)))]
-      retained <- c(retained, add)
-      remaining <- setdiff(remaining, add)
-      notes[add] <- paste0("retained to keep at least ", min_retained,
-                           " predictors")
-    }
-  }
   repeat {
     retained_vif <- vif_values(mat[, retained, drop = FALSE])
     if (length(retained) <= min_retained ||
@@ -376,11 +341,6 @@ utils::write.csv(predictor_screen,
                  row.names = FALSE)
 sdm_retained <- sdm_screen$variable[sdm_screen$retained]
 exposure_retained <- exposure_screen$variable[exposure_screen$retained]
-if (length(sdm_retained) < 6 || length(exposure_retained) < 6) {
-  stop("Fewer than six Bio-ORACLE climate predictors were retained after ",
-       "screening. Review the candidate set or screening thresholds.",
-       call. = FALSE)
-}
 sdm_current <- sdm_candidates[[sdm_retained]]
 current <- exposure_candidates[[exposure_retained]]
 future <- exposure_future_candidates[[exposure_retained]]
@@ -419,17 +379,9 @@ if (length(presence_cells) < 30) {
 
 make_sdm <- function(current, presence_cells, complete_cells,
                      n_background = NULL, test_fraction = 0.30) {
-  if (!requireNamespace("maxnet", quietly = TRUE)) {
-    stop("The maxnet package is required for the continuous SDM example.",
-         call. = FALSE)
-  }
   extract_cell_values <- function(x, cells) {
     out <- terra::extract(x, cells)
-    id_cols <- intersect(c("ID", "cell"), names(out))
-    if (length(id_cols) > 0) {
-      out <- out[, setdiff(names(out), id_cols), drop = FALSE]
-    }
-    out
+    out[, setdiff(names(out), "ID"), drop = FALSE]
   }
   set.seed(42)
   background <- setdiff(complete_cells, presence_cells)
@@ -455,7 +407,7 @@ make_sdm <- function(current, presence_cells, complete_cells,
   ok <- stats::complete.cases(dat)
   dat <- as.data.frame(dat[ok, , drop = FALSE])
   pa <- pa[ok]
-  feature_classes <- if (ncol(dat) < 3) "l" else "lq"
+  feature_classes <- "lq"
   mod <- maxnet::maxnet(
     p = pa,
     data = dat,
@@ -490,8 +442,8 @@ make_sdm <- function(current, presence_cells, complete_cells,
     fn <- sum(!predicted & test_pa == 1)
     tn <- sum(!predicted & test_pa == 0)
     fp <- sum(predicted & test_pa == 0)
-    sensitivity <- if ((tp + fn) == 0) NA_real_ else tp / (tp + fn)
-    specificity <- if ((tn + fp) == 0) NA_real_ else tn / (tn + fp)
+    sensitivity <- tp / (tp + fn)
+    specificity <- tn / (tn + fp)
     data.frame(
       threshold = th,
       sensitivity = sensitivity,

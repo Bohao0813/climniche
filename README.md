@@ -4,11 +4,10 @@
 
 # climniche
 
-Climate change is not equally meaningful across a species' range. A large
-change may still move a site toward the realised niche centre, while a smaller
-change may push another site beyond the current niche boundary. `climniche`
-quantifies this niche-relative exposure from occurrence records, range maps,
-binary SDMs or continuous suitability maps.
+Climate change becomes exposure when it is read against the climate a species
+already occupies. `climniche` measures where each projected climate moves in
+that niche: how far, toward or away from the realised niche centre, into a
+different climatic combination, or beyond the current boundary.
 
 [![R-CMD-check](https://github.com/Bohao0813/climniche/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/Bohao0813/climniche/actions/workflows/R-CMD-check.yaml)
 [![CRAN status](https://www.r-pkg.org/badges/version/climniche)](https://CRAN.R-project.org/package=climniche)

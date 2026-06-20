@@ -11,12 +11,10 @@ vignette: >
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.align = "center")
 ```
 
-This example uses European anchovy (*Engraulis encrasicolus*) in the
-Mediterranean Sea. Prepared tables and figures come from Bio-ORACLE v3 surface
-layers, OBIS occurrence records, and a continuous presence-background SDM
-suitability map. The SDM threshold is selected by maximum test-set TSS. The
-`climniche` step uses the remaining suitability values as continuous reference
-weights.
+This vignette analyses European anchovy (*Engraulis encrasicolus*) in the
+Mediterranean Sea using Bio-ORACLE v3 surface layers, OBIS occurrences, and a
+continuous presence-background SDM. `climniche` treats above-threshold
+suitability values as reference weights.
 
 ```{r}
 library(climniche)
@@ -82,8 +80,8 @@ subset(
 )
 ```
 
-Predictor screening was completed before the `climniche` fit. The table below
-records the variables retained for the niche-relative exposure calculation.
+Predictor screening was completed before the `climniche` fit. The retained
+variables are:
 
 ```{r}
 climniche_predictors <- subset(
@@ -156,8 +154,8 @@ metric_summary[, c(
 )]
 ```
 
-Variable contributions are model-derived summaries of fitted change. They are
-not causal attribution.
+Variable contributions summarize fitted change; they should not be interpreted
+causally.
 
 ```{r}
 variable_contributions
