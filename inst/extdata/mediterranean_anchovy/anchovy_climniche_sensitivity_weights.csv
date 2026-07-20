@@ -1,0 +1,8 @@
+"variable","label","sensitivity_weight"
+"temperature_mean","Mean temperature",0.8568975
+"temperature_range","Temperature range",1.0946185
+"salinity_range","Salinity range",2.273867
+"ph_mean","Mean pH",0.8619769
+"chlorophyll_mean","Mean chlorophyll",0.3309994
+"sea_water_speed_mean","Mean current speed",0.717835
+"sea_water_speed_range","Current speed range",0.8638056

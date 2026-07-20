@@ -7,9 +7,12 @@
 niche_metric(sensitivity = NULL, cnfa = NULL, type = c("diag", "factor"))
 }
 \arguments{
-\item{sensitivity}{Numeric vector of climate variable sensitivity weights.}
+\item{sensitivity}{Numeric vector of climate variable sensitivity weights,
+used by the diagonal metric. For a factor metric, complete names can be
+used to order the CNFA loading rows.}
 
-\item{cnfa}{Optional CENFA \code{cnfa} object or list with \code{sf}, \code{co}, and \code{eig}.}
+\item{cnfa}{Optional CENFA \code{cnfa} object or compatible list. A diagonal
+metric can use \code{sf}; a factor metric requires \code{co} and \code{eig}.}
 
 \item{type}{Metric type. \code{"diag"} uses variable-level sensitivity weights.
 \code{"factor"} uses a factor metric when CNFA factor coordinates are available.}
@@ -19,4 +22,18 @@ A positive semi-definite matrix.
 }
 \description{
 Build a sensitivity weighted niche metric
+}
+\details{
+For sensitivity weights \eqn{s_j}, the diagonal metric is
+\deqn{A = \mathrm{diag}(s / \bar{s}).}
+For a CNFA loading matrix \eqn{U} and factor eigenvalues \eqn{\rho}, the
+factor metric is
+\deqn{A = U\,\mathrm{diag}(\rho / \bar{\rho})\,U^{\mathsf{T}}.}
+The factor metric is constructed from \code{co} and \code{eig}; a separate
+\code{sensitivity} vector is not combined with it. This quadratic metric is a
+climniche construction from CENFA components, not a metric returned by
+CENFA itself.
+}
+\examples{
+niche_metric(c(temperature = 2, salinity = 1, oxygen = 0.5))
 }

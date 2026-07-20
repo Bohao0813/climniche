@@ -29,13 +29,16 @@
       type = 8
     ))
   } else {
-    tolerance <- as.numeric(tolerance)[1]
+    tolerance <- .check_finite_scalar(tolerance, "tolerance")
   }
   if (!is.finite(tolerance) || tolerance < 0) {
     stop("tolerance must be a finite non-negative number.", call. = FALSE)
   }
 
-  boundary_exceedance_tolerance <- as.numeric(boundary_exceedance_tolerance)[1]
+  boundary_exceedance_tolerance <- .check_finite_scalar(
+    boundary_exceedance_tolerance,
+    "boundary_exceedance_tolerance"
+  )
   if (!is.finite(boundary_exceedance_tolerance) ||
       boundary_exceedance_tolerance < 0) {
     stop("boundary_exceedance_tolerance must be a finite non-negative number.",

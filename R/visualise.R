@@ -47,6 +47,9 @@
 
 .raster_df <- function(x, value = "value") {
   .need_raster()
+  if (raster::nlayers(x) != 1L) {
+    stop("Only one-layer Raster* objects can be plotted.", call. = FALSE)
+  }
   pts <- raster::rasterToPoints(x)
   pts <- as.data.frame(pts)
   names(pts) <- c("x", "y", value)
@@ -315,6 +318,11 @@
 .climniche_plot_data <- function(x, scope = c("current", "all"),
                                  max_points = 5000, seed = 1) {
   scope <- match.arg(scope)
+  max_points <- .check_positive_integer(max_points, "max_points")
+  seed <- .check_finite_scalar(seed, "seed")
+  if (seed != floor(seed)) {
+    stop("seed must be an integer.", call. = FALSE)
+  }
   dat <- climniche_table(x, scope = scope)
   if (nrow(dat) > max_points) {
     set.seed(seed)
@@ -339,7 +347,8 @@
 #' @param limits Optional two-element colour scale limits.
 #' @param breaks Optional colour scale breaks.
 #' @param colours Optional colour vector replacing the metric palette.
-#' @param legend_title Optional colour legend title.
+#' @param legend_title Optional colour legend title. Use `FALSE` to suppress
+#'   the title.
 #' @param legend_position Position passed to the ggplot theme.
 #' @param show_legend If FALSE, suppress the colour legend.
 #' @param symmetric If TRUE, use limits symmetric around `midpoint`. The
@@ -370,7 +379,7 @@
                                 limits = NULL,
                                 breaks = NULL,
                                 colours = NULL,
-                                legend_title = NULL,
+                                legend_title = FALSE,
                                 legend_position = "right",
                                 show_legend = TRUE,
                                 symmetric = NULL,
@@ -415,7 +424,9 @@
   cell_size <- .spatial_res(r)
   axis_spec <- .map_axis_spec(r, degree_labels = degree_labels)
   region_df <- .study_region_df(study_region, r)
-  if (is.null(legend_title)) {
+  if (isFALSE(legend_title)) {
+    legend_title <- NULL
+  } else if (is.null(legend_title)) {
     legend_title <- .metric_label(metric)
   }
   if (is.null(colours)) {
@@ -439,6 +450,7 @@
       limits <- c(0, upper)
     }
   }
+  scale_breaks <- if (is.null(breaks)) ggplot2::waiver() else breaks
 
   p <- ggplot2::ggplot(dat, ggplot2::aes(x = x, y = y, fill = value)) +
     ggplot2::geom_tile(width = cell_size[1], height = cell_size[2]) +
@@ -455,12 +467,14 @@
   if (metric_key %in% c("niche_distance_change", "change_alignment")) {
     p <- p + ggplot2::scale_fill_gradient2(
       low = colours[1], mid = colours[2], high = colours[3],
-      midpoint = midpoint, limits = limits, breaks = breaks, na.value = NA,
+      midpoint = midpoint, limits = limits, breaks = scale_breaks,
+      na.value = NA,
       oob = .squish_values
     )
   } else {
     p <- p + ggplot2::scale_fill_gradientn(
-      colours = colours, limits = limits, breaks = breaks, na.value = NA,
+      colours = colours, limits = limits, breaks = scale_breaks,
+      na.value = NA,
       oob = .squish_values
     )
   }
@@ -530,7 +544,7 @@
       x = "Climatic Displacement",
       y = "Niche Distance Shift",
       title = ttl,
-    subtitle = "Positive Niche Distance Shift indicates movement away from the realised niche centre"
+      subtitle = "Positive Niche Distance Shift indicates movement away from the realised niche centre"
     ) +
     .climniche_theme()
   p <- p + ggplot2::scale_colour_gradientn(
@@ -545,8 +559,8 @@
 #' @param x A fitted `climniche_fit` object.
 #' @param metric One of `"climate_change_amount"`, `"niche_distance_change"`,
 #'   `"niche_boundary_exceedance"` or `"climate_reconfiguration"`.
-#' @param scope `"current"` for current reference cells or `"all"` for all
-#'   evaluated cells.
+#' @param scope `"current"` for a reference-weighted distribution or `"all"`
+#'   for an unweighted distribution across evaluated cells.
 #' @param title Optional plot title.
 #'
 #' @return A ggplot object.
@@ -566,14 +580,20 @@
   scope <- match.arg(scope)
   tab <- climniche_table(x, scope = scope)
   tab$value <- tab[[metric_key]]
+  tab$plot_weight <- if (scope == "current") {
+    tab$occupied_weight
+  } else {
+    rep(1, nrow(tab))
+  }
   ttl <- .plot_title(title, .metric_label(metric))
+  y_label <- if (scope == "current") "Weighted count" else "Number of cells"
 
-  ggplot2::ggplot(tab, ggplot2::aes(x = value)) +
+  ggplot2::ggplot(tab, ggplot2::aes(x = value, weight = plot_weight)) +
     ggplot2::geom_histogram(bins = 36, fill = "#5b91bd",
                             colour = "white", linewidth = 0.15) +
     ggplot2::geom_vline(xintercept = 0, colour = "grey35",
                         linetype = 2, linewidth = 0.3) +
-    ggplot2::labs(x = .metric_label(metric), y = "Number of cells",
+    ggplot2::labs(x = .metric_label(metric), y = y_label,
                   title = ttl) +
     .climniche_theme() +
     ggplot2::theme(legend.position = "none")
@@ -598,10 +618,12 @@
 #' @param x A fitted `climniche_fit` object with raster outputs.
 #' @param metrics Character vector of reported quantity field names.
 #' @param ncol Number of map columns when patchwork is available.
+#' @param legend_title Shared legend title. The default suppresses repeated
+#'   metric names because each panel is titled.
 #' @param ... Map options passed to `plot_climniche_map()`. Commonly used
 #'   arguments are `occupied`, `occupied_only`, `occupied_threshold`, `extent`,
-#'   `degree_labels`, `study_region`, `legend_position`, `legend_title`,
-#'   `limits`, `breaks`, `colours`, and `show_legend`.
+#'   `degree_labels`, `study_region`, `legend_position`, `limits`, `breaks`,
+#'   `colours`, and `show_legend`.
 #'
 #' @return A patchwork object when patchwork is installed, otherwise a named
 #'   list of ggplot objects.
@@ -611,6 +633,7 @@ plot_climniche_maps <- function(
     metrics = c("climate_change_amount", "niche_distance_change",
                 "climate_reconfiguration", "niche_boundary_exceedance"),
     ncol = 2L,
+    legend_title = FALSE,
     ...) {
   titles <- c(
     climate_change_amount = "Climatic Displacement",
@@ -619,11 +642,20 @@ plot_climniche_maps <- function(
     niche_boundary_exceedance = "Niche Boundary Exceedance"
   )
   metrics <- vapply(metrics, .metric_key, character(1))
+  if (!length(metrics) || any(!metrics %in% names(titles))) {
+    stop("metrics must contain reported metric field names or their legacy aliases.",
+         call. = FALSE)
+  }
+  ncol <- .check_finite_scalar(ncol, "ncol")
+  if (ncol != floor(ncol) || ncol < 1) {
+    stop("ncol must be a positive integer.", call. = FALSE)
+  }
   plots <- lapply(metrics, function(metric) {
     plot_climniche_map(
       x,
       metric = metric,
       title = unname(titles[metric]),
+      legend_title = legend_title,
       ...
     )
   })
@@ -631,7 +663,7 @@ plot_climniche_maps <- function(
   if (!requireNamespace("patchwork", quietly = TRUE)) {
     return(plots)
   }
-  patchwork::wrap_plots(plots, ncol = max(1L, as.integer(ncol)[1])) +
+  patchwork::wrap_plots(plots, ncol = as.integer(ncol)) +
     patchwork::plot_annotation(
       tag_levels = "a", tag_prefix = "(", tag_suffix = ")"
     )

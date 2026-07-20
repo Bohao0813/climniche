@@ -23,13 +23,15 @@ plot_climniche_summary_figure(
 \item{scope}{\code{"current"} for current reference cells; \code{"all"} for all
 evaluated cells.}
 
-\item{max_points}{Maximum number of cells to draw in the exposure plane.}
+\item{max_points}{Maximum number of rows retained in the auxiliary \code{plane}
+table. Figure bins use all cells in the selected scope.}
 
-\item{seed}{Random seed used when subsampling cells.}
+\item{seed}{Random seed used when subsampling the auxiliary \code{plane} table.}
 
 \item{plane_bins}{Number of fixed bins used to summarize the exposure plane.}
 
-\item{boundary_probs}{Boundary quantiles used for the sensitivity curve.}
+\item{boundary_probs}{Boundary quantiles retained in the auxiliary figure
+data.}
 
 \item{top_variables}{Number of variables to show.}
 

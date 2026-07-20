@@ -2,7 +2,8 @@
 #'
 #' @param current Numeric matrix or data frame of current climate values.
 #' @param future Numeric matrix or data frame of future climate values, with the
-#'   same dimensions and variables as `current`.
+#'   same rows and variables as `current`. Complete names are matched before
+#'   fitting.
 #' @param occupied NULL, logical vector, row indices, or a numeric vector with
 #'   one value per row. Numeric vectors of length `nrow(current)` are treated as
 #'   continuous reference weights, including SDM suitability values.
@@ -47,17 +48,22 @@
                                   tolerance_quantile = 0.10,
                                   boundary_exceedance_tolerance = 0) {
   metric <- match.arg(metric)
+  metric_type <- if (is.null(A)) metric else "user"
+  scale <- .check_flag(scale, "scale")
+  preprocess <- .check_flag(preprocess, "preprocess")
+  boundary <- .check_open_probability(boundary, "boundary")
   current <- .as_numeric_matrix(current, "current")
   future <- .as_numeric_matrix(future, "future")
-  if (!identical(dim(current), dim(future))) {
-    stop("current and future must have identical dimensions.", call. = FALSE)
-  }
-  if (boundary <= 0 || boundary >= 1) {
-    stop("boundary must be between 0 and 1.", call. = FALSE)
-  }
+  aligned <- .align_climate_pair(current, future)
+  current <- aligned$current
+  future <- aligned$future
 
-  occupied_weight <- .reference_weights(occupied, nrow(current),
-                                        threshold = occupied_threshold)
+  occupied_weight <- .reference_weights(
+    occupied,
+    nrow(current),
+    threshold = occupied_threshold,
+    row_names = rownames(current)
+  )
   occ <- .positive_reference_indices(occupied_weight)
   p_original <- ncol(current)
   preprocessed <- .preprocess_climate_pair(
@@ -74,14 +80,16 @@
     c("keep", "original_variables", "retained_variables",
       "removed_variables", "settings")
   ]
-  center <- .subset_fit_vector(center, keep, p_original, "center")
+  variables <- preprocessed$original_variables
+  center <- .subset_fit_vector(center, keep, p_original, "center", variables)
   sensitivity <- .subset_fit_vector(sensitivity, keep, p_original,
-                                    "sensitivity")
+                                    "sensitivity", variables)
   global_mean <- .subset_fit_vector(global_mean, keep, p_original,
-                                    "global_mean")
-  global_sd <- .subset_fit_vector(global_sd, keep, p_original, "global_sd")
-  A <- .subset_fit_matrix(A, keep, p_original, "A")
-  cnfa <- .subset_cnfa_object(cnfa, keep, p_original)
+                                    "global_mean", variables)
+  global_sd <- .subset_fit_vector(global_sd, keep, p_original, "global_sd",
+                                  variables)
+  A <- .subset_fit_matrix(A, keep, p_original, "A", variables)
+  cnfa <- .subset_cnfa_object(cnfa, keep, p_original, variables)
   scaled <- .standardize_pair(current, future, scale, global_mean, global_sd)
   x0 <- scaled$current
   x1 <- scaled$future
@@ -93,20 +101,38 @@
     center <- .weighted_mean(x0, occupied_weight)
   }
   center <- as.numeric(center)
-  if (length(center) != ncol(current)) {
-    stop("center must have length equal to ncol(current).", call. = FALSE)
+  if (length(center) != ncol(current) || any(!is.finite(center))) {
+    stop("center must contain one finite value per retained climate variable.",
+         call. = FALSE)
   }
+  names(center) <- colnames(current)
 
   if (is.null(A)) {
-    if (is.null(sensitivity)) {
-      sensitivity <- .extract_slot(cnfa, "sf")
-    }
-    if (is.null(sensitivity)) {
-      sensitivity <- rep(1, ncol(current))
+    if (identical(metric, "diag")) {
+      if (is.null(sensitivity)) {
+        sensitivity <- .extract_slot(cnfa, "sf")
+      }
+      if (is.null(sensitivity)) {
+        sensitivity <- rep(1, ncol(current))
+      }
+      if (length(sensitivity) != ncol(current)) {
+        stop("sensitivity must contain one value per retained climate variable.",
+             call. = FALSE)
+      }
     }
     A <- niche_metric(sensitivity = sensitivity, cnfa = cnfa, type = metric)
   }
   A <- .validate_niche_metric(A, ncol(current), "A")
+  dimnames(A) <- list(colnames(current), colnames(current))
+  sensitivity_weights <- if (identical(metric_type, "diag")) {
+    sensitivity <- as.numeric(sensitivity)
+    sensitivity / mean(sensitivity)
+  } else {
+    NULL
+  }
+  if (!is.null(sensitivity_weights)) {
+    names(sensitivity_weights) <- colnames(current)
+  }
 
   psi0 <- niche_potential(x0, center = center, A = A)
   psi1 <- niche_potential(x1, center = center, A = A)
@@ -146,6 +172,8 @@
     reference_weight = occupied_weight,
     center = center,
     A = A,
+    metric_type = metric_type,
+    sensitivity_weights = sensitivity_weights,
     psi_current = psi0,
     psi_future = psi1,
     niche_radius_current = radius0,
@@ -159,6 +187,7 @@
     outside_niche_exceedance = exceed,
     boundary_quantile = boundary,
     boundary_value = b_radius,
+    boundary_distance = b_radius,
     boundary_potential = b_potential,
     boundary_radius = b_radius,
     niche_percentile = perc,
@@ -168,7 +197,13 @@
     descriptor_settings = descriptor_settings,
     threshold_settings = descriptor_settings,
     preprocessing = preprocessing_record,
-    standardization = list(center = scaled$center, scale = scaled$scale)
+    standardization = list(
+      enabled = scale,
+      mean = scaled$center,
+      sd = scaled$scale,
+      center = scaled$center,
+      scale = scaled$scale
+    )
   )
   class(out) <- "climniche_fit"
   out
@@ -184,6 +219,14 @@
 #' @export
 niche_potential <- function(x, center, A) {
   x <- .as_numeric_matrix(x, "x")
+  aligned <- .align_metric_inputs(x, center, A)
+  center <- aligned$center
+  A <- aligned$A
+  if (length(center) != ncol(x) || any(!is.finite(center))) {
+    stop("center must contain one finite value per column of x.",
+         call. = FALSE)
+  }
+  A <- .validate_niche_metric(A, ncol(x), "A")
   z <- sweep(x, 2L, center, "-")
   .quad_form_rows(z, A)
 }
@@ -232,10 +275,22 @@ niche_radius <- function(psi) {
 #'   `"potential"` returns exceedance beyond squared niche potential.
 #'
 #' @return Numeric vector.
+#'
+#' @examples
+#' psi <- c(0.5, 1, 2)
+#' boundary_exceedance(psi, boundary_value = 1)
 #' @export
 boundary_exceedance <- function(psi_future, boundary_value,
                                 scale = c("radial", "potential")) {
   scale <- match.arg(scale)
+  psi_future <- as.numeric(psi_future)
+  boundary_value <- .check_finite_scalar(boundary_value, "boundary_value")
+  if (any(!is.finite(psi_future))) {
+    stop("psi_future must contain finite values.", call. = FALSE)
+  }
+  if (boundary_value < 0) {
+    stop("boundary_value must be non-negative.", call. = FALSE)
+  }
   if (scale == "radial") {
     return(pmax(0, niche_radius(psi_future) - niche_radius(boundary_value)))
   }
@@ -252,6 +307,10 @@ boundary_exceedance <- function(psi_future, boundary_value,
 #' @return Data frame with current, future, and delta percentiles.
 #' @export
 niche_percentile <- function(psi_current, psi_future, occupied) {
+  if (length(psi_current) != length(psi_future)) {
+    stop("psi_current and psi_future must have the same length.",
+         call. = FALSE)
+  }
   weights <- .reference_weights(occupied, length(psi_current), threshold = NULL)
   current <- .weighted_ecdf_values(psi_current, psi_current, weights)
   future <- .weighted_ecdf_values(psi_current, psi_future, weights)
@@ -270,6 +329,16 @@ niche_percentile <- function(psi_current, psi_future, occupied) {
 variable_contribution <- function(current, future, center, A) {
   current <- .as_numeric_matrix(current, "current")
   future <- .as_numeric_matrix(future, "future")
+  aligned <- .align_climate_pair(current, future)
+  current <- aligned$current
+  future <- aligned$future
+  metric_inputs <- .align_metric_inputs(current, center, A)
+  center <- metric_inputs$center
+  A <- metric_inputs$A
+  if (length(center) != ncol(current) || any(!is.finite(center))) {
+    stop("center must contain one finite value per climate variable.",
+         call. = FALSE)
+  }
   A <- .validate_niche_metric(A, ncol(current), "A")
   c0 <- sweep(current, 2L, center, "-")
   c1 <- sweep(future, 2L, center, "-")

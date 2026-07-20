@@ -25,3 +25,7 @@ Numeric vector.
 \description{
 Niche Boundary Exceedance
 }
+\examples{
+psi <- c(0.5, 1, 2)
+boundary_exceedance(psi, boundary_value = 1)
+}

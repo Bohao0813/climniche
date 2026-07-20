@@ -8,7 +8,126 @@
   if (any(!is.finite(x))) {
     stop(arg, " contains non-finite values; handle NA/Inf before calling climniche.", call. = FALSE)
   }
+  if (nrow(x) < 1L || ncol(x) < 1L) {
+    stop(arg, " must contain at least one row and one column.",
+         call. = FALSE)
+  }
   x
+}
+
+.names_are_complete <- function(x) {
+  !is.null(x) && length(x) > 0L && all(!is.na(x) & nzchar(x))
+}
+
+.names_are_partial <- function(x) {
+  !is.null(x) && any(!is.na(x) & nzchar(x)) && !.names_are_complete(x)
+}
+
+.check_unique_names <- function(x, label) {
+  if (anyDuplicated(x)) {
+    stop(label, " must be unique.", call. = FALSE)
+  }
+}
+
+.align_climate_pair <- function(current, future) {
+  if (!identical(dim(current), dim(future))) {
+    stop("current and future must have identical dimensions.", call. = FALSE)
+  }
+
+  current_variables <- colnames(current)
+  future_variables <- colnames(future)
+  if (.names_are_partial(current_variables) ||
+      .names_are_partial(future_variables)) {
+    stop("Climate variable names must be complete or omitted.", call. = FALSE)
+  }
+  if (.names_are_complete(current_variables)) {
+    .check_unique_names(current_variables, "current variable names")
+  }
+  if (.names_are_complete(future_variables)) {
+    .check_unique_names(future_variables, "future variable names")
+  }
+  if (.names_are_complete(current_variables) &&
+      .names_are_complete(future_variables)) {
+    if (!setequal(current_variables, future_variables)) {
+      stop("current and future variable names must match.", call. = FALSE)
+    }
+    future <- future[, match(current_variables, future_variables), drop = FALSE]
+  } else if (.names_are_complete(current_variables)) {
+    colnames(future) <- current_variables
+  } else if (.names_are_complete(future_variables)) {
+    colnames(current) <- future_variables
+  }
+
+  current_rows <- rownames(current)
+  future_rows <- rownames(future)
+  if (.names_are_partial(current_rows) || .names_are_partial(future_rows)) {
+    stop("Climate row names must be complete or omitted.", call. = FALSE)
+  }
+  if (.names_are_complete(current_rows)) {
+    .check_unique_names(current_rows, "current row names")
+  }
+  if (.names_are_complete(future_rows)) {
+    .check_unique_names(future_rows, "future row names")
+  }
+  if (.names_are_complete(current_rows) && .names_are_complete(future_rows)) {
+    if (!setequal(current_rows, future_rows)) {
+      stop("current and future row names must match.", call. = FALSE)
+    }
+    future <- future[match(current_rows, future_rows), , drop = FALSE]
+  } else if (.names_are_complete(current_rows)) {
+    rownames(future) <- current_rows
+  } else if (.names_are_complete(future_rows)) {
+    rownames(current) <- future_rows
+  }
+
+  list(current = current, future = future)
+}
+
+.check_flag <- function(x, name) {
+  if (!is.logical(x) || length(x) != 1L || is.na(x)) {
+    stop(name, " must be TRUE or FALSE.", call. = FALSE)
+  }
+  x
+}
+
+.check_finite_scalar <- function(x, name) {
+  if (!is.numeric(x) || length(x) != 1L || !is.finite(x)) {
+    stop(name, " must be a finite number.", call. = FALSE)
+  }
+  as.numeric(x)
+}
+
+.check_open_probability <- function(x, name) {
+  x <- .check_finite_scalar(x, name)
+  if (x <= 0 || x >= 1) {
+    stop(name, " must be between 0 and 1.", call. = FALSE)
+  }
+  x
+}
+
+.check_positive_integer <- function(x, name) {
+  x <- .check_finite_scalar(x, name)
+  if (x < 1 || x != floor(x)) {
+    stop(name, " must be a positive integer.", call. = FALSE)
+  }
+  as.integer(x)
+}
+
+.align_metric_inputs <- function(x, center, A) {
+  variables <- colnames(x)
+  if (.names_are_partial(variables)) {
+    stop("Climate variable names must be complete or omitted.",
+         call. = FALSE)
+  }
+  if (.names_are_complete(variables)) {
+    .check_unique_names(variables, "climate variable names")
+    keep <- rep(TRUE, ncol(x))
+    center <- .subset_fit_vector(
+      center, keep, ncol(x), "center", variables
+    )
+    A <- .subset_fit_matrix(A, keep, ncol(x), "A", variables)
+  }
+  list(center = as.numeric(center), A = as.matrix(A))
 }
 
 .clean_reference_weights <- function(weights, threshold = NULL,
@@ -19,17 +138,32 @@
     stop(arg, " contains negative reference weights.", call. = FALSE)
   }
   if (!is.null(threshold)) {
-    threshold <- as.numeric(threshold)[1]
-    if (!is.finite(threshold)) {
-      stop("occupied_threshold must be NULL or a finite number.",
-           call. = FALSE)
-    }
+    threshold <- .check_finite_scalar(threshold, "occupied_threshold")
     weights[weights <= threshold] <- 0
   }
   weights
 }
 
-.reference_weights <- function(occupied, n, threshold = NULL) {
+.align_reference_values <- function(x, row_names, arg = "occupied") {
+  x_names <- names(x)
+  if (.names_are_partial(x_names)) {
+    stop(arg, " names must be complete or omitted.", call. = FALSE)
+  }
+  if (!.names_are_complete(x_names)) {
+    return(x)
+  }
+  .check_unique_names(x_names, paste(arg, "names"))
+  if (!.names_are_complete(row_names)) {
+    return(x)
+  }
+  if (!setequal(x_names, row_names)) {
+    stop(arg, " names must match current row names.", call. = FALSE)
+  }
+  x[match(row_names, x_names)]
+}
+
+.reference_weights <- function(occupied, n, threshold = NULL,
+                               row_names = NULL) {
   if (is.null(occupied)) {
     return(rep(1, n))
   }
@@ -37,12 +171,14 @@
     if (length(occupied) != n) {
       stop("occupied must have length equal to nrow(current).", call. = FALSE)
     }
+    occupied <- .align_reference_values(occupied, row_names)
     weights <- as.numeric(occupied)
     weights[is.na(weights)] <- 0
     return(weights)
   }
   if (is.numeric(occupied)) {
     if (length(occupied) == n) {
+      occupied <- .align_reference_values(occupied, row_names)
       return(.clean_reference_weights(occupied, threshold = threshold))
     }
     if (any(!is.finite(occupied)) ||
@@ -88,6 +224,9 @@
 .weighted_mean_vector <- function(x, weights) {
   weights <- .clean_reference_weights(weights, threshold = NULL,
                                       arg = "weights")
+  if (length(x) != length(weights)) {
+    stop("x and weights must have the same length.", call. = FALSE)
+  }
   ok <- is.finite(x) & weights > 0
   if (!any(ok)) {
     return(NA_real_)
@@ -127,24 +266,15 @@
   }
   x <- x[ok]
   weights <- weights[ok]
-  if (length(unique(weights)) == 1L) {
-    return(as.numeric(stats::quantile(
-      x, probs = probs, names = names, na.rm = TRUE, type = 8
-    )))
-  }
   ord <- order(x)
   x <- x[ord]
   weights <- weights[ord]
   cum <- cumsum(weights) / sum(weights)
-  out <- stats::approx(
-    x = c(0, cum),
-    y = c(x[1], x),
-    xout = probs,
-    method = "constant",
-    f = 1,
-    ties = "ordered",
-    rule = 2
-  )$y
+  out <- vapply(probs, function(prob) {
+    index <- which(cum >= prob)[1L]
+    if (is.na(index)) index <- length(x)
+    x[index]
+  }, numeric(1))
   if (names) names(out) <- paste0(100 * probs, "%")
   out
 }
@@ -172,8 +302,8 @@
 }
 
 .check_probability <- function(x, name) {
-  x <- as.numeric(x)[1]
-  if (!is.finite(x) || x < 0 || x > 1) {
+  x <- .check_finite_scalar(x, name)
+  if (x < 0 || x > 1) {
     stop(name, " must be a finite value between 0 and 1.", call. = FALSE)
   }
   x
@@ -303,13 +433,14 @@
       settings = settings
     ))
   }
-  correlation <- as.numeric(correlation)[1]
-  if (!is.finite(correlation) || correlation <= 0 || correlation > 1) {
+  correlation <- .check_finite_scalar(correlation,
+                                      "preprocess_correlation")
+  if (correlation <= 0 || correlation > 1) {
     stop("preprocess_correlation must be greater than 0 and no larger than 1.",
          call. = FALSE)
   }
-  min_sd <- as.numeric(min_sd)[1]
-  if (!is.finite(min_sd) || min_sd < 0) {
+  min_sd <- .check_finite_scalar(min_sd, "preprocess_min_sd")
+  if (min_sd < 0) {
     stop("preprocess_min_sd must be a finite non-negative number.",
          call. = FALSE)
   }
@@ -345,7 +476,12 @@
       if (!is.finite(max_cor) || max_cor <= correlation) {
         break
       }
-      pair <- which(abs_cor == max_cor, arr.ind = TRUE)[1, ]
+      pairs <- which(upper.tri(abs_cor) & abs_cor == max_cor,
+                     arr.ind = TRUE)
+      pair_keys <- vapply(seq_len(nrow(pairs)), function(k) {
+        paste(sort(variable[active[ids[pairs[k, ]]]]), collapse = "\r")
+      }, character(1))
+      pair <- pairs[order(pair_keys)[1L], ]
       i <- ids[pair[1]]
       j <- ids[pair[2]]
       others_i <- setdiff(ids, i)
@@ -353,7 +489,9 @@
       mean_i <- mean(abs(cor_current[i, others_i]), na.rm = TRUE)
       mean_j <- mean(abs(cor_current[j, others_j]), na.rm = TRUE)
       drop_local <- if (is.finite(mean_i) && is.finite(mean_j) &&
-                        mean_i > mean_j) {
+                        mean_i != mean_j) {
+        if (mean_i > mean_j) i else j
+      } else if (variable[active[i]] > variable[active[j]]) {
         i
       } else {
         j
@@ -385,9 +523,31 @@
   )
 }
 
-.subset_fit_vector <- function(x, keep, p_old, arg) {
+.subset_fit_vector <- function(x, keep, p_old, arg, variables) {
   if (is.null(x)) {
     return(NULL)
+  }
+  if (!is.numeric(x)) {
+    stop(arg, " must be numeric.", call. = FALSE)
+  }
+  retained <- variables[keep]
+  x_names <- names(x)
+  if (.names_are_partial(x_names)) {
+    stop(arg, " names must be complete or omitted.", call. = FALSE)
+  }
+  if (.names_are_complete(x_names)) {
+    .check_unique_names(x_names, paste(arg, "names"))
+    target <- if (length(x) == p_old) {
+      variables
+    } else if (length(x) == sum(keep)) {
+      retained
+    } else {
+      NULL
+    }
+    if (is.null(target) || !setequal(x_names, target)) {
+      stop(arg, " names must match the climate variables.", call. = FALSE)
+    }
+    x <- x[match(target, x_names)]
   }
   x <- as.numeric(x)
   if (length(x) == p_old) {
@@ -400,12 +560,40 @@
        call. = FALSE)
 }
 
-.subset_fit_matrix <- function(x, keep, p_old, arg) {
+.subset_fit_matrix <- function(x, keep, p_old, arg, variables) {
   if (is.null(x)) {
     return(NULL)
   }
   x <- as.matrix(x)
   p_new <- sum(keep)
+  retained <- variables[keep]
+  target <- if (identical(dim(x), c(p_old, p_old))) {
+    variables
+  } else if (identical(dim(x), c(p_new, p_new))) {
+    retained
+  } else {
+    stop(arg, " must match the original or preprocessed number of variables.",
+         call. = FALSE)
+  }
+  row_names <- rownames(x)
+  column_names <- colnames(x)
+  if (.names_are_partial(row_names) || .names_are_partial(column_names)) {
+    stop(arg, " row and column names must be complete or omitted.",
+         call. = FALSE)
+  }
+  if (xor(.names_are_complete(row_names),
+          .names_are_complete(column_names))) {
+    stop(arg, " must have both row and column names or neither.",
+         call. = FALSE)
+  }
+  if (.names_are_complete(row_names)) {
+    .check_unique_names(row_names, paste(arg, "row names"))
+    .check_unique_names(column_names, paste(arg, "column names"))
+    if (!setequal(row_names, target) || !setequal(column_names, target)) {
+      stop(arg, " names must match the climate variables.", call. = FALSE)
+    }
+    x <- x[match(target, row_names), match(target, column_names), drop = FALSE]
+  }
   if (identical(dim(x), c(p_old, p_old))) {
     return(x[keep, keep, drop = FALSE])
   }
@@ -416,33 +604,64 @@
        call. = FALSE)
 }
 
-.subset_cnfa_object <- function(cnfa, keep, p_old) {
+.subset_cnfa_loading <- function(x, keep, p_old, variables) {
+  x <- as.matrix(x)
+  p_new <- sum(keep)
+  retained <- variables[keep]
+  target <- if (nrow(x) == p_old) {
+    variables
+  } else if (nrow(x) == p_new) {
+    retained
+  } else {
+    stop("cnfa co must have rows equal to the original or preprocessed number of variables.",
+         call. = FALSE)
+  }
+  row_names <- rownames(x)
+  if (.names_are_partial(row_names)) {
+    stop("cnfa co row names must be complete or omitted.", call. = FALSE)
+  }
+  if (.names_are_complete(row_names)) {
+    .check_unique_names(row_names, "cnfa co row names")
+    if (!setequal(row_names, target)) {
+      stop("cnfa co row names must match the climate variables.",
+           call. = FALSE)
+    }
+    x <- x[match(target, row_names), , drop = FALSE]
+  }
+  if (nrow(x) == p_old) {
+    x <- x[keep, , drop = FALSE]
+  }
+  x
+}
+
+.subset_cnfa_object <- function(cnfa, keep, p_old, variables) {
   if (is.null(cnfa)) {
     return(NULL)
   }
   out <- list(
-    mf = .subset_fit_vector(.extract_slot(cnfa, "mf"), keep, p_old, "cnfa mf"),
-    sf = .subset_fit_vector(.extract_slot(cnfa, "sf"), keep, p_old, "cnfa sf"),
+    mf = .subset_fit_vector(.extract_slot(cnfa, "mf"), keep, p_old,
+                            "cnfa mf", variables),
+    sf = .subset_fit_vector(.extract_slot(cnfa, "sf"), keep, p_old,
+                            "cnfa sf", variables),
     eig = .extract_slot(cnfa, "eig")
   )
   co <- .extract_slot(cnfa, "co")
   if (!is.null(co)) {
-    co <- as.matrix(co)
-    if (nrow(co) == p_old) {
-      co <- co[keep, , drop = FALSE]
-    } else if (nrow(co) != sum(keep)) {
-      stop("cnfa co must have rows equal to the original or preprocessed number of variables.",
-           call. = FALSE)
-    }
+    co <- .subset_cnfa_loading(co, keep, p_old, variables)
   }
   out$co <- co
   out
 }
 
 .standardize_pair <- function(current, future, scale, global_mean, global_sd) {
+  variables <- colnames(current)
   if (!scale) {
-    return(list(current = current, future = future, center = rep(0, ncol(current)),
-                scale = rep(1, ncol(current))))
+    center <- rep(0, ncol(current))
+    scale_value <- rep(1, ncol(current))
+    names(center) <- variables
+    names(scale_value) <- variables
+    return(list(current = current, future = future, center = center,
+                scale = scale_value))
   }
   if (is.null(global_mean)) {
     global_mean <- colMeans(current)
@@ -450,9 +669,19 @@
   if (is.null(global_sd)) {
     global_sd <- apply(current, 2L, stats::sd)
   }
-  if (any(global_sd <= 0)) {
-    stop("All climate variables must have positive standard deviation.", call. = FALSE)
+  global_mean <- as.numeric(global_mean)
+  global_sd <- as.numeric(global_sd)
+  if (length(global_mean) != ncol(current) || any(!is.finite(global_mean))) {
+    stop("global_mean must contain one finite value per climate variable.",
+         call. = FALSE)
   }
+  if (length(global_sd) != ncol(current) || any(!is.finite(global_sd)) ||
+      any(global_sd <= 0)) {
+    stop("global_sd must contain one finite positive value per climate variable.",
+         call. = FALSE)
+  }
+  names(global_mean) <- variables
+  names(global_sd) <- variables
   list(
     current = sweep(sweep(current, 2L, global_mean, "-"), 2L, global_sd, "/"),
     future = sweep(sweep(future, 2L, global_mean, "-"), 2L, global_sd, "/"),

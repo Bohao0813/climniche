@@ -16,7 +16,7 @@ print(report)
 
 if (requireNamespace("ggplot2", quietly = TRUE)) {
   plot_climniche_exposure(fit)
-  plot_climniche_class_summary(fit)
+  plot_climniche_distribution(fit, metric = "niche_distance_change")
   plot_climniche_variable_contribution(fit)
 }
 

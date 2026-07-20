@@ -31,32 +31,38 @@ fit_climniche(
 are cells, sites, or samples. Columns are climate variables.}
 
 \item{future}{Numeric matrix or data frame of future climate values with the
-same rows and columns as \code{current}.}
+same rows and variables as \code{current}. Complete row and variable names are
+matched before fitting.}
 
 \item{occupied}{Reference information used to estimate the current realised
 niche. Use \code{NULL} to give every row weight 1, a logical vector to mark
 reference rows, a numeric vector of length \code{nrow(current)} for continuous
-reference weights, or positive integer row indices for 0/1 reference cells.}
+reference weights, or positive integer row indices for 0/1 reference cells.
+Complete names are matched to the row names of \code{current}.}
 
 \item{occupied_threshold}{Optional cutoff for numeric reference weights.
 Values at or below the cutoff are set to 0. Values above it keep their
 original continuous value.}
 
-\item{cnfa}{Optional CENFA \code{cnfa} object. Its marginality and sensitivity
-slots are used when \code{center}, \code{sensitivity}, or \code{A} are not supplied.}
+\item{cnfa}{Optional CENFA \code{cnfa} object. Its \code{mf} and \code{sf} components are
+used when \code{center}, \code{sensitivity}, or \code{A} are not supplied; \code{metric = "factor"} requires \code{co} and \code{eig}. The object and climatic inputs must use
+the same variables and standardisation.}
 
-\item{center}{Optional realised niche centre in the climate space used by the
-fit. If omitted, the centre is the weighted mean of current reference rows.}
+\item{center}{Optional realised niche centre on the scale used for distance
+calculations. With \code{scale = TRUE}, supply a centre in the standardized
+climatic space. If omitted, the centre is the weighted mean of current
+reference rows.}
 
 \item{sensitivity}{Optional non-negative variable weights. Used to build a
 diagonal metric when \code{A} is not supplied.}
 
-\item{A}{Optional square metric matrix. When supplied, it overrides
-\code{sensitivity}, \code{cnfa}, and \code{metric} for distance calculations.}
+\item{A}{Optional square metric matrix defined for the fitted climatic
+space. When supplied, it overrides \code{sensitivity}, \code{cnfa}, and \code{metric} for
+distance calculations.}
 
 \item{metric}{Method used to build \code{A} when \code{A} is missing. \code{"diag"} uses
-variable-level sensitivity weights. \code{"factor"} uses the factor metric
-available from a compatible CENFA object.}
+variable-level sensitivity weights. \code{"factor"} constructs a factor-weighted
+metric from the \code{co} and \code{eig} components of a compatible CENFA object.}
 
 \item{boundary}{Quantile used to define the empirical boundary of the current
 realised niche. Must be between 0 and 1.}
@@ -74,11 +80,12 @@ among current climate variables during preprocessing.}
 \item{preprocess_min_sd}{Minimum current-climate standard deviation retained
 during preprocessing.}
 
-\item{global_mean}{Optional means used for centering. If omitted,
-column means of \code{current} are used.}
+\item{global_mean}{Optional means used for centering when \code{scale = TRUE}. If
+omitted, column means of \code{current} are used.}
 
 \item{global_sd}{Optional standard deviations used for scaling. If
-omitted, column standard deviations of \code{current} are used.}
+\code{scale = TRUE} and this argument is omitted, column standard deviations of
+\code{current} are used.}
 
 \item{tolerance}{Optional tolerance around zero for Niche Distance Shift. If
 \code{NULL}, the fitted object uses \code{tolerance_quantile}.}
@@ -90,7 +97,8 @@ set \code{tolerance} when \code{tolerance = NULL}.}
 Boundary Exceedance is greater than zero for descriptor summaries.}
 }
 \value{
-An object of class \code{climniche_fit}.
+A \code{climniche_fit} object containing the four metrics, reference
+weights, fitted niche centre, metric matrix and effective settings.
 }
 \description{
 Fit niche relative climate exposure from matrices
@@ -106,8 +114,17 @@ matrix \eqn{A}. The four metrics are:
 \deqn{C_i = \sqrt{\max(0, D_i^2 - R_i^2)}}
 \deqn{E_i = \max(0, d_A(f_i, \mu) - B_q)}
 
-where \eqn{B_q} is the \eqn{q}-th weighted quantile of current reference-cell
-distances from the realised niche centre.
+where \eqn{B_q} is the \eqn{q}-th weighted quantile of current reference cell
+distances from the realised niche centre. It is the smallest observed
+reference distance whose cumulative normalised reference weight reaches
+\eqn{q}.
+
+In the transformed climatic space, let \eqn{r_{0i}} and \eqn{r_{1i}} be the
+current and future distances from the niche centre, and let \eqn{\theta_i}
+be the angle between their centred vectors. Then
+\deqn{C_i^2 = 2 r_{0i} r_{1i} (1 - \cos(\theta_i)).}
+Climatic Reconfiguration is therefore a distance scaled angular change. It
+is not a strict orthogonal projection or an independently fitted process.
 }
 \section{Metric fields}{
 
@@ -125,11 +142,19 @@ the boundary descriptor. The fitted values are stored in
 \code{descriptor_settings}.
 }
 
+\section{Boundary scale}{
+
+\code{boundary_distance} and \code{boundary_radius} store the fitted boundary in
+distance units. \code{boundary_potential} stores its squared value and is the
+quantity accepted by \code{\link[=boundary_exceedance]{boundary_exceedance()}}. \code{boundary_value} is retained
+as a legacy alias of \code{boundary_distance}.
+}
+
 \section{Scaling and preprocessing}{
 
-\code{scale} centres and scales retained variables. \code{preprocess} screens the
-variable set before fitting. The two steps are independent and are enabled by
-default.
+\code{preprocess} selects retained variables. \code{scale} then converts those
+variables to z scores using current-climate means and standard deviations.
+Both are enabled by default.
 }
 
 \section{Choosing a fit function}{
@@ -139,6 +164,17 @@ been extracted to matrices or data frames. Use \code{fit_climniche_raster()} for
 objects from the \code{raster} package. Use \code{fit_climniche_terra()} for
 \code{terra::SpatRaster} objects. The three functions calculate the same metrics;
 the raster and terra methods add spatial masking and return map layers in
-\code{x$rasters}.
+\code{x$rasters}. Use \code{\link[=fit_climniche_series]{fit_climniche_series()}} for ordered future periods or
+climate model ensembles.
 }
 
+\examples{
+sim <- simulate_climniche(n = 250, p = 6, seed = 7)
+fit <- fit_climniche(
+  current = sim$current,
+  future = sim$future_away,
+  occupied = sim$occupied,
+  sensitivity = sim$sensitivity
+)
+climniche_summary(fit)
+}

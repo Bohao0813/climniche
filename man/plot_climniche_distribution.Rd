@@ -21,8 +21,8 @@ plot_climniche_distribution(
 \code{"climate_reconfiguration"}, and \code{"niche_boundary_exceedance"}. Legacy
 aliases \code{"composition_change"} and \code{"outside_niche_exceedance"} still work.}
 
-\item{scope}{\code{"current"} for current reference cells or \code{"all"} for all
-evaluated cells.}
+\item{scope}{\code{"current"} for a reference-weighted distribution or \code{"all"}
+for an unweighted distribution across evaluated cells.}
 
 \item{title}{Optional plot title.}
 }

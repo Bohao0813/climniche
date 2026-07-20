@@ -9,6 +9,7 @@ plot_climniche_maps(
   metrics = c("climate_change_amount", "niche_distance_change",
     "climate_reconfiguration", "niche_boundary_exceedance"),
   ncol = 2L,
+  legend_title = FALSE,
   ...
 )
 }
@@ -19,10 +20,13 @@ plot_climniche_maps(
 
 \item{ncol}{Number of map columns when patchwork is available.}
 
+\item{legend_title}{Shared legend title. The default suppresses repeated
+metric names because each panel is titled.}
+
 \item{...}{Map options passed to \code{plot_climniche_map()}. Commonly used
 arguments are \code{occupied}, \code{occupied_only}, \code{occupied_threshold}, \code{extent},
-\code{degree_labels}, \code{study_region}, \code{legend_position}, \code{legend_title},
-\code{limits}, \code{breaks}, \code{colours}, and \code{show_legend}.}
+\code{degree_labels}, \code{study_region}, \code{legend_position}, \code{limits}, \code{breaks},
+\code{colours}, and \code{show_legend}.}
 }
 \value{
 A patchwork object when patchwork is installed, otherwise a named

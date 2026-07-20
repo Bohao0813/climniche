@@ -46,6 +46,18 @@ reference:
       - fit_climniche
       - fit_climniche_raster
       - fit_climniche_terra
+      - fit_climniche_reference
+      - project_climniche
+      - fit_climniche_series
+  - title: Exposure through time
+    contents:
+      - climniche_series_table
+      - climniche_range_summary
+      - climniche_departure
+      - climniche_model_agreement
+      - climniche_change_rate
+      - climniche_series_report
+      - write_climniche_series_report
   - title: Report and summaries
     contents:
       - climniche_report
@@ -71,6 +83,8 @@ reference:
       - plot_climniche_distribution
       - plot_climniche_report
       - plot_climniche_variable_contribution
+      - plot_climniche_time
+      - plot_climniche_departure_map
   - title: Simulation helper
     contents:
       - simulate_climniche

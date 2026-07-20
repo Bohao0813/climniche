@@ -18,8 +18,15 @@ climniche_table <- function(x, scope = c("current", "all")) {
   niche_boundary_exceedance <- .fit_metric(x, "niche_boundary_exceedance")[idx]
   descriptors <- .fit_exposure_descriptors(x)
 
+  cell <- if (!is.null(x$cell_index) &&
+              length(x$cell_index) == nrow(x$current)) {
+    x$cell_index[idx]
+  } else {
+    idx
+  }
+
   data.frame(
-    cell = idx,
+    cell = cell,
     occupied_weight = occupied_weight,
     current_niche_distance = x$niche_radius_current[idx],
     future_niche_distance = x$niche_radius_future[idx],
@@ -124,12 +131,12 @@ climniche_table <- function(x, scope = c("current", "all")) {
         "niche centre."
       ),
       paste(
-        "Non-radial component of climatic displacement derived from",
+        "Non radial component of climatic displacement derived from",
         "Climatic Displacement and Niche Distance Shift."
       ),
       paste(
         "Positive excess beyond the chosen weighted quantile of current",
-        "reference-cell distances from the realised niche centre."
+        "reference cell distances from the realised niche centre."
       )
     ),
     stringsAsFactors = FALSE
@@ -149,12 +156,13 @@ climniche_table <- function(x, scope = c("current", "all")) {
       "Climatic Reconfiguration",
       "Climatic Reconfiguration",
       "Niche Boundary Exceedance",
+      "Niche Boundary Exceedance",
       "Niche Boundary Exceedance"
     ),
     statistic = c("mean", "median", "90th percentile",
                   "mean", "median", "90th percentile",
                   "mean", "median", "90th percentile",
-                  "mean", "90th percentile"),
+                  "mean", "median", "90th percentile"),
     value = c(
       summary$mean_climate_change_amount,
       summary$median_climate_change_amount,
@@ -166,6 +174,7 @@ climniche_table <- function(x, scope = c("current", "all")) {
       summary$median_climate_reconfiguration,
       summary$q90_climate_reconfiguration,
       summary$mean_niche_boundary_exceedance,
+      summary$median_niche_boundary_exceedance,
       summary$q90_niche_boundary_exceedance
     ),
     stringsAsFactors = FALSE
@@ -324,6 +333,7 @@ climniche_report <- function(x, species = NULL, scope = c("current", "all"),
     stop("x must be a fitted climniche object.", call. = FALSE)
   }
   scope <- match.arg(scope)
+  top_variables <- .check_positive_integer(top_variables, "top_variables")
   tab <- climniche_table(x, scope = scope)
   summ <- climniche_summary(x, scope = scope)
   idx <- if (scope == "current") x$occupied else seq_len(nrow(x$current))
@@ -341,9 +351,15 @@ climniche_report <- function(x, species = NULL, scope = c("current", "all"),
     variable = names(vals),
     mean_contribution = as.numeric(vals),
     abs_mean_contribution = abs(as.numeric(vals)),
-    interpretation = ifelse(vals > 0,
-                            "positive fitted variable contribution",
-                            "negative fitted variable contribution"),
+    interpretation = ifelse(
+      vals > 0,
+      "increases future minus current niche potential",
+      ifelse(
+        vals < 0,
+        "decreases future minus current niche potential",
+        "no mean change in niche potential"
+      )
+    ),
     stringsAsFactors = FALSE
   )
   var_tab <- var_tab[order(var_tab$abs_mean_contribution, decreasing = TRUE),
@@ -353,31 +369,54 @@ climniche_report <- function(x, species = NULL, scope = c("current", "all"),
   direction <- if (summ$mean_niche_distance_change > 0) {
     paste(
       "positive, indicating average movement farther from the current",
-      "reference niche centre"
+      "realised climatic niche centre"
     )
   } else if (summ$mean_niche_distance_change < 0) {
     paste(
       "negative, indicating average movement closer to the current",
-      "reference niche centre"
+      "realised climatic niche centre"
     )
   } else {
     "near zero on average"
   }
 
+  exceedance_unit <- if (scope == "current") {
+    "total reference weight"
+  } else {
+    "analysed cells"
+  }
   interpretation <- c(
     paste0("Mean Niche Distance Shift is ", direction, "."),
-    paste0(round(100 * summ$prop_outside_niche, 1),
-           "% of analysed cells have Niche Boundary Exceedance above the ",
-           "configured tolerance at q = ", summ$boundary_quantile, ".")
+    paste0("Niche Boundary Exceedance is above the configured tolerance for ",
+           round(100 * summ$prop_beyond_niche_boundary, 1), "% of ",
+           exceedance_unit, " (boundary quantile q = ",
+           summ$boundary_quantile, ").")
   )
+  metric_weights <- if (!is.null(x$sensitivity_weights)) {
+    data.frame(
+      variable = names(x$sensitivity_weights),
+      sensitivity_weight = as.numeric(x$sensitivity_weights),
+      stringsAsFactors = FALSE
+    )
+  } else {
+    data.frame(
+      variable = character(),
+      sensitivity_weight = numeric(),
+      stringsAsFactors = FALSE
+    )
+  }
 
   out <- list(
     species = species,
     scope = scope,
     metric_definitions = .metric_definitions(),
     settings = data.frame(
+      metric_type = x$metric_type %||% "unspecified",
+      scaled = x$standardization$enabled %||% NA,
+      preprocessed = x$preprocessing$settings$enabled %||% NA,
       boundary_quantile = x$boundary_quantile,
-      boundary_distance = x$boundary_radius,
+      boundary_distance = x$boundary_distance %||%
+        x$boundary_radius %||% x$boundary_value,
       n_variables = ncol(x$current),
       n_cells = nrow(tab),
       stringsAsFactors = FALSE
@@ -386,6 +425,8 @@ climniche_report <- function(x, species = NULL, scope = c("current", "all"),
     summary = summ,
     metric_summary = .report_metric_summary(summ),
     descriptor_summary = descriptor_summary,
+    metric_weights = metric_weights,
+    metric_matrix = x$A,
     top_variables = var_tab,
     interpretation = interpretation,
     table = tab
@@ -415,8 +456,13 @@ print.climniche_report <- function(x, ...) {
     cat("- ", line, "\n", sep = "")
   }
 
-  cat("\nReported quantity summary\n")
+  cat("\nMetric summary\n")
   print(x$metric_summary, row.names = FALSE)
+
+  if (nrow(x$metric_weights)) {
+    cat("\nSensitivity weights\n")
+    print(x$metric_weights, row.names = FALSE)
+  }
 
   cat("\nTop variable contributions\n")
   print(x$top_variables, row.names = FALSE)
@@ -451,7 +497,7 @@ write_climniche_report <- function(report, file) {
     "## Interpretation",
     paste0("- ", report$interpretation),
     "",
-    "## Reported quantity definitions",
+    "## Metric definitions",
     "```text",
     fmt_row(report$metric_definitions),
     "```",
@@ -466,11 +512,16 @@ write_climniche_report <- function(report, file) {
     fmt_row(report$descriptor_settings),
     "```",
     "",
-    "## Reported quantity summary",
+    "## Metric summary",
     "```text",
     fmt_row(report$metric_summary),
     "```",
     "",
+    if (nrow(report$metric_weights)) "## Sensitivity weights" else NULL,
+    if (nrow(report$metric_weights)) "```text" else NULL,
+    if (nrow(report$metric_weights)) fmt_row(report$metric_weights) else NULL,
+    if (nrow(report$metric_weights)) "```" else NULL,
+    if (nrow(report$metric_weights)) "" else NULL,
     "## Top Variable Contributions",
     "```text",
     fmt_row(report$top_variables),
@@ -479,8 +530,8 @@ write_climniche_report <- function(report, file) {
     "## Notes",
     paste(
       "The report describes climatic exposure relative to the current",
-      "reference niche estimated from the supplied occurrence, range or",
-      "suitability weights."
+      "realised climatic niche represented by the supplied occurrence, range",
+      "or suitability weights."
     )
   )
   writeLines(lines, con = file)

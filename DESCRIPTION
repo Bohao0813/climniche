@@ -1,15 +1,16 @@
 Package: climniche
 Type: Package
 Title: Niche Relative Climate Exposure
-Version: 0.3.1
+Version: 0.3.3
 Authors@R: c(
     person("Bohao", "He", role = c("aut", "cre"), email = "bohao.he@polimi.it")
     )
-Description: Measures projected climate exposure relative to a species'
-    current reference niche estimated from occurrences, range maps or species
-    distribution model suitability weights. The package reports Climatic
-    Displacement, Niche Distance Shift, Climatic Reconfiguration and Niche
-    Boundary Exceedance from current and future environmental data.
+Description: Quantifies projected climate exposure relative to a species'
+    current realised climatic niche. Occurrence records, range maps, and binary
+    or continuous species distribution model outputs can define the current
+    reference. The package reports Climatic Displacement, Niche Distance Shift,
+    Climatic Reconfiguration and Niche Boundary Exceedance for single
+    projections, ordered time series and climate model ensembles.
 License: MIT + file LICENSE
 URL: https://github.com/Bohao0813/climniche,
     https://bohao0813.github.io/climniche/

@@ -32,7 +32,8 @@ fit_climniche_terra(
 \item{current}{terra SpatRaster of current climate layers.}
 
 \item{future}{terra SpatRaster of future climate layers with the same
-geometry and layer order as \code{current}.}
+geometry and variables as \code{current}. Named layers are matched before
+fitting.}
 
 \item{occupied}{Optional one layer SpatRaster with binary or continuous
 occurrence, range, or SDM suitability values.}
@@ -45,21 +46,25 @@ analysed.}
 
 \item{domain_threshold}{Values greater than this threshold define the domain.}
 
-\item{cnfa}{Optional CENFA \code{cnfa} object. Its marginality and sensitivity
-slots are used when \code{center}, \code{sensitivity}, or \code{A} are not supplied.}
+\item{cnfa}{Optional CENFA \code{cnfa} object. Its \code{mf} and \code{sf} components are
+used when \code{center}, \code{sensitivity}, or \code{A} are not supplied; \code{metric = "factor"} requires \code{co} and \code{eig}. The object and climatic inputs must use
+the same variables and standardisation.}
 
-\item{center}{Optional realised niche centre in the climate space used by the
-fit. If omitted, the centre is the weighted mean of current reference rows.}
+\item{center}{Optional realised niche centre on the scale used for distance
+calculations. With \code{scale = TRUE}, supply a centre in the standardized
+climatic space. If omitted, the centre is the weighted mean of current
+reference rows.}
 
 \item{sensitivity}{Optional non-negative variable weights. Used to build a
 diagonal metric when \code{A} is not supplied.}
 
-\item{A}{Optional square metric matrix. When supplied, it overrides
-\code{sensitivity}, \code{cnfa}, and \code{metric} for distance calculations.}
+\item{A}{Optional square metric matrix defined for the fitted climatic
+space. When supplied, it overrides \code{sensitivity}, \code{cnfa}, and \code{metric} for
+distance calculations.}
 
 \item{metric}{Method used to build \code{A} when \code{A} is missing. \code{"diag"} uses
-variable-level sensitivity weights. \code{"factor"} uses the factor metric
-available from a compatible CENFA object.}
+variable-level sensitivity weights. \code{"factor"} constructs a factor-weighted
+metric from the \code{co} and \code{eig} components of a compatible CENFA object.}
 
 \item{boundary}{Quantile used to define the empirical boundary of the current
 realised niche. Must be between 0 and 1.}
@@ -77,11 +82,12 @@ among current climate variables during preprocessing.}
 \item{preprocess_min_sd}{Minimum current-climate standard deviation retained
 during preprocessing.}
 
-\item{global_mean}{Optional means used for centering. If omitted,
-column means of \code{current} are used.}
+\item{global_mean}{Optional means used for centering when \code{scale = TRUE}. If
+omitted, column means of \code{current} are used.}
 
 \item{global_sd}{Optional standard deviations used for scaling. If
-omitted, column standard deviations of \code{current} are used.}
+\code{scale = TRUE} and this argument is omitted, column standard deviations of
+\code{current} are used.}
 
 \item{tolerance}{Optional tolerance around zero for Niche Distance Shift. If
 \code{NULL}, the fitted object uses \code{tolerance_quantile}.}

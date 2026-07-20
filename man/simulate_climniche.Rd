@@ -6,7 +6,7 @@
 \usage{
 simulate_climniche(
   n = 2000,
-  p = 2,
+  p = 6,
   seed = 1,
   rho = 0,
   prevalence = 0.3,
@@ -34,4 +34,9 @@ sensitivity and A.
 }
 \description{
 Simulate a minimal niche relative exposure example
+}
+\examples{
+sim <- simulate_climniche(n = 200, p = 6, seed = 7)
+dim(sim$current)
+mean(sim$occupied)
 }

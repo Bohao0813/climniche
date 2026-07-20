@@ -490,6 +490,10 @@ sensitivity <- apply(current_mat, 2, stats::var, na.rm = TRUE) /
 sensitivity <- pmax(0.25, pmin(4, sensitivity))
 sensitivity <- sensitivity / mean(sensitivity, na.rm = TRUE)
 names(sensitivity) <- var_names
+sensitivity_method <- paste(
+  "current-climate variance divided by occurrence-cell variance;",
+  "truncated to [0.25, 4] and normalised to mean 1"
+)
 
 fit <- fit_climniche_terra(
   current = current,
@@ -506,6 +510,13 @@ fit <- fit_climniche_terra(
   preprocess_min_sd = climniche_preprocess_min_sd
 )
 saveRDS(fit, file.path(out_dir, "anchovy_climniche_fit.rds"))
+
+sensitivity_table <- data.frame(
+  variable = names(fit$sensitivity_weights),
+  label = unname(var_labels[names(fit$sensitivity_weights)]),
+  sensitivity_weight = as.numeric(fit$sensitivity_weights),
+  stringsAsFactors = FALSE
+)
 
 setting_value <- function(x) {
   if (is.null(x) || length(x) == 0 || all(is.na(x))) {
@@ -628,6 +639,9 @@ fit_settings <- data.frame(
     "preprocess_removed_predictor_count",
     "preprocess_retained_predictors",
     "preprocess_removed_predictors",
+    "metric_type",
+    "sensitivity_method",
+    "sensitivity_weights",
     "boundary_quantile",
     "tolerance",
     "tolerance_quantile",
@@ -656,6 +670,13 @@ fit_settings <- data.frame(
     as.character(length(removed_predictors)),
     collapse_setting(fit$preprocessing$retained_variables),
     collapse_setting(removed_predictors),
+    "diagonal sensitivity metric",
+    sensitivity_method,
+    paste(
+      paste0(names(sensitivity), "=", formatC(sensitivity, digits = 6,
+                                                format = "fg")),
+      collapse = ", "
+    ),
     setting_value(fit$boundary_quantile),
     setting_value(fit$descriptor_settings$tolerance),
     setting_value(fit$descriptor_settings$tolerance_quantile),
@@ -666,6 +687,11 @@ fit_settings <- data.frame(
 utils::write.csv(fit_settings,
                  file.path(out_dir, "anchovy_climniche_fit_settings.csv"),
                  row.names = FALSE)
+utils::write.csv(
+  sensitivity_table,
+  file.path(out_dir, "anchovy_climniche_sensitivity_weights.csv"),
+  row.names = FALSE
+)
 
 report <- climniche_report(fit, species = species_name, scope = "current")
 write_climniche_report(report, file.path(out_dir, "anchovy_climniche_report.md"))
@@ -684,7 +710,7 @@ utils::write.csv(climniche_table(fit, scope = "current"),
 
 amount_r <- fit$rasters$climate_change_amount
 distance_r <- fit$rasters$niche_distance_change
-composition_r <- fit$rasters$climate_reconfiguration
+reconfiguration_r <- fit$rasters$climate_reconfiguration
 exceed_r <- fit$rasters$niche_boundary_exceedance
 
 terra::writeRaster(suitability_r, file.path(out_dir, "anchovy_sdm_suitability.tif"),
@@ -693,7 +719,7 @@ terra::writeRaster(amount_r, file.path(out_dir, "anchovy_climate_change_amount.t
                    overwrite = TRUE)
 terra::writeRaster(distance_r, file.path(out_dir, "anchovy_niche_distance_change.tif"),
                    overwrite = TRUE)
-terra::writeRaster(composition_r, file.path(out_dir, "anchovy_climate_reconfiguration.tif"),
+terra::writeRaster(reconfiguration_r, file.path(out_dir, "anchovy_climate_reconfiguration.tif"),
                    overwrite = TRUE)
 terra::writeRaster(exceed_r, file.path(out_dir, "anchovy_boundary_exceedance.tif"),
                    overwrite = TRUE)
@@ -709,7 +735,7 @@ suitability_df <- suitability_df[suitability_df$value > sdm$threshold, ,
                                  drop = FALSE]
 amount_df <- map_df(amount_r, "value")
 distance_df <- map_df(distance_r, "value")
-composition_df <- map_df(composition_r, "value")
+reconfiguration_df <- map_df(reconfiguration_r, "value")
 exceed_df <- map_df(exceed_r, "value")
 
 suitable_mask <- suitability_df[, c("x", "y"), drop = FALSE]
@@ -720,7 +746,7 @@ mask_suitable_df <- function(d) {
 }
 amount_df <- mask_suitable_df(amount_df)
 distance_df <- mask_suitable_df(distance_df)
-composition_df <- mask_suitable_df(composition_df)
+reconfiguration_df <- mask_suitable_df(reconfiguration_df)
 exceed_df <- mask_suitable_df(exceed_df)
 
 world <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
@@ -849,13 +875,13 @@ p_distance <- base_map() +
   labs(title = "(b) Niche Distance Shift") +
   theme_map(show_x = FALSE, show_y = FALSE)
 
-p_composition <- base_map() +
-  geom_tile(data = composition_df, aes(x = x, y = y, fill = value),
+p_reconfiguration <- base_map() +
+  geom_tile(data = reconfiguration_df, aes(x = x, y = y, fill = value),
             width = cell_width, height = cell_height, alpha = 0.95) +
   geography_layers() +
   scale_fill_gradientn(
     colours = c("#f7fcf5", "#c7e9c0", "#74c476", "#238b45"),
-    limits = c(0, max(composition_df$value, na.rm = TRUE)),
+    limits = c(0, max(reconfiguration_df$value, na.rm = TRUE)),
     name = NULL
   ) +
   guides(fill = guide_metric()) +
@@ -875,7 +901,7 @@ p_exceed <- base_map() +
   labs(title = "(d) Niche Boundary Exceedance") +
   theme_map(show_x = TRUE, show_y = FALSE)
 
-fig_main <- (p_amount | p_distance) / (p_composition | p_exceed) +
+fig_main <- (p_amount | p_distance) / (p_reconfiguration | p_exceed) +
   plot_layout(widths = c(1, 1), heights = c(1, 1))
 
 diagram_labels <- var_labels

@@ -1,3 +1,36 @@
+# climniche 0.3.3
+
+* Added `fit_climniche_reference()` and `project_climniche()` to estimate the
+  current realised climatic niche once and reuse it across projections.
+* Added `fit_climniche_series()` for ordered future periods, climate models and
+  scenarios. Series share one effective descriptor tolerance. Spatial
+  references are fitted independently of future missing cells, while
+  projections use common finite cell support.
+* Added a range level decomposition of Niche Boundary Exceedance into exposed
+  fraction, conditional relative exceedance and their range mean. Reference,
+  aggregation and raster cell area weights remain distinct.
+* Added continuous summaries of departure onset, duration, cumulative
+  exceedance, re-entry and maximum interval increase.
+* Added climate model agreement for ensembles with at least two models, time
+  series reports and dynamic time and map figures.
+* Documented the angular identity underlying Climatic Reconfiguration.
+
+# climniche 0.3.2
+
+* Matched named climate rows, variables, reference weights, centres,
+  sensitivities, metric matrices and compatible CNFA components before fitting.
+* Made correlation filtering deterministic and used one inverse weighted
+  empirical distribution definition for binary and continuous reference
+  weights.
+* Added stricter validation for fitted climate spaces and factor metrics. A
+  requested factor metric now stops when its CNFA components are incomplete.
+* Corrected weighted summaries and plots, single-layer raster handling,
+  non-finite raster masks, spatial layer names and original raster cell indices.
+* Added executable examples, a table of case-study sensitivity weights and
+  extended tests for alignment, weighting and invalid inputs.
+* Kept manuscript PDF figures in the repository while excluding them from the
+  source package built for CRAN.
+
 # climniche 0.3.1
 
 * Added default climate-variable preprocessing in `fit_climniche()` and the

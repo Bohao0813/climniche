@@ -11,12 +11,35 @@
 #'
 #' @return A list with current, future_toward, future_away, occupied, center,
 #'   sensitivity and A.
+#'
+#' @examples
+#' sim <- simulate_climniche(n = 200, p = 6, seed = 7)
+#' dim(sim$current)
+#' mean(sim$occupied)
 #' @export
-simulate_climniche <- function(n = 2000, p = 2, seed = 1,
+simulate_climniche <- function(n = 2000, p = 6, seed = 1,
                                rho = 0, prevalence = 0.30,
                                shift = 0.40) {
+  n <- .check_finite_scalar(n, "n")
+  p <- .check_finite_scalar(p, "p")
+  seed <- .check_finite_scalar(seed, "seed")
+  rho <- .check_finite_scalar(rho, "rho")
+  prevalence <- .check_finite_scalar(prevalence, "prevalence")
+  shift <- .check_finite_scalar(shift, "shift")
+  if (n != floor(n) || n < 2) {
+    stop("n must be an integer of at least 2.", call. = FALSE)
+  }
+  if (p != floor(p) || p < 1) {
+    stop("p must be a positive integer.", call. = FALSE)
+  }
+  if (seed != floor(seed)) {
+    stop("seed must be an integer.", call. = FALSE)
+  }
+  n <- as.integer(n)
+  p <- as.integer(p)
+  seed <- as.integer(seed)
   set.seed(seed)
-  if (rho < -1 / (p - 1) || rho >= 1) {
+  if (p > 1L && (rho <= -1 / (p - 1) || rho >= 1)) {
     stop("rho must define a positive-definite equicorrelation matrix.",
          call. = FALSE)
   }

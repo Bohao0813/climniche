@@ -12,9 +12,8 @@ knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.align = "center")
 ```
 
 This vignette analyses European anchovy (*Engraulis encrasicolus*) in the
-Mediterranean Sea using Bio-ORACLE v3 surface layers, OBIS occurrences, and a
-continuous presence-background SDM. `climniche` treats above-threshold
-suitability values as reference weights.
+Mediterranean Sea using Bio-ORACLE v3 surface layers, OBIS occurrences and a
+continuous suitability surface fitted with presence-background data.
 
 ```{r}
 library(climniche)
@@ -36,6 +35,9 @@ sdm_settings <- read.csv(
 )
 fit_settings <- read.csv(
   file.path(case_path, "anchovy_climniche_fit_settings.csv")
+)
+sensitivity_weights <- read.csv(
+  file.path(case_path, "anchovy_climniche_sensitivity_weights.csv")
 )
 predictor_screen <- read.csv(
   file.path(case_path, "anchovy_predictor_correlation_vif_screen.csv")
@@ -92,13 +94,19 @@ climniche_predictors <- subset(
 subset(climniche_predictors, retained, c("label", "vif_after_screening"))
 ```
 
-## Reproducing the climniche step
+## Fit the exposure model
 
-This example uses `fit_climniche_terra()` because the prepared Bio-ORACLE
-layers are terra rasters. The current and future layers must be aligned, and
-the suitability map is passed to `occupied` as a continuous reference layer.
-`occupied_threshold` removes low suitability cells without converting the
-remaining values to one.
+The prepared Bio-ORACLE layers are terra rasters. The suitability raster enters
+the fit as a continuous reference layer; the maximum TSS cutoff removes low
+suitability values without converting the retained values to one.
+
+The diagonal metric for this case study uses the ratio of current-domain
+variance to occurrence-cell variance, bounded between 0.25 and 4 and rescaled
+to mean one.
+
+```{r}
+sensitivity_weights
+```
 
 ```{r fit-code, eval = FALSE}
 # Use the maximum TSS threshold to remove low suitability cells.
@@ -114,6 +122,10 @@ selected_predictors <- climniche_predictors[["variable"]]
 predictor_labels <- setNames(
   climniche_predictors[["label"]],
   selected_predictors
+)
+predictor_sensitivity <- setNames(
+  sensitivity_weights[["sensitivity_weight"]],
+  sensitivity_weights[["variable"]]
 )
 
 # The suitability raster supplies continuous reference weights.
@@ -135,9 +147,20 @@ The fit returns four quantities. Climatic Displacement is the
 distance from current to future conditions in the fitted sensitivity weighted
 climatic space. Niche Distance Shift is the signed change in distance from the
 current realised niche centre. Climatic Reconfiguration is the remaining
-non-radial component, calculated from the identity \(D_i^2 = R_i^2 + C_i^2\).
+non radial component, calculated from the identity \(D_i^2 = R_i^2 + C_i^2\).
 Niche Boundary Exceedance is the positive excess beyond the chosen weighted
-quantile of current reference-cell distances from the realised niche centre.
+quantile of current reference cell distances from the realised niche centre.
+
+If \(r_{0i}\) and \(r_{1i}\) are the current and future distances from the
+niche centre and \(\theta_i\) is the angle between their centred climatic
+vectors, then
+
+\[
+C_i^2 = 2r_{0i}r_{1i}\{1 - \cos(\theta_i)\}.
+\]
+
+Climatic Reconfiguration is therefore an angular difference scaled by both
+distances from the niche centre. It is not an independent ecological process.
 
 ```{r}
 subset(
@@ -150,12 +173,12 @@ subset(
 metric_summary[, c(
   "n", "reference_weight_sum", "boundary_quantile",
   "mean_climate_change_amount", "mean_niche_distance_change",
-  "prop_outside_niche", "mean_niche_boundary_exceedance"
+  "prop_beyond_niche_boundary", "mean_niche_boundary_exceedance"
 )]
 ```
 
-Variable contributions summarize fitted change; they should not be interpreted
-causally.
+Variable contributions sum to the change in quadratic niche potential. They
+are not causal effects.
 
 ```{r}
 variable_contributions
@@ -174,7 +197,7 @@ metric_maps <- plot_climniche_maps(
   occupied_threshold = sdm_threshold,
   study_region = mediterranean_boundary,
   degree_labels = "hemisphere",
-  legend_title = NULL,
+  legend_title = FALSE,
   legend_position = "bottom"
 )
 

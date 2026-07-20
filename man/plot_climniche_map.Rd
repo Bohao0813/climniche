@@ -17,7 +17,7 @@ plot_climniche_map(
   limits = NULL,
   breaks = NULL,
   colours = NULL,
-  legend_title = NULL,
+  legend_title = FALSE,
   legend_position = "right",
   show_legend = TRUE,
   symmetric = NULL,
@@ -61,7 +61,8 @@ when used as an overlay or mask.}
 
 \item{colours}{Optional colour vector replacing the metric palette.}
 
-\item{legend_title}{Optional colour legend title.}
+\item{legend_title}{Optional colour legend title. The default, \code{FALSE},
+suppresses a title that would repeat the panel title.}
 
 \item{legend_position}{Position passed to the ggplot theme. Common values
 are \code{"right"}, \code{"bottom"}, and \code{"none"}.}

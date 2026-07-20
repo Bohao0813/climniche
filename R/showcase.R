@@ -125,10 +125,12 @@
 #' @param x A fitted climniche object.
 #' @param scope `"current"` for current reference cells; `"all"` for all
 #'   evaluated cells.
-#' @param max_points Maximum number of cells to keep for the exposure plane.
-#' @param seed Random seed used when subsampling cells.
+#' @param max_points Maximum number of rows retained in the returned `plane`
+#'   table. Figure bins are calculated from all cells in the selected scope.
+#' @param seed Random seed used when subsampling the returned `plane` table.
 #' @param plane_bins Number of fixed bins used to summarize the exposure plane.
-#' @param boundary_probs Boundary quantiles used for the sensitivity curve.
+#' @param boundary_probs Boundary quantiles retained in the returned `boundary`
+#'   table for downstream inspection.
 #' @param top_variables Number of variables to show.
 #'
 #' @return A list of data frames used by `plot_climniche_summary_figure()`.
@@ -142,6 +144,19 @@ climniche_summary_figure_data <- function(x, scope = c("current", "all"),
     stop("x must be a fitted climniche object.", call. = FALSE)
   }
   scope <- match.arg(scope)
+  max_points <- .check_positive_integer(max_points, "max_points")
+  plane_bins <- .check_positive_integer(plane_bins, "plane_bins")
+  top_variables <- .check_positive_integer(top_variables, "top_variables")
+  seed <- .check_finite_scalar(seed, "seed")
+  if (seed != floor(seed)) {
+    stop("seed must be an integer.", call. = FALSE)
+  }
+  if (!is.numeric(boundary_probs) || !length(boundary_probs) ||
+      any(!is.finite(boundary_probs)) ||
+      any(boundary_probs <= 0 | boundary_probs >= 1)) {
+    stop("boundary_probs must contain values between 0 and 1.",
+         call. = FALSE)
+  }
   tab <- climniche_table(x, scope = scope)
   tab_weight <- if (scope == "current") tab$occupied_weight else rep(1, nrow(tab))
 
@@ -202,9 +217,7 @@ climniche_summary_figure_data <- function(x, scope = c("current", "all"),
   variables$variable <- factor(variables$variable,
                                levels = rev(variables$variable))
 
-  boundary_probs <- sort(unique(boundary_probs))
-  boundary_probs <- boundary_probs[is.finite(boundary_probs) &
-                                     boundary_probs > 0 & boundary_probs < 1]
+  boundary_probs <- sort(unique(as.numeric(boundary_probs)))
   boundary <- do.call(rbind, lapply(boundary_probs, function(q) {
     b_potential <- as.numeric(.weighted_quantile(
       x$psi_current,
@@ -252,7 +265,8 @@ climniche_summary_figure_data <- function(x, scope = c("current", "all"),
       sampled_cells = nrow(plane),
       plane_bins = plane_bins,
       fitted_boundary_quantile = x$boundary_quantile,
-      fitted_boundary_distance = x$boundary_radius
+      fitted_boundary_distance = x$boundary_distance %||%
+        x$boundary_radius %||% x$boundary_value
     )
   )
   class(out) <- "climniche_summary_figure_data"
@@ -265,10 +279,12 @@ climniche_summary_figure_data <- function(x, scope = c("current", "all"),
 #'   `climniche_summary_figure_data()`.
 #' @param scope `"current"` for current reference cells; `"all"` for all
 #'   evaluated cells.
-#' @param max_points Maximum number of cells to draw in the exposure plane.
-#' @param seed Random seed used when subsampling cells.
+#' @param max_points Maximum number of rows retained in the auxiliary `plane`
+#'   table. Figure bins use all cells in the selected scope.
+#' @param seed Random seed used when subsampling the auxiliary `plane` table.
 #' @param plane_bins Number of fixed bins used to summarize the exposure plane.
-#' @param boundary_probs Boundary quantiles used for the sensitivity curve.
+#' @param boundary_probs Boundary quantiles retained in the auxiliary figure
+#'   data.
 #' @param top_variables Number of variables to show.
 #' @param variable_labels Optional named vector replacing variable labels.
 #' @param title Optional overall title when `patchwork` is installed.
@@ -449,7 +465,7 @@ plot_climniche_summary_figure <- function(x, scope = c("current", "all"),
       labels = function(z) paste0(round(100 * z), "%")
     ) +
     ggplot2::labs(
-      title = "(d) Distributions across suitable habitat",
+      title = "(d) Metric distributions",
       x = NULL,
       y = "Weighted percentage"
     ) +

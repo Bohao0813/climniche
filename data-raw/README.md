@@ -13,5 +13,6 @@ layers. It expects the IHO Mediterranean Sea boundary (Marine Regions MRGID
 
 Raw downloads stay under `../../data-raw/`. Model outputs, including any
 manuscript PDF/SVG/TIFF copies, are written under `output/`. Neither location is
-included in the CRAN source package. The prepared, compact tables used by the
-vignette are stored under `inst/extdata/mediterranean_anchovy/`.
+included in the CRAN source package. The prepared tables used by the vignette,
+including the fitted sensitivity weights, are stored under
+`inst/extdata/mediterranean_anchovy/`.

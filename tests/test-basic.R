@@ -10,7 +10,8 @@ toward <- fit_climniche(
   future = sim$future_toward,
   occupied = sim$occupied,
   center = sim$center,
-  sensitivity = sim$sensitivity
+  sensitivity = sim$sensitivity,
+  scale = FALSE
 )
 
 away <- fit_climniche(
@@ -18,7 +19,8 @@ away <- fit_climniche(
   future = sim$future_away,
   occupied = sim$occupied,
   center = sim$center,
-  sensitivity = sim$sensitivity
+  sensitivity = sim$sensitivity,
+  scale = FALSE
 )
 
 away_numeric_occupied <- fit_climniche(
@@ -27,7 +29,8 @@ away_numeric_occupied <- fit_climniche(
   occupied = as.numeric(sim$occupied),
   occupied_threshold = 0.5,
   center = sim$center,
-  sensitivity = sim$sensitivity
+  sensitivity = sim$sensitivity,
+  scale = FALSE
 )
 
 stopifnot(inherits(toward, "climniche_fit"))
@@ -48,6 +51,22 @@ stopifnot(isTRUE(all.equal(
   toward$outside_niche_exceedance,
   tolerance = 0
 )))
+fit_summary <- summary(toward)
+stopifnot(isTRUE(all.equal(
+  fit_summary$climate_reconfiguration,
+  fit_summary$composition_change
+)))
+stopifnot(isTRUE(all.equal(
+  fit_summary$niche_boundary_exceedance,
+  fit_summary$outside_niche_exceedance
+)))
+stopifnot(isTRUE(all.equal(
+  fit_summary$boundary_distance,
+  toward$boundary_distance
+)))
+summary_text <- capture.output(print(fit_summary))
+stopifnot(any(grepl("Climatic Reconfiguration", summary_text, fixed = TRUE)))
+stopifnot(!any(grepl("composition_change", summary_text, fixed = TRUE)))
 stopifnot(all(toward$climate_reconfiguration >= -sqrt(.Machine$double.eps)))
 stopifnot(all(abs(toward$change_alignment[!is.na(toward$change_alignment)]) <=
                 1 + sqrt(.Machine$double.eps)))
@@ -88,6 +107,7 @@ custom_descriptor <- fit_climniche(
   occupied = sim$occupied,
   center = sim$center,
   sensitivity = sim$sensitivity,
+  scale = FALSE,
   tolerance = 1e6,
   boundary_exceedance_tolerance = 1e6
 )
@@ -119,8 +139,11 @@ weighted_fit <- fit_climniche(
 )
 expected_center <- colSums(simple_current * simple_weights) /
   sum(simple_weights)
-stopifnot(isTRUE(all.equal(weighted_fit$center, expected_center)))
-stopifnot(!isTRUE(all.equal(weighted_fit$center, colMeans(simple_current[1:2, ]))))
+stopifnot(isTRUE(all.equal(unname(weighted_fit$center), expected_center)))
+stopifnot(!isTRUE(all.equal(
+  unname(weighted_fit$center),
+  colMeans(simple_current[1:2, ])
+)))
 
 threshold_fit <- fit_climniche(
   simple_current,
@@ -152,7 +175,7 @@ length_n_weight_fit <- fit_climniche(
   scale = FALSE
 )
 expected_length_n_center <- colSums(simple_current * c(1, 2, 3, 4)) / 10
-stopifnot(isTRUE(all.equal(length_n_weight_fit$center,
+stopifnot(isTRUE(all.equal(unname(length_n_weight_fit$center),
                            expected_length_n_center)))
 
 negative_weight <- try(fit_climniche(
@@ -235,24 +258,29 @@ pre_cnfa <- fit_climniche(
 stopifnot(inherits(pre_cnfa, "climniche_fit"))
 stopifnot(ncol(pre_cnfa$current) == 2L)
 
-A_full <- matrix(c(1, 0.25, 0.25, 1.4), 2, 2)
+A_full <- diag(seq(1, 1.5, length.out = ncol(sim$current)))
+A_full[1, 2] <- A_full[2, 1] <- 0.25
 fit_full <- fit_climniche(
   current = sim$current,
   future = sim$future_away,
   occupied = sim$occupied,
   center = sim$center,
-  A = A_full
+  A = A_full,
+  scale = FALSE
 )
 stopifnot(isTRUE(all.equal(rowSums(fit_full$variable_contribution),
                            fit_full$psi_future - fit_full$psi_current,
                            tolerance = 1e-7)))
-bad_A <- matrix(c(1, 2, 0, 1), 2, 2)
+bad_A <- A_full
+bad_A[1, 2] <- 2
+bad_A[2, 1] <- 0
 bad_fit <- try(fit_climniche(
   current = sim$current,
   future = sim$future_away,
   occupied = sim$occupied,
   center = sim$center,
-  A = bad_A
+  A = bad_A,
+  scale = FALSE
 ), silent = TRUE)
 stopifnot(inherits(bad_fit, "try-error"))
 
@@ -267,7 +295,15 @@ stopifnot(all(c("metric", "value", "weight") %in% names(summary_data$metrics)))
 stopifnot(!("classes" %in% names(summary_data)))
 stopifnot(all(c("descriptor", "level", "proportion") %in%
                 names(summary_data$descriptors)))
-stopifnot(nrow(summary_data$descriptors) == 5L)
+descriptor_counts <- table(summary_data$descriptors$descriptor)
+stopifnot(identical(
+  as.integer(descriptor_counts["Niche Distance Shift direction"]),
+  3L
+))
+stopifnot(identical(
+  as.integer(descriptor_counts["Niche boundary status"]),
+  2L
+))
 stopifnot(all(c("metric", "x", "width", "proportion") %in%
                 names(summary_data$metric_histograms)))
 stopifnot("mean_absolute_share" %in% names(summary_data$variables))
@@ -283,6 +319,8 @@ formal_metric_names <- c(
 )
 stopifnot(all(formal_metric_names %in% report$metric_definitions$metric))
 stopifnot(all(formal_metric_names %in% report$metric_summary$metric))
+stopifnot(nrow(report$metric_summary) == 12L)
+stopifnot(all(table(report$metric_summary$metric) == 3L))
 stopifnot(is.null(report$class_summary))
 stopifnot(is.null(report$classification_settings))
 stopifnot(nrow(report$descriptor_summary) == 5L)
@@ -323,6 +361,21 @@ if (requireNamespace("ggplot2", quietly = TRUE)) {
 }
 
 if (requireNamespace("raster", quietly = TRUE)) {
+  single_current <- raster::raster(
+    nrows = 4, ncols = 4, xmn = 0, xmx = 4, ymn = 0, ymx = 4,
+    crs = "+proj=longlat +datum=WGS84"
+  )
+  single_values <- seq_len(raster::ncell(single_current))
+  single_values[1] <- Inf
+  raster::values(single_current) <- single_values
+  single_future <- single_current
+  future_values <- seq_len(raster::ncell(single_future)) + 0.5
+  raster::values(single_future) <- future_values
+  single_fit <- fit_climniche_raster(single_current, single_future)
+  stopifnot(ncol(single_fit$current) == 1L)
+  stopifnot(nrow(single_fit$current) == 15L)
+  stopifnot(!single_fit$raster_complete[1])
+
   r1 <- raster::raster(nrows = 4, ncols = 4, xmn = 0, xmx = 4,
                        ymn = 0, ymx = 4, crs = "+proj=longlat +datum=WGS84")
   raster::values(r1) <- seq_len(raster::ncell(r1))
@@ -330,6 +383,8 @@ if (requireNamespace("raster", quietly = TRUE)) {
   raster::values(r2) <- rev(seq_len(raster::ncell(r2)))
   cur <- raster::stack(r1, r2)
   fut <- raster::stack(r1 + 0.5, r2 + 1)
+  names(cur) <- c("temperature", "salinity")
+  names(fut) <- c("temperature", "salinity")
   occ <- r1
   raster::values(occ) <- c(rep(0, 7), 0.5, rep(0.7, 4), rep(1, 4))
   domain <- r1
@@ -345,8 +400,25 @@ if (requireNamespace("raster", quietly = TRUE)) {
   stopifnot(methods::is(rf$rasters$climate_change_amount, "RasterLayer"))
   stopifnot(!is.null(rf$rasters$climate_reconfiguration))
   stopifnot(!is.null(rf$rasters$niche_boundary_exceedance))
+  stopifnot(identical(names(rf$rasters$climate_change_amount),
+                      "climate_change_amount"))
   stopifnot(is.null(rf$rasters$classification))
   stopifnot(is.null(rf$class_lookup))
+  stopifnot(identical(rf$call[[1]], as.name("fit_climniche_raster")))
+  stopifnot(identical(climniche_table(rf, scope = "all")$cell,
+                      which(rf$raster_complete)))
+  rf_reordered <- fit_climniche_raster(
+    cur, fut[[2:1]], occupied = occ, occupied_threshold = 0.5
+  )
+  stopifnot(isTRUE(all.equal(
+    rf$climate_change_amount,
+    rf_reordered$climate_change_amount,
+    tolerance = 0
+  )))
+  bad_raster_occupied <- try(fit_climniche_raster(
+    cur, fut, occupied = raster::stack(occ, occ)
+  ), silent = TRUE)
+  stopifnot(inherits(bad_raster_occupied, "try-error"))
   rf_domain <- fit_climniche_raster(cur, fut, occupied = occ,
                                     occupied_threshold = 0.5,
                                     domain = domain)
@@ -368,9 +440,23 @@ if (requireNamespace("raster", quietly = TRUE)) {
     )
     stopifnot(inherits(p_map_new, "ggplot"))
     stopifnot(inherits(p_map_old, "ggplot"))
+    stopifnot(!identical(
+      p_map_new$scales$get_scales("fill")$guide,
+      "none"
+    ))
+    p_map_hidden_legend <- plot_climniche_map(
+      rf,
+      metric = "niche_boundary_exceedance",
+      show_legend = FALSE
+    )
+    stopifnot(identical(
+      p_map_hidden_legend$theme$legend.position,
+      "none"
+    ))
     stopifnot(inherits(p_maps, "patchwork") || is.list(p_maps))
     stopifnot(identical(p_map_new$labels$title,
                         "Niche Boundary Exceedance"))
+    stopifnot(is.null(p_map_new$labels$fill))
     stopifnot(nrow(p_map_new$data) == 8)
     stopifnot(isTRUE(all.equal(p_map_new$data$value, p_map_old$data$value)))
     p_shift <- plot_climniche_map(rf, metric = "niche_distance_change")
@@ -404,6 +490,20 @@ if (requireNamespace("raster", quietly = TRUE)) {
 }
 
 if (requireNamespace("terra", quietly = TRUE)) {
+  single_current <- terra::rast(
+    nrows = 4, ncols = 4, xmin = 0, xmax = 4,
+    ymin = 0, ymax = 4, crs = "EPSG:4326"
+  )
+  single_values <- seq_len(terra::ncell(single_current))
+  single_values[1] <- Inf
+  terra::values(single_current) <- single_values
+  single_future <- single_current
+  terra::values(single_future) <- seq_len(terra::ncell(single_future)) + 0.5
+  single_fit <- fit_climniche_terra(single_current, single_future)
+  stopifnot(ncol(single_fit$current) == 1L)
+  stopifnot(nrow(single_fit$current) == 15L)
+  stopifnot(!single_fit$raster_complete[1])
+
   r1 <- terra::rast(nrows = 4, ncols = 4, xmin = 0, xmax = 4,
                     ymin = 0, ymax = 4, crs = "EPSG:4326")
   terra::values(r1) <- seq_len(terra::ncell(r1))
@@ -411,6 +511,8 @@ if (requireNamespace("terra", quietly = TRUE)) {
   terra::values(r2) <- rev(seq_len(terra::ncell(r2)))
   cur <- c(r1, r2)
   fut <- c(r1 + 0.5, r2 + 1)
+  names(cur) <- c("temperature", "salinity")
+  names(fut) <- c("temperature", "salinity")
   occ <- r1
   terra::values(occ) <- c(rep(0, 7), 0.5, rep(0.7, 4), rep(1, 4))
   domain <- r1
@@ -426,8 +528,21 @@ if (requireNamespace("terra", quietly = TRUE)) {
   stopifnot(methods::is(tf$rasters$climate_change_amount, "SpatRaster"))
   stopifnot(!is.null(tf$rasters$climate_reconfiguration))
   stopifnot(!is.null(tf$rasters$niche_boundary_exceedance))
+  stopifnot(identical(names(tf$rasters$climate_change_amount),
+                      "climate_change_amount"))
   stopifnot(is.null(tf$rasters$classification))
   stopifnot(is.null(tf$class_lookup))
+  stopifnot(identical(tf$call[[1]], as.name("fit_climniche_terra")))
+  stopifnot(identical(climniche_table(tf, scope = "all")$cell,
+                      which(tf$raster_complete)))
+  tf_reordered <- fit_climniche_terra(
+    cur, fut[[2:1]], occupied = occ, occupied_threshold = 0.5
+  )
+  stopifnot(isTRUE(all.equal(
+    tf$climate_change_amount,
+    tf_reordered$climate_change_amount,
+    tolerance = 0
+  )))
   tf_domain <- fit_climniche_terra(cur, fut, occupied = occ,
                                    occupied_threshold = 0.5,
                                    domain = domain)

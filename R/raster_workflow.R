@@ -2,7 +2,7 @@
 #'
 #' @param current Raster* object of current climate layers.
 #' @param future Raster* object of future climate layers with the same geometry
-#'   and number of layers as `current`.
+#'   and variables as `current`. Named layers are matched before fitting.
 #' @param occupied Optional RasterLayer indicating current occurrence or range
 #'   cells, or continuous SDM suitability values used as reference weights.
 #' @param occupied_threshold Numeric threshold used when `occupied` is a raster.
@@ -24,16 +24,27 @@
   if (!methods::is(current, "Raster") || !methods::is(future, "Raster")) {
     stop("current and future must be raster Raster* objects.", call. = FALSE)
   }
+  domain_threshold <- .check_finite_scalar(domain_threshold,
+                                            "domain_threshold")
+  if (raster::nlayers(current) < 1L ||
+      raster::nlayers(current) != raster::nlayers(future)) {
+    stop("current and future rasters must have the same positive number of layers.",
+         call. = FALSE)
+  }
   if (!raster::compareRaster(current, future, stopiffalse = FALSE)) {
     stop("current and future rasters must have matching geometry.", call. = FALSE)
   }
 
-  x0 <- raster::getValues(current)
-  x1 <- raster::getValues(future)
-  complete <- stats::complete.cases(x0) & stats::complete.cases(x1)
+  x0 <- .raster_values_matrix(current)
+  x1 <- .raster_values_matrix(future)
+  complete <- rowSums(!is.finite(x0)) == 0L &
+    rowSums(!is.finite(x1)) == 0L
   if (!is.null(domain)) {
     if (!methods::is(domain, "Raster")) {
       stop("domain must be NULL or a RasterLayer.", call. = FALSE)
+    }
+    if (raster::nlayers(domain) != 1L) {
+      stop("domain must have one layer.", call. = FALSE)
     }
     if (!raster::compareRaster(raster::raster(current), domain,
                                stopiffalse = FALSE)) {
@@ -41,7 +52,7 @@
            call. = FALSE)
     }
     dom <- raster::getValues(domain)
-    complete <- complete & !is.na(dom) & dom > domain_threshold
+    complete <- complete & is.finite(dom) & dom > domain_threshold
   }
   if (!any(complete)) {
     stop("No analysable cells remain after applying environmental and domain masks.",
@@ -53,6 +64,9 @@
   } else {
     if (!methods::is(occupied, "Raster")) {
       stop("occupied must be NULL or a RasterLayer.", call. = FALSE)
+    }
+    if (raster::nlayers(occupied) != 1L) {
+      stop("occupied must have one layer.", call. = FALSE)
     }
     if (!raster::compareRaster(raster::raster(current), occupied,
                                stopiffalse = FALSE)) {
@@ -121,8 +135,21 @@
       level = levels(fit$boundary_status)
     )
   )
+  for (nm in names(fit$rasters)) {
+    names(fit$rasters[[nm]]) <- nm
+  }
+  fit$cell_index <- which(complete)
   fit$raster_complete <- complete
   fit
+}
+
+.raster_values_matrix <- function(x) {
+  values <- raster::getValues(x)
+  if (is.null(dim(values))) {
+    values <- matrix(values, ncol = 1L)
+    colnames(values) <- names(x)
+  }
+  values
 }
 
 .values_to_raster <- function(template, values_complete, complete) {
@@ -137,7 +164,8 @@
 #'
 #' @param current SpatRaster of current environmental layers.
 #' @param future SpatRaster of future environmental layers with the same
-#'   geometry and number of layers as `current`.
+#'   geometry and variables as `current`. Named layers are matched before
+#'   fitting.
 #' @param occupied Optional SpatRaster layer indicating current occurrence,
 #'   range, suitability or probability values used as reference weights.
 #' @param occupied_threshold Numeric threshold used when `occupied` is supplied.
@@ -161,14 +189,22 @@
     stop("current and future must be terra SpatRaster objects.",
          call. = FALSE)
   }
+  domain_threshold <- .check_finite_scalar(domain_threshold,
+                                            "domain_threshold")
+  if (terra::nlyr(current) < 1L ||
+      terra::nlyr(current) != terra::nlyr(future)) {
+    stop("current and future rasters must have the same positive number of layers.",
+         call. = FALSE)
+  }
   if (!terra::compareGeom(current, future, stopOnError = FALSE)) {
     stop("current and future rasters must have matching geometry.",
          call. = FALSE)
   }
 
-  x0 <- terra::values(current)
-  x1 <- terra::values(future)
-  complete <- stats::complete.cases(x0) & stats::complete.cases(x1)
+  x0 <- terra::values(current, mat = TRUE)
+  x1 <- terra::values(future, mat = TRUE)
+  complete <- rowSums(!is.finite(x0)) == 0L &
+    rowSums(!is.finite(x1)) == 0L
   if (!is.null(domain)) {
     if (!methods::is(domain, "SpatRaster")) {
       stop("domain must be NULL or a terra SpatRaster.", call. = FALSE)
@@ -181,7 +217,7 @@
            call. = FALSE)
     }
     dom <- terra::values(domain)[, 1]
-    complete <- complete & !is.na(dom) & dom > domain_threshold
+    complete <- complete & is.finite(dom) & dom > domain_threshold
   }
   if (!any(complete)) {
     stop("No analysable cells remain after applying environmental and domain masks.",
@@ -252,6 +288,10 @@
       level = levels(fit$boundary_status)
     )
   )
+  for (nm in names(fit$rasters)) {
+    names(fit$rasters[[nm]]) <- nm
+  }
+  fit$cell_index <- which(complete)
   fit$raster_complete <- complete
   fit
 }
