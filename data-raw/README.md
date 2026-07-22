@@ -1,7 +1,9 @@
 # Mediterranean anchovy case study
 
-`mediterranean_anchovy_case_study.R` generates the prepared CSV files and PNG
-figures used by the package vignette. Run it from the package root.
+`mediterranean_anchovy_case_study.R` generates the fitted case study and its
+main figures. `mediterranean_anchovy_priority.R` and
+`mediterranean_anchovy_contributions.R` use that fitted object for the two
+additional examples. Run the scripts from the package root.
 
 The script downloads OBIS occurrence records and Bio-ORACLE v3 environmental
 layers. It expects the IHO Mediterranean Sea boundary (Marine Regions MRGID

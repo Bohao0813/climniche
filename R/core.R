@@ -317,7 +317,7 @@ niche_percentile <- function(psi_current, psi_future, occupied) {
   data.frame(current = current, future = future, delta = future - current)
 }
 
-#' Variable contribution to change in niche potential
+#' Climatic variable contribution to change in niche potential
 #'
 #' @param current Current climate matrix in the fitted climate space.
 #' @param future Future climate matrix in the fitted climate space.
@@ -325,6 +325,18 @@ niche_percentile <- function(psi_current, psi_future, occupied) {
 #' @param A Niche metric matrix.
 #'
 #' @return Matrix whose rows sum to the change in niche potential.
+#'
+#' @details
+#' For centred current and future climatic vectors \eqn{z_{0i}} and
+#' \eqn{z_{1i}}, the contribution of variable \eqn{j} is
+#' \deqn{V_{ij} = z_{1ij}(A z_{1i})_j - z_{0ij}(A z_{0i})_j.}
+#' Consequently,
+#' \deqn{\sum_j V_{ij} = \psi_{1i} - \psi_{0i}
+#' = (r_{1i} - r_{0i})(r_{1i} + r_{0i}),}
+#' where \eqn{r_{0i}} and \eqn{r_{1i}} are current and future niche distances.
+#' These values therefore decompose the squared-distance change underlying
+#' Niche Distance Shift. They are not SDM variable importance or causal
+#' effects.
 #' @export
 variable_contribution <- function(current, future, center, A) {
   current <- .as_numeric_matrix(current, "current")

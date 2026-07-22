@@ -60,10 +60,10 @@ library(climniche)
 sim <- simulate_climniche()
 
 fit <- fit_climniche(
-  current = sim$current,
-  future = sim$future_away,
-  occupied = sim$occupied,
-  sensitivity = sim$sensitivity
+  current = sim[["current"]],
+  future = sim[["future_away"]],
+  occupied = sim[["occupied"]],
+  sensitivity = sim[["sensitivity"]]
 )
 
 climniche_summary(fit)
@@ -86,15 +86,16 @@ comparisons use cells available in every projection.
 
 ```r
 future <- lapply(c(0.25, 0.50, 0.75, 1), function(fraction) {
-  sim$current + fraction * (sim$future_away - sim$current)
+  sim[["current"]] + fraction *
+    (sim[["future_away"]] - sim[["current"]])
 })
 
 series <- fit_climniche_series(
-  current = sim$current,
+  current = sim[["current"]],
   future = future,
   time = c(2030, 2050, 2070, 2090),
-  occupied = sim$occupied,
-  sensitivity = sim$sensitivity
+  occupied = sim[["occupied"]],
+  sensitivity = sim[["sensitivity"]]
 )
 
 climniche_range_summary(series)
@@ -110,12 +111,45 @@ cell level metric.
 Optional aggregation and raster cell area weights remain separate from the
 reference weights used to estimate the realised niche.
 
+## Climate exposure priority
+
+`climniche_priority()` applies two-objective Pareto ranking to one exposure
+quantity and one reference or decision criterion. The default comparison uses
+current reference weight and outward Niche Distance Shift.
+
+```r
+priority <- climniche_priority(fit)
+plot_climniche_priority(priority, type = "plane")
+```
+
+For spatial fits, `type = "map"` returns the corresponding Pareto depth map.
+An independent ecological or management criterion can replace the reference
+weight.
+
+## Climatic contributions
+
+`climniche_dominant_contribution()` identifies the climate variable with the
+largest absolute contribution to niche potential change at each cell. Its
+dominance share measures how much of the total absolute contribution is
+assigned to that variable. These terms decompose the squared-distance change
+underlying Niche Distance Shift; they are not SDM variable importance.
+
+```r
+contribution <- climniche_dominant_contribution(fit)
+summary(contribution)
+```
+
+For a spatial fit, `plot_climniche_dominant_contribution()` maps the dominant
+variable and its share within the selected reference area.
+
 ## Worked example
 
-The [Examples](https://bohao0813.github.io/climniche/articles/climniche-examples.html)
-page applies the four metrics to European anchovy in the Mediterranean Sea
-using OBIS occurrences, Bio-ORACLE v3 climate layers and continuous SDM
-suitability weights under SSP2-4.5.
+The [European anchovy example](https://bohao0813.github.io/climniche/articles/climniche-examples.html)
+applies the four metrics in the Mediterranean Sea. The
+[priority example](https://bohao0813.github.io/climniche/articles/climniche-priority.html)
+uses the same fit for Pareto spatial screening.
+The [climatic contribution example](https://bohao0813.github.io/climniche/articles/climniche-contributions.html)
+maps the fitted climate variables that account for niche potential change.
 
 ## Contributor
 

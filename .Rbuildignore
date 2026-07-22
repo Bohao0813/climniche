@@ -1,4 +1,5 @@
 ^\.github$
+^\.playwright-cli$
 ^_pkgdown\.yml$
 ^\.Rproj\.user$
 ^.*\.Rproj$

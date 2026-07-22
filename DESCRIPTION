@@ -1,7 +1,7 @@
 Package: climniche
 Type: Package
 Title: Niche Relative Climate Exposure
-Version: 0.3.3
+Version: 0.3.4
 Authors@R: c(
     person("Bohao", "He", role = c("aut", "cre"), email = "bohao.he@polimi.it")
     )
@@ -10,7 +10,10 @@ Description: Quantifies projected climate exposure relative to a species'
     or continuous species distribution model outputs can define the current
     reference. The package reports Climatic Displacement, Niche Distance Shift,
     Climatic Reconfiguration and Niche Boundary Exceedance for single
-    projections, ordered time series and climate model ensembles.
+    projections, ordered time series and climate model ensembles. A
+    two-objective Pareto ranking supports spatial climate exposure screening,
+    and cell-level terms decompose change in niche potential among fitted
+    climate variables.
 License: MIT + file LICENSE
 URL: https://github.com/Bohao0813/climniche,
     https://bohao0813.github.io/climniche/

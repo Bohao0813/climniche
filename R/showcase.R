@@ -199,8 +199,14 @@ climniche_summary_figure_data <- function(x, scope = c("current", "all"),
   contribution_share[positive_total, ] <-
     contribution_share[positive_total, , drop = FALSE] /
     contribution_total[positive_total]
-  contribution_share[!positive_total, ] <- 0
-  mean_absolute_share <- .weighted_col_means(contribution_share, weights)
+  mean_absolute_share <- if (any(positive_total)) {
+    .weighted_col_means(
+      contribution_share[positive_total, , drop = FALSE],
+      weights[positive_total]
+    )
+  } else {
+    rep(NA_real_, ncol(contribution_share))
+  }
   variables <- data.frame(
     variable = names(vals),
     mean_contribution = as.numeric(vals),
@@ -419,7 +425,7 @@ plot_climniche_summary_figure <- function(x, scope = c("current", "all"),
     )
   }
   direction_subtitle <- if (mixed_direction) {
-    "Colour indicates the direction of the fitted variable contribution"
+    "Colour shows the sign of the mean contribution"
   } else {
     NULL
   }
@@ -428,9 +434,9 @@ plot_climniche_summary_figure <- function(x, scope = c("current", "all"),
       labels = function(z) paste0(round(100 * z), "%")
     ) +
     ggplot2::labs(
-      title = "(c) Predictor contributions",
+      title = "(c) Contributions to niche potential change",
       subtitle = direction_subtitle,
-      x = "Mean absolute contribution",
+      x = "Mean absolute contribution share",
       y = NULL
     ) +
     .climniche_theme(base_size = base_size) +
@@ -441,7 +447,7 @@ plot_climniche_summary_figure <- function(x, scope = c("current", "all"),
       legend.key.height = grid::unit(3.0, "mm")
     )
   if (mixed_direction) {
-    p_vars <- p_vars + ggplot2::labs(fill = "Fitted contribution")
+    p_vars <- p_vars + ggplot2::labs(fill = "Mean contribution sign")
   }
 
   p_metrics <- ggplot2::ggplot(

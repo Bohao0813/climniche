@@ -58,6 +58,15 @@ reference:
       - climniche_change_rate
       - climniche_series_report
       - write_climniche_series_report
+  - title: Climate exposure priority
+    contents:
+      - climniche_priority
+      - plot_climniche_priority
+  - title: Climatic contributions
+    contents:
+      - variable_contribution
+      - climniche_dominant_contribution
+      - plot_climniche_dominant_contribution
   - title: Report and summaries
     contents:
       - climniche_report
@@ -72,7 +81,6 @@ reference:
       - niche_radius
       - boundary_exceedance
       - niche_percentile
-      - variable_contribution
   - title: Figures and maps
     contents:
       - plot_climniche_summary_figure
@@ -93,3 +101,5 @@ articles:
     navbar: ~
     contents:
       - climniche-examples
+      - climniche-priority
+      - climniche-contributions

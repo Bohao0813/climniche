@@ -181,6 +181,24 @@ climniche_table <- function(x, scope = c("current", "all")) {
   )
 }
 
+.report_variable_display <- function(x) {
+  out <- x[, c(
+    "variable",
+    "mean_absolute_share",
+    "mean_signed_contribution",
+    "dominant_weight_fraction",
+    "interpretation"
+  ), drop = FALSE]
+  names(out) <- c(
+    "Climate variable",
+    "Mean absolute share",
+    "Mean signed contribution",
+    "Weighted dominance frequency",
+    "Interpretation"
+  )
+  out
+}
+
 #' Summarise climniche results
 #'
 #' @param x A fitted `climniche_fit` object.
@@ -345,24 +363,36 @@ climniche_report <- function(x, species = NULL, scope = c("current", "all"),
 
   descriptor_summary <- .descriptor_summary(tab, weights)
 
-  vals <- .weighted_col_means(x$variable_contribution[idx, , drop = FALSE],
-                              weights)
+  contribution_fit <- x
+  contribution_fit$rasters <- NULL
+  contribution_fit$raster_complete <- NULL
+  contribution_summary <- climniche_dominant_contribution(
+    contribution_fit,
+    scope = scope
+  )$summary
   var_tab <- data.frame(
-    variable = names(vals),
-    mean_contribution = as.numeric(vals),
-    abs_mean_contribution = abs(as.numeric(vals)),
+    variable = contribution_summary$variable,
+    mean_absolute_share = contribution_summary$mean_absolute_share,
+    mean_signed_contribution =
+      contribution_summary$mean_signed_contribution,
+    dominant_weight_fraction =
+      contribution_summary$dominant_weight_fraction,
+    mean_contribution = contribution_summary$mean_signed_contribution,
+    abs_mean_contribution = abs(
+      contribution_summary$mean_signed_contribution
+    ),
     interpretation = ifelse(
-      vals > 0,
-      "increases future minus current niche potential",
+      contribution_summary$mean_signed_contribution > 0,
+      "positive mean contribution",
       ifelse(
-        vals < 0,
-        "decreases future minus current niche potential",
-        "no mean change in niche potential"
+        contribution_summary$mean_signed_contribution < 0,
+        "negative mean contribution",
+        "zero mean contribution"
       )
     ),
     stringsAsFactors = FALSE
   )
-  var_tab <- var_tab[order(var_tab$abs_mean_contribution, decreasing = TRUE),
+  var_tab <- var_tab[order(var_tab$mean_absolute_share, decreasing = TRUE),
                      , drop = FALSE]
   var_tab <- utils::head(var_tab, top_variables)
 
@@ -465,7 +495,7 @@ print.climniche_report <- function(x, ...) {
   }
 
   cat("\nTop variable contributions\n")
-  print(x$top_variables, row.names = FALSE)
+  print(.report_variable_display(x$top_variables), row.names = FALSE)
   invisible(x)
 }
 
@@ -524,7 +554,7 @@ write_climniche_report <- function(report, file) {
     if (nrow(report$metric_weights)) "" else NULL,
     "## Top Variable Contributions",
     "```text",
-    fmt_row(report$top_variables),
+    fmt_row(.report_variable_display(report$top_variables)),
     "```",
     "",
     "## Notes",

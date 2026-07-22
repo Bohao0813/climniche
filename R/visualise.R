@@ -669,7 +669,7 @@ plot_climniche_maps <- function(
     )
 }
 
-#' Plot mean variable contribution
+#' Plot mean climatic variable contribution
 #'
 #' @param x A `climniche_fit` object.
 #' @param occupied_only If TRUE, summarize occupied cells only.
@@ -710,8 +710,11 @@ plot_climniche_variable_contribution <- function(x, occupied_only = TRUE,
     ggplot2::geom_hline(yintercept = 0, linewidth = 0.3, colour = "grey35") +
     ggplot2::scale_fill_manual(values = c("TRUE" = "#c65d57",
                                           "FALSE" = "#4c78a8")) +
-    ggplot2::labs(x = NULL, y = "Mean fitted variable contribution",
-                  title = .plot_title(title, "Variable contribution")) +
+    ggplot2::labs(
+      x = NULL,
+      y = "Mean contribution to niche potential change",
+      title = .plot_title(title, "Contributions to niche potential change")
+    ) +
     ggplot2::theme_classic(base_size = 8.5) +
     ggplot2::theme(
       legend.position = "none",

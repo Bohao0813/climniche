@@ -2,7 +2,7 @@
 % Please edit documentation in R/visualise.R
 \name{plot_climniche_variable_contribution}
 \alias{plot_climniche_variable_contribution}
-\title{Plot mean variable contribution}
+\title{Plot mean climatic variable contribution}
 \usage{
 plot_climniche_variable_contribution(
   x,
@@ -24,5 +24,5 @@ plot_climniche_variable_contribution(
 A ggplot object.
 }
 \description{
-Plot mean variable contribution
+Plot mean climatic variable contribution
 }

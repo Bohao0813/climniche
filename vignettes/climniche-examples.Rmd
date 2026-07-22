@@ -147,17 +147,17 @@ The fit returns four quantities. Climatic Displacement is the
 distance from current to future conditions in the fitted sensitivity weighted
 climatic space. Niche Distance Shift is the signed change in distance from the
 current realised niche centre. Climatic Reconfiguration is the remaining
-non radial component, calculated from the identity \(D_i^2 = R_i^2 + C_i^2\).
+non radial component, calculated from the identity $D_i^2 = R_i^2 + C_i^2$.
 Niche Boundary Exceedance is the positive excess beyond the chosen weighted
 quantile of current reference cell distances from the realised niche centre.
 
-If \(r_{0i}\) and \(r_{1i}\) are the current and future distances from the
-niche centre and \(\theta_i\) is the angle between their centred climatic
+If $r_{0i}$ and $r_{1i}$ are the current and future distances from the
+niche centre and $\theta_i$ is the angle between their centred climatic
 vectors, then
 
-\[
-C_i^2 = 2r_{0i}r_{1i}\{1 - \cos(\theta_i)\}.
-\]
+$$
+C_i^2 = 2r_{0i}r_{1i}\left[1 - \cos(\theta_i)\right].
+$$
 
 Climatic Reconfiguration is therefore an angular difference scaled by both
 distances from the niche centre. It is not an independent ecological process.
@@ -177,8 +177,8 @@ metric_summary[, c(
 )]
 ```
 
-Variable contributions sum to the change in quadratic niche potential. They
-are not causal effects.
+The variable contributions sum to the change in quadratic niche potential.
+They are not SDM variable importance or causal effects.
 
 ```{r}
 variable_contributions
@@ -212,8 +212,11 @@ knitr::include_graphics("figures/anchovy-mediterranean-maps.png")
 
 The summary figure uses one weighted plane for Climatic Displacement and Niche
 Distance Shift and a second for Climatic Reconfiguration and Niche Boundary
-Exceedance. It also shows model-derived variable contribution shares and
-weighted distributions of the four reported quantities.
+Exceedance. Panel (c) shows each climatic variable's mean absolute contribution
+share to the squared-distance change underlying Niche Distance Shift. Panel
+(d) shows weighted distributions of the four reported quantities.
+The [spatial climatic contribution example](climniche-contributions.html)
+maps the cell-level pattern underlying panel (c).
 
 ```{r summary-figure-code, eval = FALSE}
 summary_figure <- plot_climniche_summary_figure(

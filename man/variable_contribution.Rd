@@ -2,7 +2,7 @@
 % Please edit documentation in R/core.R
 \name{variable_contribution}
 \alias{variable_contribution}
-\title{Variable contribution to change in niche potential}
+\title{Climatic variable contribution to change in niche potential}
 \usage{
 variable_contribution(current, future, center, A)
 }
@@ -19,5 +19,17 @@ variable_contribution(current, future, center, A)
 Matrix whose rows sum to the change in niche potential.
 }
 \description{
-Variable contribution to change in niche potential
+Climatic variable contribution to change in niche potential
+}
+\details{
+For centred current and future climatic vectors \eqn{z_{0i}} and
+\eqn{z_{1i}}, the contribution of variable \eqn{j} is
+\deqn{V_{ij} = z_{1ij}(A z_{1i})_j - z_{0ij}(A z_{0i})_j.}
+Consequently,
+\deqn{\sum_j V_{ij} = \psi_{1i} - \psi_{0i}
+= (r_{1i} - r_{0i})(r_{1i} + r_{0i}),}
+where \eqn{r_{0i}} and \eqn{r_{1i}} are current and future niche distances.
+These values therefore decompose the squared-distance change underlying
+Niche Distance Shift. They are not SDM variable importance or causal
+effects.
 }

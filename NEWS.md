@@ -1,3 +1,15 @@
+# climniche 0.3.4
+
+* Added two-objective Pareto depth for climate exposure screening, including
+  decision planes and spatial priority maps.
+* Added a European anchovy priority example and clarified that summary figure
+  panel (c) decomposes change in niche potential rather than SDM variable
+  importance.
+* Added cell-level dominant climatic contributions, dominance shares and
+  spatial maps, with a Mediterranean anchovy example.
+* Added Pareto summary diagnostics, including first-front size and objective
+  rank correlation.
+
 # climniche 0.3.3
 
 * Added `fit_climniche_reference()` and `project_climniche()` to estimate the

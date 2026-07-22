@@ -1,13 +1,13 @@
 library(climniche)
 
-sim <- simulate_climniche(n = 1000, p = 3, rho = 0.5, shift = 0.5)
+sim <- simulate_climniche(n = 1000, p = 6, rho = 0.5, shift = 0.5)
 
 fit <- fit_climniche(
-  current = sim$current,
-  future = sim$future_away,
-  occupied = sim$occupied,
-  center = sim$center,
-  sensitivity = sim$sensitivity,
+  current = sim[["current"]],
+  future = sim[["future_away"]],
+  occupied = sim[["occupied"]],
+  center = sim[["center"]],
+  sensitivity = sim[["sensitivity"]],
   scale = FALSE
 )
 
