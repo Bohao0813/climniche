@@ -7,6 +7,8 @@
   importance.
 * Added cell-level dominant climatic contributions, dominance shares and
   spatial maps, with a Mediterranean anchovy example.
+* Added complete variable legends for contribution maps and aligned the
+  Mediterranean example to one six-variable climate set.
 * Added Pareto summary diagnostics, including first-front size and objective
   rank correlation.
 

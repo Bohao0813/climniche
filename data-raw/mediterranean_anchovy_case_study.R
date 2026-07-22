@@ -105,33 +105,29 @@ climniche_preprocess_min_sd <- 1e-08
 candidate_specs <- data.frame(
   variable = c(
     "temperature_mean", "temperature_range",
-    "salinity_mean", "salinity_range",
-    "oxygen_mean", "ph_mean", "chlorophyll_mean",
+    "salinity_range",
+    "oxygen_mean", "ph_mean",
     "sea_water_speed_mean", "sea_water_speed_range"
   ),
   current_dataset = c(
     "thetao_baseline_2000_2019_depthsurf",
     "thetao_baseline_2000_2019_depthsurf",
     "so_baseline_2000_2019_depthsurf",
-    "so_baseline_2000_2019_depthsurf",
     "o2_baseline_2000_2018_depthsurf",
     "ph_baseline_2000_2018_depthsurf",
-    "chl_baseline_2000_2018_depthsurf",
     "sws_baseline_2000_2019_depthsurf",
     "sws_baseline_2000_2019_depthsurf"
   ),
   current_variable = c(
-    "thetao_mean", "thetao_range", "so_mean", "so_range",
-    "o2_mean", "ph_mean", "chl_mean", "sws_mean", "sws_range"
+    "thetao_mean", "thetao_range", "so_range",
+    "o2_mean", "ph_mean", "sws_mean", "sws_range"
   ),
   label = c(
     "Mean temperature",
     "Temperature range",
-    "Mean salinity",
     "Salinity range",
     "Mean dissolved oxygen",
     "Mean pH",
-    "Mean chlorophyll",
     "Mean current speed",
     "Current speed range"
   ),
@@ -159,7 +155,11 @@ collapse_time_layers <- function(r) {
       x <- mean(r[[idx]], na.rm = TRUE)
     }
     names(x) <- nm
-    x
+    terra::writeRaster(
+      x,
+      tempfile(pattern = paste0(nm, "_"), fileext = ".tif"),
+      overwrite = TRUE
+    )
   })
   do.call(c, out)
 }
@@ -187,11 +187,15 @@ download_biooracle_stack <- function(specs, dataset_col, variable_col,
       directory = biooracle_dir,
       verbose = FALSE
     )
-    r <- terra::rast(r)
+    if (inherits(r, "SpatRaster")) {
+      r <- terra::rast(unique(terra::sources(r)))
+    } else {
+      r <- terra::rast(r)
+    }
     r <- collapse_time_layers(r)
     pieces[[dataset_id]] <- r[[vars]]
   }
-  out <- do.call(c, pieces)
+  out <- do.call(c, unname(pieces))
   names(out) <- specs$variable[match(names(out), specs[[variable_col]])]
   out <- terra::crop(out, region_extent)
   terra::crs(out) <- "EPSG:4326"

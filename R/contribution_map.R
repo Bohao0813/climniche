@@ -258,6 +258,9 @@ print.climniche_contribution <- function(x, ...) {
 #' @param scope Scope used when `x` is a fitted object.
 #' @param variable_labels Optional named vector replacing climate variable
 #'   names.
+#' @param legend_variables Optional character vector of fitted variable names
+#'   to retain in the legend, including variables that are not dominant in any
+#'   mapped cell. The default shows only observed categories.
 #' @param colours Optional colours for the climate variables. A final colour
 #'   may be supplied for tied contributions; otherwise ties are grey.
 #' @param title Optional overall title for a combined figure.
@@ -292,7 +295,8 @@ plot_climniche_dominant_contribution <- function(
     extent = NULL,
     degree_labels = c("auto", "none", "hemisphere"),
     study_region = NULL,
-    legend_position = "bottom") {
+    legend_position = "bottom",
+    legend_variables = NULL) {
   .need_ggplot2()
   type <- match.arg(type)
   scope <- match.arg(scope)
@@ -317,6 +321,22 @@ plot_climniche_dominant_contribution <- function(
     replace <- !is.na(matched)
     labels[replace] <- unname(variable_labels[matched[replace]])
   }
+  legend_breaks <- ggplot2::waiver()
+  drop_legend_levels <- TRUE
+  if (!is.null(legend_variables)) {
+    legend_variables <- unique(as.character(legend_variables))
+    if (!length(legend_variables) || anyNA(legend_variables) ||
+        any(!nzchar(legend_variables))) {
+      stop("legend_variables must contain fitted variable names.",
+           call. = FALSE)
+    }
+    matched <- match(legend_variables, x$lookup$variable)
+    if (anyNA(matched)) {
+      stop("legend_variables contains names not found in x.", call. = FALSE)
+    }
+    legend_breaks <- labels[matched]
+    drop_legend_levels <- FALSE
+  }
   if (is.null(colours)) {
     colours <- .contribution_colours(nrow(x$lookup))
   }
@@ -334,6 +354,8 @@ plot_climniche_dominant_contribution <- function(
     x,
     labels = labels,
     colours = colours,
+    legend_breaks = legend_breaks,
+    drop_legend_levels = drop_legend_levels,
     extent = extent,
     degree_labels = degree_labels,
     study_region = study_region,
@@ -408,7 +430,8 @@ plot.climniche_contribution <- function(x, ...) {
   )
 }
 
-.plot_dominant_variable_map <- function(x, labels, colours, extent,
+.plot_dominant_variable_map <- function(x, labels, colours, legend_breaks,
+                                        drop_legend_levels, extent,
                                         degree_labels, study_region,
                                         legend_position) {
   map <- .contribution_map_data(
@@ -429,7 +452,8 @@ plot.climniche_contribution <- function(x, ...) {
   ) +
     ggplot2::geom_tile(
       width = map$cell_size[1L],
-      height = map$cell_size[2L]
+      height = map$cell_size[2L],
+      show.legend = TRUE
     ) +
     ggplot2::coord_equal(
       xlim = map$limits$xlim,
@@ -438,7 +462,12 @@ plot.climniche_contribution <- function(x, ...) {
     ) +
     ggplot2::scale_x_continuous(labels = map$axis$x) +
     ggplot2::scale_y_continuous(labels = map$axis$y) +
-    ggplot2::scale_fill_manual(values = colours, drop = TRUE, na.value = NA) +
+    ggplot2::scale_fill_manual(
+      values = colours,
+      breaks = legend_breaks,
+      drop = drop_legend_levels,
+      na.value = NA
+    ) +
     ggplot2::labs(
       title = "Dominant climatic contribution",
       x = map$axis$xlab,

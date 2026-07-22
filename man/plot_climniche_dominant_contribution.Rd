@@ -15,7 +15,8 @@ plot_climniche_dominant_contribution(
   extent = NULL,
   degree_labels = c("auto", "none", "hemisphere"),
   study_region = NULL,
-  legend_position = "bottom"
+  legend_position = "bottom",
+  legend_variables = NULL
 )
 
 \method{plot}{climniche_contribution}(x, ...)
@@ -43,6 +44,10 @@ may be supplied for tied contributions; otherwise ties are grey.}
 \code{\link[=plot_climniche_map]{plot_climniche_map()}}.}
 
 \item{legend_position}{Legend position.}
+
+\item{legend_variables}{Optional character vector of fitted variable names
+to retain in the legend, including variables that are not dominant in any
+mapped cell. The default shows only observed categories.}
 
 \item{...}{Additional arguments passed to
 \code{plot_climniche_dominant_contribution()} by the S3 \code{plot()} method.}

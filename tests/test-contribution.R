@@ -205,5 +205,17 @@ if (requireNamespace("terra", quietly = TRUE)) {
       colours = c("#0072B2", "#D55E00")
     )
     stopifnot(inherits(custom_map, "ggplot"))
+    complete_legend_map <- plot_climniche_dominant_contribution(
+      spatial_contribution,
+      type = "variable",
+      variable_labels = c(
+        temperature = "Temperature",
+        water_balance = "Water balance"
+      ),
+      legend_variables = c("temperature", "water_balance")
+    )
+    fill_scale <- complete_legend_map$scales$get_scales("fill")
+    stopifnot(identical(fill_scale$breaks, c("Temperature", "Water balance")))
+    stopifnot(identical(fill_scale$drop, FALSE))
   }
 }

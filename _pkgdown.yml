@@ -21,7 +21,13 @@ navbar:
   components:
     examples:
       text: Examples
-      href: articles/climniche-examples.html
+      menu:
+        - text: Mediterranean example
+          href: articles/climniche-examples.html
+        - text: Climate exposure priority
+          href: articles/climniche-priority.html
+        - text: Spatial climatic contributions
+          href: articles/climniche-contributions.html
     reference:
       text: Reference
       href: reference/index.html

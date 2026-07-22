@@ -78,10 +78,19 @@ palette <- c(
   "Temperature range" = "#D55E00",
   "Salinity range" = "#009E73",
   "Mean pH" = "#CC79A7",
-  "Mean chlorophyll" = "#E69F00",
   "Mean current speed" = "#56B4E9",
   "Current speed range" = "#6A3D9A",
   "Tied" = "#777777"
+)
+
+legend_variables <- c(
+  "temperature_mean", "temperature_range", "salinity_range", "ph_mean",
+  "sea_water_speed_mean", "sea_water_speed_range"
+)
+legend_labels <- unname(variable_labels[legend_variables])
+dominant_map$label <- factor(
+  dominant_map$label,
+  levels = c(unname(variable_labels), "Tied")
 )
 
 degree_label <- function(x, positive, negative) {
@@ -131,7 +140,8 @@ variable_plot <- ggplot() +
     data = dominant_map,
     aes(x = x, y = y, fill = label),
     width = cell_size[1],
-    height = cell_size[2]
+    height = cell_size[2],
+    show.legend = TRUE
   ) +
   geom_sf(data = land, fill = "#eeeeee", colour = NA) +
   geom_sf(
@@ -140,10 +150,20 @@ variable_plot <- ggplot() +
     colour = "#333333",
     linewidth = 0.22
   ) +
-  scale_fill_manual(values = palette, drop = TRUE, name = "Climate variable") +
+  scale_fill_manual(
+    values = palette,
+    breaks = legend_labels,
+    drop = FALSE,
+    name = "Climate variable"
+  ) +
   map_coordinates +
   labs(title = "(a) Dominant climatic contribution", x = NULL, y = NULL) +
-  guides(fill = guide_legend(nrow = 2, byrow = TRUE)) +
+  guides(fill = guide_legend(
+    nrow = 3,
+    byrow = TRUE,
+    title.position = "top",
+    title.hjust = 0
+  )) +
   map_theme()
 
 share_plot <- ggplot() +

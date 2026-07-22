@@ -68,7 +68,6 @@ variable_labels <- c(
   temperature_range = "Temperature range",
   salinity_range = "Salinity range",
   ph_mean = "Mean pH",
-  chlorophyll_mean = "Mean chlorophyll",
   sea_water_speed_mean = "Mean current speed",
   sea_water_speed_range = "Current speed range"
 )
@@ -77,6 +76,7 @@ plot_climniche_dominant_contribution(
   contribution,
   type = "both",
   variable_labels = variable_labels,
+  legend_variables = names(variable_labels),
   study_region = mediterranean_boundary,
   degree_labels = "hemisphere"
 )
@@ -86,8 +86,10 @@ plot_climniche_dominant_contribution(
 knitr::include_graphics("figures/anchovy-climniche-contributions.png")
 ```
 
-Panel (a) maps the variable with the largest absolute contribution. Panel (b)
-maps its share of the total absolute contribution at the same cell. Mean pH
+Panel (a) maps the variable with the largest absolute contribution and retains
+all six fitted climate variables in its legend.
+Panel (b) maps the dominant variable's share of the total absolute contribution
+at the same cell. Mean pH
 has the largest absolute term across most of the weighted anchovy reference
 habitat. Temperature range and salinity range have the largest term in smaller,
 geographically distinct areas.
