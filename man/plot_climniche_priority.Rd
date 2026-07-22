@@ -3,12 +3,12 @@
 \name{plot_climniche_priority}
 \alias{plot_climniche_priority}
 \alias{plot.climniche_priority}
-\title{Plot climate exposure priority}
+\title{Plot ecological screening of climate exposure}
 \usage{
 plot_climniche_priority(
   x,
   type = c("plane", "map", "both"),
-  map_value = c("relative_priority", "pareto_rank"),
+  map_value = c("pareto_depth_score", "pareto_rank", "relative_priority"),
   max_points = 6000L,
   seed = 1L,
   title = NULL,
@@ -25,13 +25,13 @@ plot_climniche_priority(
 
 \item{type}{\code{"plane"}, \code{"map"}, or \code{"both"}.}
 
-\item{map_value}{Map rescaled Pareto depth (\code{"relative_priority"}) or the
-original \code{"pareto_rank"}.}
+\item{map_value}{Map \code{"pareto_depth_score"}, the original \code{"pareto_rank"},
+or the legacy alias \code{"relative_priority"}.}
 
-\item{max_points}{Target maximum number of cells drawn in the priority plane.
+\item{max_points}{Target maximum number of cells drawn in the decision plane.
 Pareto rank 1 is always retained.}
 
-\item{seed}{Random seed used when the priority plane is subsampled.}
+\item{seed}{Random seed used when the decision plane is subsampled.}
 
 \item{title}{Optional overall title for a combined figure.}
 
@@ -52,7 +52,7 @@ A ggplot object, a patchwork object, or a named list of plots when
 \code{patchwork} is unavailable.
 }
 \description{
-Plot climate exposure priority
+Plot ecological screening of climate exposure
 }
 \examples{
 sim <- simulate_climniche(n = 400, p = 6, seed = 21)

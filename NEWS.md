@@ -1,8 +1,18 @@
+# climniche 0.3.5
+
+* Reframed Pareto output as ecological screening of climate exposure.
+  `exposure_direction` now distinguishes exposure concern from persistence
+  opportunities based on lower Climatic Displacement.
+* Added `pareto_depth_score` as the primary Pareto depth field while retaining
+  `relative_priority` as an exact compatibility alias.
+* Reworked the Mediterranean anchovy example to compare exposure concern with
+  climatic persistence opportunity in paired decision planes and maps.
+
 # climniche 0.3.4
 
 * Added two-objective Pareto depth for climate exposure screening, including
-  decision planes and spatial priority maps.
-* Added a European anchovy priority example and clarified that summary figure
+  decision planes and spatial Pareto maps.
+* Added a European anchovy screening example and clarified that summary figure
   panel (c) decomposes change in niche potential rather than SDM variable
   importance.
 * Added cell-level dominant climatic contributions, dominance shares and

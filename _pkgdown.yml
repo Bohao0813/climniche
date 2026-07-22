@@ -24,7 +24,7 @@ navbar:
       menu:
         - text: Mediterranean example
           href: articles/climniche-examples.html
-        - text: Climate exposure priority
+        - text: Ecological exposure screening
           href: articles/climniche-priority.html
         - text: Spatial climatic contributions
           href: articles/climniche-contributions.html
@@ -64,7 +64,7 @@ reference:
       - climniche_change_rate
       - climniche_series_report
       - write_climniche_series_report
-  - title: Climate exposure priority
+  - title: Ecological exposure screening
     contents:
       - climniche_priority
       - plot_climniche_priority

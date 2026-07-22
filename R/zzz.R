@@ -22,6 +22,7 @@ if (getRversion() >= "2.15.1") {
     "niche_boundary_exceedance",
     "niche_distance_change",
     "occupied_weight",
+    "pareto_depth_score",
     "plot_weight",
     "plot_value",
     "prop_exceeded",

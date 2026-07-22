@@ -111,20 +111,31 @@ cell level metric.
 Optional aggregation and raster cell area weights remain separate from the
 reference weights used to estimate the realised niche.
 
-## Climate exposure priority
+## Ecological screening of climate exposure
 
-`climniche_priority()` applies two-objective Pareto ranking to one exposure
-quantity and one reference or decision criterion. The default comparison uses
-current reference weight and outward Niche Distance Shift.
+Climate exposure can guide different spatial decisions. High ecological value
+combined with greater exposure identifies areas of concern, whereas high value
+combined with limited climatic displacement identifies persistence
+opportunities. `climniche_priority()` keeps these objectives explicit through
+two-objective Pareto screening.
 
 ```r
-priority <- climniche_priority(fit)
-plot_climniche_priority(priority, type = "plane")
+exposure_concern <- climniche_priority(
+  fit,
+  exposure = "niche_distance_change",
+  exposure_direction = "maximize"
+)
+
+persistence_opportunity <- climniche_priority(
+  fit,
+  exposure = "climate_change_amount",
+  positive_only = FALSE,
+  exposure_direction = "minimize"
+)
 ```
 
-For spatial fits, `type = "map"` returns the corresponding Pareto depth map.
-An independent ecological or management criterion can replace the reference
-weight.
+Each result retains the decision plane, Pareto fronts and spatial Pareto depth.
+An ecological or management layer can be supplied through `criterion`.
 
 ## Climatic contributions
 
@@ -146,8 +157,8 @@ variable and its share within the selected reference area.
 
 The [European anchovy example](https://bohao0813.github.io/climniche/articles/climniche-examples.html)
 applies the four metrics in the Mediterranean Sea. The
-[priority example](https://bohao0813.github.io/climniche/articles/climniche-priority.html)
-uses the same fit for Pareto spatial screening.
+[ecological screening example](https://bohao0813.github.io/climniche/articles/climniche-priority.html)
+contrasts exposure concern with climatic persistence opportunity.
 The [climatic contribution example](https://bohao0813.github.io/climniche/articles/climniche-contributions.html)
 maps the fitted climate variables that account for niche potential change.
 

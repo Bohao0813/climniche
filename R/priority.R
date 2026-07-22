@@ -1,4 +1,4 @@
-#' Rank cells for climate exposure screening
+#' Screen ecological criteria against climate exposure
 #'
 #' @param x A fitted `climniche_fit` object.
 #' @param exposure Climatic quantity used as the exposure objective. Available
@@ -17,10 +17,14 @@
 #' @param positive_only If `TRUE`, only cells with a positive value of the
 #'   selected exposure quantity are ranked. Set to `FALSE` to retain zero and
 #'   negative values.
+#' @param exposure_direction Whether larger or smaller exposure values are
+#'   preferred in the Pareto comparison. Use `"maximize"` to screen for
+#'   greater exposure and `"minimize"` to screen for lower exposure.
 #'
 #' @return A `climniche_priority` object containing the two decision criteria,
-#'   Pareto ranks, rescaled Pareto depth (`relative_priority`) and, for spatial
-#'   fits, map layers.
+#'   Pareto ranks, Pareto Depth Score (`pareto_depth_score`) and, for spatial
+#'   fits, map layers. `relative_priority` is retained as a compatibility alias
+#'   for `pareto_depth_score`.
 #'
 #' @details
 #' The function ranks cells on two objectives: the selected climatic exposure
@@ -29,10 +33,12 @@
 #' preferred on one. Non-dominated cells form Pareto rank 1. Removing that front
 #' and repeating the comparison produces ranks 2, 3, and subsequent fronts.
 #'
-#' `relative_priority` rescales Pareto depth from 0 to 1. It does not order cells
-#' within the same front and is not comparable among separate analyses. Pareto
-#' dominance is invariant to monotonic rescaling, so the two criteria are not
-#' combined with fitted weights.
+#' If an analysis contains \eqn{K} Pareto fronts, `pareto_depth_score` is
+#' \eqn{(K-r_i)/(K-1)} for the rank \eqn{r_i} of cell \eqn{i}; it is 1 when all
+#' cells occupy one front. The score does not order cells within a front and is
+#' not comparable among separate analyses. Pareto dominance is invariant to
+#' monotonic rescaling, so the two criteria are not combined with fitted
+#' weights.
 #'
 #' When current reference weights are constant, the default second criterion
 #' does not distinguish cells and ranking is determined by exposure alone.
@@ -40,8 +46,11 @@
 #' Only one exposure quantity is used at a time. This avoids counting Climatic
 #' Displacement, Niche Distance Shift and Climatic Reconfiguration as independent
 #' objectives even though their values satisfy the fitted geometric identity.
-#' The result is a climate exposure screening rank, not a complete conservation
-#' plan.
+#' When the second criterion represents ecological value, maximising both
+#' objectives screens for valuable sites under greater climatic concern.
+#' Minimising exposure while maximising ecological value screens for climatic
+#' persistence opportunities. The two directions answer different ecological
+#' questions; neither is a complete conservation plan.
 #'
 #' `summary()` reports the first-front fraction and the Spearman correlation
 #' between exposure and the preference-oriented second criterion. These
@@ -52,6 +61,10 @@
 #'   Prioritizing conserved areas threatened by wildfire and fragmentation for
 #'   monitoring and management. *PLOS ONE*, 13, e0200203.
 #'   \doi{10.1371/journal.pone.0200203}
+#'
+#'   Sacre E, Bode M, Weeks R, Pressey RL (2019). The context dependence of
+#'   frontier versus wilderness conservation priorities. *Conservation
+#'   Letters*, 12, e12632. \doi{10.1111/conl.12632}
 #'
 #' @examples
 #' sim <- simulate_climniche(n = 500, p = 6, seed = 18)
@@ -81,12 +94,14 @@ climniche_priority <- function(
     criterion_name = NULL,
     criterion_direction = c("maximize", "minimize"),
     scope = c("current", "all"),
-    positive_only = TRUE) {
+    positive_only = TRUE,
+    exposure_direction = c("maximize", "minimize")) {
   if (!inherits(x, "climniche_fit")) {
     stop("x must be a fitted climniche object.", call. = FALSE)
   }
   exposure <- match.arg(exposure)
   criterion_direction <- match.arg(criterion_direction)
+  exposure_direction <- match.arg(exposure_direction)
   scope <- match.arg(scope)
   positive_only <- .check_flag(positive_only, "positive_only")
   if (!is.null(criterion_name) &&
@@ -121,7 +136,7 @@ climniche_priority <- function(
     included <- included & reference_weight > 0
   }
   if (!any(included)) {
-    stop("No cells have finite priority criteria in the selected scope.",
+    stop("No cells have finite screening criteria in the selected scope.",
          call. = FALSE)
   }
 
@@ -129,22 +144,29 @@ climniche_priority <- function(
   if (identical(criterion_direction, "minimize")) {
     criterion_preference <- -criterion_preference
   }
+  exposure_preference <- exposure_data$values[included]
+  if (identical(exposure_direction, "minimize")) {
+    exposure_preference <- -exposure_preference
+  }
   ranks <- .pareto_rank_2d(
     criterion_preference,
-    exposure_data$values[included]
+    exposure_preference
   )
-  relative <- .relative_pareto_priority(ranks)
+  depth_score <- .pareto_depth_score(ranks)
 
   pareto_rank <- rep(NA_integer_, n)
+  pareto_depth_score <- rep(NA_real_, n)
   relative_priority <- rep(NA_real_, n)
   pareto_rank[included] <- ranks
-  relative_priority[included] <- relative
+  pareto_depth_score[included] <- depth_score
+  relative_priority[included] <- depth_score
   front_sizes <- tabulate(ranks, nbins = max(ranks))
 
   table <- data.frame(
     cell = seq_len(n),
     reference_weight = reference_weight,
     pareto_rank = pareto_rank,
+    pareto_depth_score = pareto_depth_score,
     relative_priority = relative_priority,
     included = included,
     stringsAsFactors = FALSE
@@ -161,6 +183,7 @@ climniche_priority <- function(
     },
     exposure_data$field,
     "pareto_rank",
+    "pareto_depth_score",
     "relative_priority",
     "included"
   ), drop = FALSE]
@@ -172,6 +195,7 @@ climniche_priority <- function(
     criterion = criterion_data$field,
     criterion_label = criterion_data$label,
     criterion_direction = criterion_direction,
+    exposure_direction = exposure_direction,
     scope = scope,
     positive_only = positive_only,
     table = table,
@@ -182,7 +206,7 @@ climniche_priority <- function(
     rasters = .priority_rasters(
       x,
       pareto_rank = pareto_rank,
-      relative_priority = relative_priority
+      pareto_depth_score = pareto_depth_score
     )
   )
   class(out) <- "climniche_priority"
@@ -201,6 +225,10 @@ summary.climniche_priority <- function(object, ...) {
   }
   included <- object$table$included
   exposure <- object$table[[object$exposure]][included]
+  exposure_direction <- object$exposure_direction %||% "maximize"
+  if (identical(exposure_direction, "minimize")) {
+    exposure <- -exposure
+  }
   criterion <- object$table[[object$criterion]][included]
   if (identical(object$criterion_direction, "minimize")) {
     criterion <- -criterion
@@ -225,6 +253,7 @@ summary.climniche_priority <- function(object, ...) {
   out <- list(
     settings = data.frame(
       exposure = object$exposure_label,
+      exposure_direction = exposure_direction,
       criterion = object$criterion_label,
       criterion_direction = object$criterion_direction,
       scope = object$scope,
@@ -240,8 +269,9 @@ summary.climniche_priority <- function(object, ...) {
 
 #' @export
 print.summary.climniche_priority <- function(x, ...) {
-  cat("Climate exposure priority summary\n\n")
+  cat("Ecological screening of climate exposure\n\n")
   cat("Exposure:", x$settings$exposure, "\n")
+  cat("Exposure direction:", x$settings$exposure_direction, "\n")
   cat("Second criterion:", x$settings$criterion, "\n")
   cat("Criterion direction:", x$settings$criterion_direction, "\n")
   cat("Scope:", x$settings$scope, "\n")
@@ -264,8 +294,9 @@ print.summary.climniche_priority <- function(x, ...) {
 print.climniche_priority <- function(x, ...) {
   included <- x$table$included
   first_front_n <- x$front_sizes$n[1L]
-  cat("climniche climate exposure priority\n\n")
+  cat("climniche ecological screening of climate exposure\n\n")
   cat("Exposure:", x$exposure_label, "\n")
+  cat("Exposure direction:", x$exposure_direction %||% "maximize", "\n")
   cat("Second criterion:", x$criterion_label,
       paste0(" (", x$criterion_direction, ")\n"))
   cat("Scope:", x$scope, "\n")
@@ -288,7 +319,7 @@ print.climniche_priority <- function(x, ...) {
     "climate_change_amount"
   )
   if (!key %in% choices) {
-    stop("Unsupported priority exposure quantity.", call. = FALSE)
+    stop("Unsupported exposure quantity.", call. = FALSE)
   }
 
   values <- .fit_metric(x, key)
@@ -418,7 +449,7 @@ print.climniche_priority <- function(x, ...) {
   out
 }
 
-.relative_pareto_priority <- function(ranks) {
+.pareto_depth_score <- function(ranks) {
   maximum <- max(ranks)
   if (maximum == 1L) {
     return(rep(1, length(ranks)))
@@ -426,10 +457,11 @@ print.climniche_priority <- function(x, ...) {
   (maximum - ranks) / (maximum - 1)
 }
 
-.priority_rasters <- function(x, pareto_rank, relative_priority) {
+.priority_rasters <- function(x, pareto_rank, pareto_depth_score) {
   rasters <- list(
     pareto_rank = .priority_value_raster(x, pareto_rank),
-    relative_priority = .priority_value_raster(x, relative_priority)
+    pareto_depth_score = .priority_value_raster(x, pareto_depth_score),
+    relative_priority = .priority_value_raster(x, pareto_depth_score)
   )
   if (all(vapply(rasters, is.null, logical(1)))) return(NULL)
   for (name in names(rasters)) names(rasters[[name]]) <- name
@@ -441,7 +473,7 @@ print.climniche_priority <- function(x, ...) {
   complete <- x$raster_complete
   if (is.null(template) || is.null(complete)) return(NULL)
   if (length(values) != sum(complete)) {
-    stop("Priority values do not match the fitted spatial cells.",
+    stop("Screening values do not match the fitted spatial cells.",
          call. = FALSE)
   }
   if (.is_raster(template)) {
@@ -453,15 +485,15 @@ print.climniche_priority <- function(x, ...) {
   NULL
 }
 
-#' Plot climate exposure priority
+#' Plot ecological screening of climate exposure
 #'
 #' @param x A `climniche_priority` object.
 #' @param type `"plane"`, `"map"`, or `"both"`.
-#' @param map_value Map rescaled Pareto depth (`"relative_priority"`) or the
-#'   original `"pareto_rank"`.
-#' @param max_points Target maximum number of cells drawn in the priority plane.
+#' @param map_value Map `"pareto_depth_score"`, the original `"pareto_rank"`,
+#'   or the legacy alias `"relative_priority"`.
+#' @param max_points Target maximum number of cells drawn in the decision plane.
 #'   Pareto rank 1 is always retained.
-#' @param seed Random seed used when the priority plane is subsampled.
+#' @param seed Random seed used when the decision plane is subsampled.
 #' @param title Optional overall title for a combined figure.
 #' @param extent Optional `c(xmin, xmax, ymin, ymax)` map extent.
 #' @param degree_labels Longitude-latitude label style.
@@ -490,7 +522,7 @@ print.climniche_priority <- function(x, ...) {
 plot_climniche_priority <- function(
     x,
     type = c("plane", "map", "both"),
-    map_value = c("relative_priority", "pareto_rank"),
+    map_value = c("pareto_depth_score", "pareto_rank", "relative_priority"),
     max_points = 6000L,
     seed = 1L,
     title = NULL,
@@ -527,7 +559,7 @@ plot_climniche_priority <- function(
     return(list(plane = plane, map = map))
   }
   plane <- plane +
-    ggplot2::labs(title = "(a) Priority plane") +
+    ggplot2::labs(title = "(a) Exposure and ecological criterion") +
     ggplot2::theme(legend.position = "none")
   map <- map + ggplot2::labs(
     title = paste0("(b) ", .priority_map_title(x, map_value))
@@ -547,17 +579,28 @@ plot.climniche_priority <- function(x, ...) {
   plot_climniche_priority(x, ...)
 }
 
-.priority_colours <- function() {
-  c("#f5f3ed", "#c8ddd2", "#7eb3a2", "#397d70", "#153f3b")
+.priority_colours <- function(exposure_direction = "maximize") {
+  if (identical(exposure_direction, "minimize")) {
+    return(c("#f2f5f4", "#c9dfda", "#82b8ae", "#3a8078", "#104a46"))
+  }
+  c("#f6f2e8", "#f2ce85", "#e49a48", "#c75b4d", "#7d2431")
 }
 
 .plot_priority_plane <- function(x, max_points, seed) {
   criterion_field <- x$criterion
   exposure_field <- x$exposure
+  exposure_direction <- x$exposure_direction %||% "maximize"
+  depth_field <- if ("pareto_depth_score" %in% names(x$table)) {
+    "pareto_depth_score"
+  } else {
+    "relative_priority"
+  }
   data <- x$table[x$table$included, c(
-    criterion_field, exposure_field, "pareto_rank", "relative_priority"
+    criterion_field, exposure_field, "pareto_rank", depth_field
   ), drop = FALSE]
-  names(data)[1:2] <- c("criterion_value", "exposure_value")
+  names(data) <- c(
+    "criterion_value", "exposure_value", "pareto_rank", "pareto_depth_score"
+  )
   front <- data[data$pareto_rank == 1L, , drop = FALSE]
 
   if (nrow(data) > max_points) {
@@ -578,7 +621,7 @@ plot.climniche_priority <- function(x, ...) {
     ggplot2::aes(
       x = criterion_value,
       y = exposure_value,
-      colour = relative_priority
+      colour = pareto_depth_score
     )
   ) +
     ggplot2::geom_point(size = 0.65, alpha = 0.48) +
@@ -593,15 +636,15 @@ plot.climniche_priority <- function(x, ...) {
       inherit.aes = FALSE
     ) +
     ggplot2::scale_colour_gradientn(
-      colours = .priority_colours(),
+      colours = .priority_colours(exposure_direction),
       limits = c(0, 1)
     ) +
     ggplot2::labs(
-      title = "Priority plane",
-      subtitle = "Outlined cells form Pareto rank 1",
+      title = "Exposure and ecological criterion",
+      subtitle = .priority_plane_subtitle(x),
       x = x$criterion_label,
       y = x$exposure_label,
-      colour = "Rescaled Pareto depth"
+      colour = "Pareto Depth Score"
     ) +
     .climniche_theme(base_size = 8.5) +
     ggplot2::theme(
@@ -613,22 +656,30 @@ plot.climniche_priority <- function(x, ...) {
 
 .plot_priority_map <- function(x, map_value, extent, degree_labels,
                                study_region, legend_position) {
-  if (is.null(x$rasters) || is.null(x$rasters[[map_value]])) {
-    stop("x does not contain spatial priority layers.", call. = FALSE)
+  raster_name <- map_value
+  if (identical(map_value, "pareto_depth_score") &&
+      is.null(x$rasters[[map_value]]) &&
+      !is.null(x$rasters[["relative_priority"]])) {
+    raster_name <- "relative_priority"
   }
-  raster <- x$rasters[[map_value]]
+  if (is.null(x$rasters) || is.null(x$rasters[[raster_name]])) {
+    stop("x does not contain spatial Pareto layers.", call. = FALSE)
+  }
+  raster <- x$rasters[[raster_name]]
   data <- .spatial_df(raster, value = "value")
   limits <- .map_extent(data, extent = extent)
   cell_size <- .spatial_res(raster)
   axis_spec <- .map_axis_spec(raster, degree_labels = degree_labels)
   region <- .study_region_df(study_region, raster)
 
-  if (identical(map_value, "relative_priority")) {
-    colours <- .priority_colours()
+  if (map_value %in% c("pareto_depth_score", "relative_priority")) {
+    colours <- .priority_colours(x$exposure_direction %||% "maximize")
     scale_limits <- c(0, 1)
-    legend_title <- "Rescaled Pareto depth"
+    legend_title <- "Pareto Depth Score"
   } else {
-    colours <- rev(.priority_colours())
+    colours <- rev(.priority_colours(
+      x$exposure_direction %||% "maximize"
+    ))
     scale_limits <- range(data$value, na.rm = TRUE)
     if (diff(scale_limits) == 0) {
       scale_limits <- scale_limits + c(-0.5, 0.5)
@@ -679,9 +730,29 @@ plot.climniche_priority <- function(x, ...) {
   plot
 }
 
+.priority_plane_subtitle <- function(x) {
+  exposure_direction <- x$exposure_direction %||% "maximize"
+  criterion_direction <- x$criterion_direction %||% "maximize"
+  exposure_text <- if (identical(exposure_direction, "maximize")) {
+    "higher exposure"
+  } else {
+    "lower exposure"
+  }
+  criterion_text <- if (identical(criterion_direction, "maximize")) {
+    "higher criterion values"
+  } else {
+    "lower criterion values"
+  }
+  paste0(
+    "Pareto rank 1 is outlined; ", exposure_text, " and ", criterion_text,
+    " are preferred"
+  )
+}
+
 .priority_map_title <- function(x, map_value) {
   switch(
     map_value,
+    pareto_depth_score = "Spatial Pareto depth",
     relative_priority = "Spatial Pareto depth",
     pareto_rank = "Spatial Pareto rank"
   )

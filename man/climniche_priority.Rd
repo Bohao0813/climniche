@@ -3,7 +3,7 @@
 \name{climniche_priority}
 \alias{climniche_priority}
 \alias{summary.climniche_priority}
-\title{Rank cells for climate exposure screening}
+\title{Screen ecological criteria against climate exposure}
 \usage{
 climniche_priority(
   x,
@@ -14,7 +14,8 @@ climniche_priority(
   criterion_name = NULL,
   criterion_direction = c("maximize", "minimize"),
   scope = c("current", "all"),
-  positive_only = TRUE
+  positive_only = TRUE,
+  exposure_direction = c("maximize", "minimize")
 )
 
 \method{summary}{climniche_priority}(object, ...)
@@ -44,20 +45,25 @@ preferred.}
 selected exposure quantity are ranked. Set to \code{FALSE} to retain zero and
 negative values.}
 
+\item{exposure_direction}{Whether larger or smaller exposure values are
+preferred in the Pareto comparison. Use \code{"maximize"} to screen for
+greater exposure and \code{"minimize"} to screen for lower exposure.}
+
 \item{object}{A \code{climniche_priority} object.}
 
 \item{...}{Unused.}
 }
 \value{
 A \code{climniche_priority} object containing the two decision criteria,
-Pareto ranks, rescaled Pareto depth (\code{relative_priority}) and, for spatial
-fits, map layers.
+Pareto ranks, Pareto Depth Score (\code{pareto_depth_score}) and, for spatial
+fits, map layers. \code{relative_priority} is retained as a compatibility alias
+for \code{pareto_depth_score}.
 
 \code{summary()} returns a \code{summary.climniche_priority} object with the
 fitted settings and Pareto diagnostics.
 }
 \description{
-Rank cells for climate exposure screening
+Screen ecological criteria against climate exposure
 }
 \details{
 The function ranks cells on two objectives: the selected climatic exposure
@@ -66,10 +72,12 @@ quantity and one reference or decision criterion. Cell \eqn{i} dominates cell
 preferred on one. Non-dominated cells form Pareto rank 1. Removing that front
 and repeating the comparison produces ranks 2, 3, and subsequent fronts.
 
-\code{relative_priority} rescales Pareto depth from 0 to 1. It does not order cells
-within the same front and is not comparable among separate analyses. Pareto
-dominance is invariant to monotonic rescaling, so the two criteria are not
-combined with fitted weights.
+If an analysis contains \eqn{K} Pareto fronts, \code{pareto_depth_score} is
+\eqn{(K-r_i)/(K-1)} for the rank \eqn{r_i} of cell \eqn{i}; it is 1 when all
+cells occupy one front. The score does not order cells within a front and is
+not comparable among separate analyses. Pareto dominance is invariant to
+monotonic rescaling, so the two criteria are not combined with fitted
+weights.
 
 When current reference weights are constant, the default second criterion
 does not distinguish cells and ranking is determined by exposure alone.
@@ -77,8 +85,11 @@ does not distinguish cells and ranking is determined by exposure alone.
 Only one exposure quantity is used at a time. This avoids counting Climatic
 Displacement, Niche Distance Shift and Climatic Reconfiguration as independent
 objectives even though their values satisfy the fitted geometric identity.
-The result is a climate exposure screening rank, not a complete conservation
-plan.
+When the second criterion represents ecological value, maximising both
+objectives screens for valuable sites under greater climatic concern.
+Minimising exposure while maximising ecological value screens for climatic
+persistence opportunities. The two directions answer different ecological
+questions; neither is a complete conservation plan.
 
 \code{summary()} reports the first-front fraction and the Spearman correlation
 between exposure and the preference-oriented second criterion. These
@@ -104,4 +115,8 @@ Tracey JA, Rochester CJ, Hathaway SA, et al. (2018).
 Prioritizing conserved areas threatened by wildfire and fragmentation for
 monitoring and management. \emph{PLOS ONE}, 13, e0200203.
 \doi{10.1371/journal.pone.0200203}
+
+Sacre E, Bode M, Weeks R, Pressey RL (2019). The context dependence of
+frontier versus wilderness conservation priorities. \emph{Conservation
+Letters}, 12, e12632. \doi{10.1111/conl.12632}
 }

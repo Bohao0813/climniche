@@ -70,6 +70,10 @@ stopifnot(all(
   priority$table$niche_distance_change[priority$table$included] >= 0
 ))
 stopifnot(min(priority$table$pareto_rank, na.rm = TRUE) == 1L)
+stopifnot(identical(
+  priority$table$pareto_depth_score,
+  priority$table$relative_priority
+))
 stopifnot(max(priority$table$relative_priority, na.rm = TRUE) == 1)
 stopifnot(min(priority$table$relative_priority, na.rm = TRUE) == 0)
 rank_order <- order(priority$table$pareto_rank[priority$table$included])
@@ -99,6 +103,50 @@ all_reference_priority <- climniche_priority(
 stopifnot(sum(all_reference_priority$table$included) == sum(
   priority_fit$occupied_weight > 0
 ))
+
+# The new argument follows the original positional interface.
+legacy_signature <- climniche_priority(
+  priority_fit,
+  "climate_change_amount",
+  NULL,
+  NULL,
+  "maximize",
+  "current",
+  FALSE
+)
+stopifnot(identical(legacy_signature$exposure_direction, "maximize"))
+
+# Reversing the exposure direction identifies low-exposure Pareto fronts.
+persistence_value <- seq_len(nrow(priority_fit$current))
+persistence <- climniche_priority(
+  priority_fit,
+  exposure = "climate_change_amount",
+  criterion = persistence_value,
+  criterion_name = "Habitat value",
+  scope = "current",
+  positive_only = FALSE,
+  exposure_direction = "minimize"
+)
+persistence_rows <- persistence$table$included
+stopifnot(identical(persistence$exposure_direction, "minimize"))
+stopifnot(identical(
+  persistence$table$pareto_rank[persistence_rows],
+  pareto_rank_2d(
+    persistence_value[persistence_rows],
+    -priority_fit$climate_change_amount[persistence_rows]
+  )
+))
+persistence_summary <- summary(persistence)
+expected_correlation <- stats::cor(
+  -priority_fit$climate_change_amount[persistence_rows],
+  persistence_value[persistence_rows],
+  method = "spearman"
+)
+stopifnot(isTRUE(all.equal(
+  persistence_summary$diagnostics$objective_rank_correlation,
+  expected_correlation,
+  tolerance = 0
+)))
 
 boundary_priority <- climniche_priority(
   priority_fit,
@@ -153,6 +201,13 @@ if (requireNamespace("ggplot2", quietly = TRUE)) {
   priority_plane <- plot_climniche_priority(priority, type = "plane")
   stopifnot(inherits(priority_plane, "ggplot"))
   stopifnot(inherits(plot(priority, type = "plane"), "ggplot"))
+  saved_priority <- priority
+  saved_priority$exposure_direction <- NULL
+  saved_priority$table$pareto_depth_score <- NULL
+  stopifnot(inherits(
+    plot_climniche_priority(saved_priority, type = "plane"),
+    "ggplot"
+  ))
 }
 
 bad_name <- try(climniche_priority(
@@ -195,6 +250,15 @@ if (requireNamespace("terra", quietly = TRUE)) {
   )
   spatial_priority <- climniche_priority(spatial_fit)
   stopifnot(inherits(spatial_priority$rasters$pareto_rank, "SpatRaster"))
+  stopifnot(inherits(
+    spatial_priority$rasters$pareto_depth_score,
+    "SpatRaster"
+  ))
+  stopifnot(isTRUE(all.equal(
+    terra::values(spatial_priority$rasters$pareto_depth_score)[, 1L],
+    terra::values(spatial_priority$rasters$relative_priority)[, 1L],
+    tolerance = 0
+  )))
   rank_values <- terra::values(spatial_priority$rasters$pareto_rank)[, 1L]
   expected_ranked <- suitability_values > 0.3 &
     spatial_fit$niche_distance_change > 0
@@ -220,5 +284,18 @@ if (requireNamespace("terra", quietly = TRUE)) {
       degree_labels = "hemisphere"
     )
     stopifnot(inherits(priority_map, "ggplot"))
+    legacy_priority_map <- plot_climniche_priority(
+      spatial_priority,
+      type = "map",
+      map_value = "relative_priority"
+    )
+    stopifnot(inherits(legacy_priority_map, "ggplot"))
+    saved_spatial_priority <- spatial_priority
+    saved_spatial_priority$exposure_direction <- NULL
+    saved_spatial_priority$rasters$pareto_depth_score <- NULL
+    stopifnot(inherits(
+      plot_climniche_priority(saved_spatial_priority, type = "map"),
+      "ggplot"
+    ))
   }
 }
