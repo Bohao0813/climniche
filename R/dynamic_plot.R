@@ -1,10 +1,11 @@
 .series_plot_labels <- function(metric) {
   switch(
     metric,
-    exposed_fraction = "Weighted Fraction Beyond Niche Boundary",
-    conditional_relative_exceedance = "Conditional Boundary Exceedance",
+    exposed_fraction = "Weighted Niche Boundary Exceedance Fraction",
+    conditional_relative_exceedance =
+      "Conditional Relative Niche Boundary Exceedance",
     range_wide_relative_exceedance =
-      "Range Mean Relative Boundary Exceedance",
+      "Range Mean Relative Niche Boundary Exceedance",
     mean_niche_boundary_exceedance = "Mean Niche Boundary Exceedance",
     metric
   )
@@ -56,10 +57,12 @@
   out
 }
 
-#' Plot range wide niche boundary exceedance through time
+#' Plot range summaries of Niche Boundary Exceedance through time
 #'
 #' @param x A `climniche_series` object.
-#' @param metric Range summary to display.
+#' @param metric Range summary field to display: `exposed_fraction`,
+#'   `conditional_relative_exceedance`, `range_wide_relative_exceedance` or
+#'   `mean_niche_boundary_exceedance`.
 #' @param scope,aggregation_weight,area_weight,boundary_exceedance_tolerance
 #'   Arguments passed to [climniche_range_summary()].
 #' @param interval Central interval drawn across climate models.
@@ -252,10 +255,13 @@ plot_climniche_time <- function(
   data
 }
 
-#' Map dynamic niche boundary departure
+#' Map Niche Boundary Exceedance through time
 #'
 #' @param x A spatial `climniche_series` object.
-#' @param metric Dynamic result to map.
+#' @param metric Temporal result field to map. Available fields are persistent
+#'   exceedance onset (`first_persistent_departure`), time weighted exceedance
+#'   fraction (`departure_time_fraction`), mean or maximum relative exceedance,
+#'   and climate model agreement.
 #' @param model,scenario,time Optional projection selectors. A selector is
 #'   required when more than one relevant value is present.
 #' @param scope,persistence,boundary_exceedance_tolerance Arguments passed to
@@ -334,16 +340,20 @@ plot_climniche_departure_map <- function(
     )
     value <- data[[metric]]
     labels <- c(
-      first_persistent_departure = "First Projected Persistent Departure",
-      departure_time_fraction = "Time Beyond Niche Boundary",
-      mean_relative_exceedance = "Mean Relative Boundary Exceedance",
-      maximum_relative_exceedance = "Maximum Relative Boundary Exceedance"
+      first_persistent_departure =
+        "Persistent Niche Boundary Exceedance Onset",
+      departure_time_fraction =
+        "Time Weighted Niche Boundary Exceedance Fraction",
+      mean_relative_exceedance =
+        "Mean Relative Niche Boundary Exceedance",
+      maximum_relative_exceedance =
+        "Maximum Relative Niche Boundary Exceedance"
     )
     default_title <- labels[[metric]]
     default_legend <- labels[[metric]]
     if (identical(metric, "first_persistent_departure")) {
       if (!is.numeric(x$index$time)) {
-        stop("First-departure maps currently require numeric projection times.",
+        stop("Persistent exceedance onset maps require numeric projection times.",
              call. = FALSE)
       }
       value <- as.numeric(value)

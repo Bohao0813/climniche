@@ -11,18 +11,16 @@ vignette: >
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.align = "center")
 ```
 
-Sites of high current ecological value can warrant attention for two distinct
-reasons: projected climate may move them farther from the realised niche, or
-limited climatic displacement may favour the persistence of their current
-conditions. `climniche_priority()` treats these as separate screening
-questions.
+An ecological criterion can be screened against different components of
+climate exposure. `climniche_priority()` keeps the two objectives visible and
+returns their Pareto fronts.
 
 ## Pareto screening
 
 Each screen pairs one climniche exposure metric with one ecological criterion.
 A cell has Pareto rank 1 when no other retained cell is at least as preferred
 on both objectives and strictly preferred on one. Successive fronts describe
-increasing Pareto depth. The Pareto Depth Score rescales these fronts from zero
+increasing Pareto depth. The Pareto depth score rescales these fronts from zero
 to one, with one assigned to the non-dominated front.
 
 The two objectives remain visible throughout the analysis. The result is a set
@@ -32,33 +30,33 @@ conservation ranking.
 ## Mediterranean anchovy
 
 The spatial fit is taken from the
-[European anchovy example](climniche-examples.html). Current habitat
-suitability provides the ecological criterion for both screens.
+[European anchovy example](climniche-examples.html). Current SDM suitability
+provides the ecological criterion for both screens.
 
-**Exposure concern** combines high current suitability with a larger outward
-Niche Distance Shift. Only positive shifts are retained because the question
-concerns movement away from the realised niche centre.
+**Positive Niche Distance Shift screen** combines high current suitability with
+a larger positive Niche Distance Shift. Positive values represent movement
+away from the realised niche centre.
 
-```{r concern-code, eval = FALSE}
-exposure_concern <- climniche_priority(
+```{r positive-shift-code, eval = FALSE}
+positive_shift <- climniche_priority(
   fit,
   exposure = "niche_distance_change",
-  criterion_name = "Current habitat suitability",
+  criterion_name = "Current SDM suitability",
   scope = "current",
   positive_only = TRUE,
   exposure_direction = "maximize"
 )
 ```
 
-**Climatic persistence opportunity** combines high current suitability with
-lower Climatic Displacement. This screen asks where current habitat value
-coincides with comparatively limited local climatic change.
+**Low Climatic Displacement screen** combines high current suitability with
+lower Climatic Displacement. It identifies cells where higher suitability
+coincides with comparatively less local climatic change.
 
-```{r persistence-code, eval = FALSE}
-persistence_opportunity <- climniche_priority(
+```{r low-displacement-code, eval = FALSE}
+low_displacement <- climniche_priority(
   fit,
   exposure = "climate_change_amount",
-  criterion_name = "Current habitat suitability",
+  criterion_name = "Current SDM suitability",
   scope = "current",
   positive_only = FALSE,
   exposure_direction = "minimize"
@@ -90,16 +88,16 @@ knitr::kable(screening_table, row.names = FALSE)
 ## Decision planes and maps
 
 ```{r screening-figure-code, eval = FALSE}
-concern_figure <- plot_climniche_priority(
-  exposure_concern,
+positive_shift_figure <- plot_climniche_priority(
+  positive_shift,
   type = "both",
   map_value = "pareto_depth_score",
   study_region = mediterranean_boundary,
   degree_labels = "hemisphere"
 )
 
-persistence_figure <- plot_climniche_priority(
-  persistence_opportunity,
+low_displacement_figure <- plot_climniche_priority(
+  low_displacement,
   type = "both",
   map_value = "pareto_depth_score",
   study_region = mediterranean_boundary,
@@ -113,7 +111,7 @@ knitr::include_graphics("figures/anchovy-climniche-priority.png")
 
 Panels (a) and (c) retain the two objectives and outline the first Pareto
 front. Panels (b) and (d) map the depth of each retained cell relative to its
-own screen. Pareto Depth Scores are therefore interpreted within a screen, not
+own screen. Pareto depth scores are therefore interpreted within a screen, not
 compared between the two maps.
 
 Suitability is used here because it defines the current anchovy reference. A
@@ -121,12 +119,8 @@ study can instead supply abundance, habitat condition, irreplaceability,
 restoration benefit or management cost through `criterion`, with the preferred
 direction set by `criterion_direction`.
 
-The contrast between exposure concern and persistence opportunity follows the
-context-dependent distinction between frontier and wilderness conservation
-priorities described by [Sacre et al. (2019)](https://doi.org/10.1111/conl.12632).
-The non-dominated ranking follows the spatial multi-criteria application of
-[Tracey et al. (2018)](https://doi.org/10.1371/journal.pone.0200203). A
-persistence opportunity denotes relative climatic stability in the fitted
-niche space; evidence of a climate refugium requires additional ecological
-information, as discussed by
-[Morelli et al. (2016)](https://doi.org/10.1371/journal.pone.0159909).
+The Pareto procedure follows the spatial multi-criteria application of
+[Tracey et al. (2018)](https://doi.org/10.1371/journal.pone.0200203). Lower
+Climatic Displacement indicates relative climatic stability in the fitted
+climatic space; it is not evidence of species persistence or a climate
+refugium.

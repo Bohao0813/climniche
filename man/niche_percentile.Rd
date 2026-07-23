@@ -7,9 +7,9 @@
 niche_percentile(psi_current, psi_future, occupied)
 }
 \arguments{
-\item{psi_current}{Current niche potential for all cells.}
+\item{psi_current}{Current squared niche distance for all cells.}
 
-\item{psi_future}{Future niche potential for all cells.}
+\item{psi_future}{Future squared niche distance for all cells.}
 
 \item{occupied}{Current reference weights or indices used to define the
 reference CDF.}

@@ -1,26 +1,31 @@
 # climniche 0.3.6
 
 * Added a Bio-ORACLE SSP2-4.5 European anchovy time-series example with
-  range-level exposure trajectories, persistent boundary exceedance maps and
-  the series-report workflow.
+  range summaries, persistent Niche Boundary Exceedance maps and the
+  series-report workflow.
 * Removed an unused fill scale from single-model time plots.
+* Standardised user-facing names for range, temporal and climatic contribution
+  summaries without removing existing R object fields.
+* Added `squared_niche_distance_change` as the primary climatic contribution
+  field while retaining `niche_potential_change` as an exact compatibility
+  alias.
 
 # climniche 0.3.5
 
 * Reframed Pareto output as ecological screening of climate exposure.
-  `exposure_direction` now distinguishes exposure concern from persistence
-  opportunities based on lower Climatic Displacement.
+  `exposure_direction` distinguishes larger positive Niche Distance Shift from
+  lower Climatic Displacement.
 * Added `pareto_depth_score` as the primary Pareto depth field while retaining
   `relative_priority` as an exact compatibility alias.
-* Reworked the Mediterranean anchovy example to compare exposure concern with
-  climatic persistence opportunity in paired decision planes and maps.
+* Reworked the Mediterranean anchovy example to compare positive Niche Distance
+  Shift with low Climatic Displacement in paired decision planes and maps.
 
 # climniche 0.3.4
 
 * Added two-objective Pareto depth for climate exposure screening, including
   decision planes and spatial Pareto maps.
 * Added a European anchovy screening example and clarified that summary figure
-  panel (c) decomposes change in niche potential rather than SDM variable
+  panel (c) decomposes squared niche distance change rather than SDM variable
   importance.
 * Added cell-level dominant climatic contributions, dominance shares and
   spatial maps, with a Mediterranean anchovy example.
@@ -37,11 +42,12 @@
   scenarios. Series share one effective descriptor tolerance. Spatial
   references are fitted independently of future missing cells, while
   projections use common finite cell support.
-* Added a range level decomposition of Niche Boundary Exceedance into exposed
-  fraction, conditional relative exceedance and their range mean. Reference,
+* Added weighted range summaries of Niche Boundary Exceedance: its weighted
+  fraction, conditional relative magnitude and range mean. Reference,
   aggregation and raster cell area weights remain distinct.
-* Added continuous summaries of departure onset, duration, cumulative
-  exceedance, re-entry and maximum interval increase.
+* Added continuous summaries of persistent exceedance onset, time weighted and
+  cumulative exceedance, return below the boundary and maximum interval
+  increase.
 * Added climate model agreement for ensembles with at least two models, time
   series reports and dynamic time and map figures.
 * Documented the angular identity underlying Climatic Reconfiguration.

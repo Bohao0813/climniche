@@ -1,4 +1,4 @@
-#' Summarise niche boundary exceedance across a range
+#' Summarise Niche Boundary Exceedance across a study domain
 #'
 #' @param x A `climniche_fit` or `climniche_series` object.
 #' @param scope `"current"` restricts the summary to positive reference
@@ -13,25 +13,29 @@
 #'   identify positive Niche Boundary Exceedance. By default, the fitted
 #'   descriptor tolerance is used.
 #'
-#' @return A data frame. For a `climniche_series`, one row is returned for each
-#'   time, model and scenario combination.
+#' @return A data frame containing Weighted Niche Boundary Exceedance Fraction
+#'   (`exposed_fraction`), Conditional Relative Niche Boundary Exceedance
+#'   (`conditional_relative_exceedance`) and Range Mean Relative Niche Boundary
+#'   Exceedance (`range_wide_relative_exceedance`). For a `climniche_series`,
+#'   one row is returned for each time, model and scenario combination.
 #'
 #' @details
 #' Let `a_i` be the range summary weight, let \eqn{\tau} be the boundary
 #' tolerance, and define
 #' \deqn{\widetilde{E}_i = E_i I(E_i > \tau), \qquad
 #'       e_i = \widetilde{E}_i / B_q.}
-#' The weighted exposed fraction is
+#' The Weighted Niche Boundary Exceedance Fraction is
 #' \deqn{F = \frac{\sum_i a_i I(e_i > 0)}{\sum_i a_i}.}
-#' Conditional relative exceedance is
+#' Conditional Relative Niche Boundary Exceedance is
 #' \deqn{S = \frac{\sum_i a_i e_i I(e_i > 0)}
 #'                  {\sum_i a_i I(e_i > 0)}.}
-#' The range mean relative exceedance is
+#' Range Mean Relative Niche Boundary Exceedance is
 #' \deqn{X = \frac{\sum_i a_i e_i I(e_i > 0)}{\sum_i a_i} = F S.}
+#' Here, \eqn{I(\cdot)} is the indicator function.
 #' For `scope = "current"`, `a_i` contains the reference weight. Optional
 #' aggregation and cell area weights multiply it. For `scope = "all"`, the
-#' reference weight is omitted. The result describes climatic exposure; it is
-#' not an estimate of extinction risk or adaptive capacity.
+#' reference weight is omitted. These quantities summarise Niche Boundary
+#' Exceedance and do not add further cell-level exposure metrics.
 #'
 #' @examples
 #' sim <- simulate_climniche(n = 250, p = 6, seed = 8)

@@ -7,10 +7,10 @@
 niche_radius(psi)
 }
 \arguments{
-\item{psi}{Numeric niche-potential values.}
+\item{psi}{Numeric squared niche distance values.}
 }
 \value{
-Numeric vector in sensitivity weighted climate distance units.
+Numeric vector in the distance units of the fitted climatic metric.
 }
 \description{
 Niche radius

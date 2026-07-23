@@ -5,8 +5,8 @@
 # climniche
 
 Equal climatic displacement can move two sites in opposite directions relative
-to a species' realised niche. `climniche` quantifies that geometry and tracks
-empirical niche boundary exceedance across space, time and climate models.
+to a species' realised niche. `climniche` quantifies that geometry and measures
+exceedance beyond an empirical radial niche boundary across space and time.
 
 [![R-CMD-check](https://github.com/Bohao0813/climniche/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/Bohao0813/climniche/actions/workflows/R-CMD-check.yaml)
 [![CRAN status](https://www.r-pkg.org/badges/version/climniche)](https://CRAN.R-project.org/package=climniche)
@@ -38,19 +38,19 @@ Field names in fitted R objects use snake_case; figures and reports use the
 formal names below.
 
 - Climatic Displacement (`climate_change_amount`): distance between current
-  and future conditions in the fitted sensitivity weighted climatic space.
+  and future conditions under the fitted climatic metric.
 - Niche Distance Shift (`niche_distance_change`): signed change in distance
   from the current realised climatic niche centre.
 - Climatic Reconfiguration (`climate_reconfiguration`): non radial component
   of climatic displacement. It is derived from Climatic Displacement and Niche
   Distance Shift rather than estimated independently.
-- Niche Boundary Exceedance (`niche_boundary_exceedance`): positive excess
-  beyond the chosen weighted quantile of current reference cell distances from
-  the realised niche centre.
+- Niche Boundary Exceedance (`niche_boundary_exceedance`): positive excess of
+  future niche distance beyond the empirical radial boundary of the current
+  realised climatic niche.
 
-Niche Boundary Exceedance is the boundary outcome. The other three quantities
-describe the magnitude and geometry of the climatic displacement that produces
-it.
+The first three quantities describe the magnitude and geometry of local
+climatic change. Niche Boundary Exceedance compares future niche distance with
+the fitted empirical radial boundary.
 
 ## Basic use
 
@@ -103,30 +103,28 @@ climniche_departure(series)
 plot_climniche_time(series)
 ```
 
-Range summaries separate the weighted fraction beyond the empirical niche
-boundary from the mean relative exceedance among those cells. Their product is
-the weighted mean relative exceedance across the analysed range. This is a
-range level summary of Niche Boundary Exceedance rather than an additional
-cell level metric.
+Range summaries separate the Weighted Niche Boundary Exceedance Fraction from
+Conditional Relative Niche Boundary Exceedance. Their product is Range Mean
+Relative Niche Boundary Exceedance. These are weighted summaries of Niche
+Boundary Exceedance, not additional cell-level exposure metrics.
 Optional aggregation and raster cell area weights remain separate from the
 reference weights used to estimate the realised niche.
 
 ## Ecological screening of climate exposure
 
-Climate exposure can guide different spatial decisions. High ecological value
-combined with greater exposure identifies areas of concern, whereas high value
-combined with limited climatic displacement identifies persistence
-opportunities. `climniche_priority()` keeps these objectives explicit through
-two-objective Pareto screening.
+`climniche_priority()` compares one climatic quantity with an ecological or
+management criterion using two-objective Pareto screening. The example below
+compares larger positive Niche Distance Shift with smaller Climatic
+Displacement in separate screens.
 
 ```r
-exposure_concern <- climniche_priority(
+positive_shift <- climniche_priority(
   fit,
   exposure = "niche_distance_change",
   exposure_direction = "maximize"
 )
 
-persistence_opportunity <- climniche_priority(
+low_displacement <- climniche_priority(
   fit,
   exposure = "climate_change_amount",
   positive_only = FALSE,
@@ -140,7 +138,7 @@ An ecological or management layer can be supplied through `criterion`.
 ## Climatic contributions
 
 `climniche_dominant_contribution()` identifies the climate variable with the
-largest absolute contribution to niche potential change at each cell. Its
+largest absolute contribution to squared niche distance change at each cell. Its
 dominance share measures how much of the total absolute contribution is
 assigned to that variable. These terms decompose the squared-distance change
 underlying Niche Distance Shift; they are not SDM variable importance.
@@ -151,19 +149,21 @@ summary(contribution)
 ```
 
 For a spatial fit, `plot_climniche_dominant_contribution()` maps the dominant
-variable and its share within the selected reference area.
+variable and its share within the selected reference cells.
 
 ## Worked example
 
 The [European anchovy example](https://bohao0813.github.io/climniche/articles/climniche-examples.html)
 applies the four metrics in the Mediterranean Sea. The
 [exposure through time example](https://bohao0813.github.io/climniche/articles/climniche-through-time.html)
-follows range-level exposure and persistent niche boundary exceedance from
+follows range-level exposure and persistent Niche Boundary Exceedance from
 2030 to 2090. The
 [ecological screening example](https://bohao0813.github.io/climniche/articles/climniche-priority.html)
-contrasts exposure concern with climatic persistence opportunity.
+contrasts larger positive Niche Distance Shift with lower Climatic
+Displacement.
 The [climatic contribution example](https://bohao0813.github.io/climniche/articles/climniche-contributions.html)
-maps the fitted climate variables that account for niche potential change.
+maps the fitted climate variables that account for squared niche distance
+change.
 
 ## Contributor
 

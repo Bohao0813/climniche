@@ -2,7 +2,7 @@
 % Please edit documentation in R/core.R
 \name{variable_contribution}
 \alias{variable_contribution}
-\title{Climatic variable contribution to change in niche potential}
+\title{Climatic variable contribution to squared niche distance change}
 \usage{
 variable_contribution(current, future, center, A)
 }
@@ -16,10 +16,10 @@ variable_contribution(current, future, center, A)
 \item{A}{Niche metric matrix.}
 }
 \value{
-Matrix whose rows sum to the change in niche potential.
+Matrix whose rows sum to future minus current squared niche distance.
 }
 \description{
-Climatic variable contribution to change in niche potential
+Climatic variable contribution to squared niche distance change
 }
 \details{
 For centred current and future climatic vectors \eqn{z_{0i}} and

@@ -9,7 +9,7 @@ fit <- fit_climniche(
   sensitivity = sim[["sensitivity"]]
 )
 
-# Rank current reference cells by reference weight and outward niche shift.
+# Rank current reference cells by reference weight and positive niche shift.
 priority <- climniche_priority(fit)
 priority
 

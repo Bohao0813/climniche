@@ -143,13 +143,14 @@ climniche_summary(fit)
 
 ## Niche-relative decomposition
 
-The fit returns four quantities. Climatic Displacement is the
-distance from current to future conditions in the fitted sensitivity weighted
-climatic space. Niche Distance Shift is the signed change in distance from the
-current realised niche centre. Climatic Reconfiguration is the remaining
-non radial component, calculated from the identity $D_i^2 = R_i^2 + C_i^2$.
-Niche Boundary Exceedance is the positive excess beyond the chosen weighted
-quantile of current reference cell distances from the realised niche centre.
+The fit returns four quantities. Climatic Displacement is the distance from
+current to future conditions under the fitted climatic metric. Niche Distance
+Shift is the signed change in distance from the current realised niche centre.
+Climatic Reconfiguration is the remaining non radial component, calculated
+from the identity
+$D_i^2 = R_i^2 + C_i^2$.
+Niche Boundary Exceedance is the positive excess of future niche distance
+beyond the empirical radial boundary of the current realised climatic niche.
 
 If $r_{0i}$ and $r_{1i}$ are the current and future distances from the
 niche centre and $\theta_i$ is the angle between their centred climatic
@@ -159,8 +160,9 @@ $$
 C_i^2 = 2r_{0i}r_{1i}\left[1 - \cos(\theta_i)\right].
 $$
 
-Climatic Reconfiguration is therefore an angular difference scaled by both
-distances from the niche centre. It is not an independent ecological process.
+Climatic Reconfiguration therefore combines angular change with current and
+future distances from the niche centre. It is calculated from Climatic
+Displacement and Niche Distance Shift rather than fitted independently.
 
 ```{r}
 subset(
@@ -177,7 +179,7 @@ metric_summary[, c(
 )]
 ```
 
-The variable contributions sum to the change in quadratic niche potential.
+The variable contributions sum to future minus current squared niche distance.
 They are not SDM variable importance or causal effects.
 
 ```{r}
@@ -186,8 +188,8 @@ variable_contributions
 
 ## Mediterranean maps
 
-The map figure shows the four continuous reported quantities within current
-suitable habitat.
+The map figure shows the four continuous reported quantities within the
+current SDM suitable area.
 
 ```{r mediterranean-maps-code, eval = FALSE}
 metric_maps <- plot_climniche_maps(

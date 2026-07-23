@@ -2,7 +2,7 @@
 % Please edit documentation in R/metric.R
 \name{niche_metric}
 \alias{niche_metric}
-\title{Build a sensitivity weighted niche metric}
+\title{Build a climatic sensitivity metric}
 \usage{
 niche_metric(sensitivity = NULL, cnfa = NULL, type = c("diag", "factor"))
 }
@@ -21,7 +21,7 @@ metric can use \code{sf}; a factor metric requires \code{co} and \code{eig}.}
 A positive semi-definite matrix.
 }
 \description{
-Build a sensitivity weighted niche metric
+Build a climatic sensitivity metric
 }
 \details{
 For sensitivity weights \eqn{s_j}, the diagonal metric is

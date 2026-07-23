@@ -1,4 +1,4 @@
-#' Build a sensitivity weighted niche metric
+#' Build a climatic sensitivity metric
 #'
 #' @param sensitivity Numeric vector of climate variable sensitivity weights,
 #'   used by the diagonal metric. For a factor metric, complete names can be

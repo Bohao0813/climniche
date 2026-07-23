@@ -24,11 +24,14 @@ A \code{climniche_contribution} object. \code{table} contains the dominant
 variable, signed contribution and dominance share for each cell. \code{summary}
 contains mean contribution shares and signed contributions by variable,
 together with the fraction of non-zero analysis weight for which each
-variable is uniquely dominant. Spatial fits also return raster layers.
+variable is uniquely dominant. \code{squared_niche_distance_change} is the
+row sum of the signed variable contributions. The legacy field
+\code{niche_potential_change} is retained as an exact alias. Spatial fits also
+return raster layers.
 }
 \description{
 Identifies the climate variable with the largest absolute contribution to
-the change in niche potential at each evaluated cell.
+future minus current squared niche distance at each evaluated cell.
 }
 \details{
 Let \eqn{V_{ij}} be the contribution returned by
@@ -39,8 +42,8 @@ The share is undefined when every contribution is zero. Equal largest
 absolute contributions are reported as \code{"Tied"} rather than being assigned
 according to column order.
 
-Contributions sum exactly to future minus current niche potential. Because
-niche potential is squared niche distance, this total is also
+Contributions sum exactly to future minus current squared niche distance.
+This total is also
 \eqn{(r_{1i} - r_{0i})(r_{1i} + r_{0i})}. The terms therefore attribute the
 squared-distance change underlying Niche Distance Shift. For a non-diagonal
 metric matrix, each variable term includes its part of the cross-variable

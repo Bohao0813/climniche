@@ -45,13 +45,13 @@ A \code{climniche_fit} object using the fixed reference.
 Project climatic conditions onto a fitted niche reference
 }
 \details{
-Let \code{A} be the fitted weighting matrix and let \code{mu} be the realised niche
-centre. In the transformed Euclidean space, write the current and future
-centred vectors as \code{z0} and \code{z1}, with lengths \code{r0} and \code{r1} and angle
-\code{theta}. Climatic Reconfiguration satisfies
+Let \eqn{A} be the fitted weighting matrix and let \eqn{\mu} be the realised
+niche centre. In the transformed climatic space, write the current and
+future centred vectors as \eqn{z_0} and \eqn{z_1}, with lengths \eqn{r_0}
+and \eqn{r_1} and angle \eqn{\theta}. Climatic Reconfiguration satisfies
 \deqn{C_i^2 = 2 r_{0i} r_{1i} (1 - \cos(\theta_i)).}
-It is therefore a distance scaled angular change, not a strict orthogonal
-projection or an independently estimated ecological process.
+It therefore combines angular change with current and future niche
+distances and is calculated rather than fitted independently.
 }
 \examples{
 sim <- simulate_climniche(n = 200, p = 6, seed = 4)

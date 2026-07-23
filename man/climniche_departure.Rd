@@ -2,7 +2,7 @@
 % Please edit documentation in R/departure.R
 \name{climniche_departure}
 \alias{climniche_departure}
-\title{Summarise niche boundary departure through time}
+\title{Summarise Niche Boundary Exceedance through time}
 \usage{
 climniche_departure(
   x,
@@ -18,17 +18,20 @@ climniche_departure(
 evaluated cell.}
 
 \item{persistence}{Minimum number of consecutive projections required to
-identify a persistent departure. This affects persistent timing summaries,
-not the continuous exceedance values.}
+identify persistent Niche Boundary Exceedance. This setting affects
+persistence summaries, not the continuous exceedance values.}
 
 \item{boundary_exceedance_tolerance}{Optional non-negative boundary
 tolerance. The fitted value is used by default.}
 }
 \value{
-A data frame with one row per cell, model and scenario.
+A data frame with one row per cell, model and scenario. The main
+temporal fields are persistent exceedance onset
+(\code{first_persistent_departure}), Time Weighted Niche Boundary Exceedance
+Fraction (\code{departure_time_fraction}) and relative exceedance summaries.
 }
 \description{
-Summarise niche boundary departure through time
+Summarise Niche Boundary Exceedance through time
 }
 \details{
 At projection time \eqn{t_k}, let \eqn{e_{ik}} be Niche Boundary Exceedance
@@ -36,14 +39,16 @@ for cell \eqn{i}, divided by the fitted niche boundary distance after the
 boundary tolerance is applied. Cumulative relative exceedance is
 \deqn{J_i = \sum_{k=1}^{K-1} (t_{k+1}-t_k)
       \frac{e_{ik}+e_{i,k+1}}{2}.}
-Mean relative exceedance is \eqn{J_i/(t_K-t_1)}. Departure time fraction
-applies the same trapezoidal calculation to the binary boundary state.
+Mean relative exceedance is \eqn{J_i/(t_K-t_1)}. The Time Weighted Niche
+Boundary Exceedance Fraction applies the same trapezoidal calculation to
+the binary exceedance indicator.
 Numeric, Date and POSIXct times may be irregularly spaced. Cumulative values
 use the reported time unit; mean values are dimensionless.
 
-A persistent departure is a run of at least \code{persistence} sampled
-projections beyond the boundary. The reported first departure is the first
-projection in that run, not an estimated event date between projections.
+Persistent Niche Boundary Exceedance is a run of at least \code{persistence}
+sampled projections above the selected boundary tolerance. Its onset is the
+first sampled projection in that run, not an estimated crossing time between
+projections.
 }
 \examples{
 sim <- simulate_climniche(n = 160, p = 6, seed = 2)

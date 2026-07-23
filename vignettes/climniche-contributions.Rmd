@@ -13,8 +13,8 @@ knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.align = "center")
 
 The four exposure metrics describe the magnitude and niche relative geometry
 of projected climatic change. The contribution terms partition the change in
-niche potential, the squared sensitivity weighted distance from the realised
-niche centre, among the fitted climate variables at each cell.
+squared distance from the realised niche centre among the fitted climate
+variables at each cell.
 
 ## Cell level contributions
 
@@ -89,10 +89,9 @@ knitr::include_graphics("figures/anchovy-climniche-contributions.png")
 Panel (a) maps the variable with the largest absolute contribution and retains
 all six fitted climate variables in its legend.
 Panel (b) maps the dominant variable's share of the total absolute contribution
-at the same cell. Mean pH
-has the largest absolute term across most of the weighted anchovy reference
-habitat. Temperature range and salinity range have the largest term in smaller,
-geographically distinct areas.
+at the same cell. Mean pH has the largest absolute term in most cells with
+positive anchovy reference weight. Temperature range and salinity range have
+the largest term in smaller, geographically distinct areas.
 
 The weighted dominance frequency is the reference-weighted fraction of cells
 with non-zero contribution for which a variable is uniquely dominant.
@@ -113,7 +112,7 @@ names(contribution_summary) <- c(
 knitr::kable(contribution_summary, digits = 3, row.names = FALSE)
 ```
 
-These contributions decompose future minus current niche potential. They do
-not estimate SDM variable importance or causal climatic effects. When the
-fitted metric matrix is non-diagonal, each variable contribution also contains
-its allocated cross-variable terms in the fitted climatic basis.
+These contributions decompose future minus current squared niche distance.
+They do not estimate SDM variable importance or causal climatic effects. When
+the fitted metric matrix is non-diagonal, each variable contribution also
+contains its allocated cross-variable terms in the fitted climatic basis.

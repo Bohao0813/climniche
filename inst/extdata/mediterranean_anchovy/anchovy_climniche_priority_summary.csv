@@ -1,3 +1,3 @@
 "profile","exposure","exposure_direction","criterion","ranked_cells","pareto_fronts","first_front_cells","first_front_fraction","objective_rank_correlation"
-"Exposure concern","Outward Niche Distance Shift","maximize","Current habitat suitability",13495,265,18,0.00133382734346054,0.13466931008483
-"Climatic persistence opportunity","Climatic Displacement","minimize","Current habitat suitability",13584,212,30,0.00220848056537102,-0.133415783541896
+"Positive Niche Distance Shift","Niche Distance Shift","maximize","Current SDM suitability",13495,265,18,0.00133382734346054,0.13466931008483
+"Low Climatic Displacement","Climatic Displacement","minimize","Current SDM suitability",13584,212,30,0.00220848056537102,-0.133415783541896

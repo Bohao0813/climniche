@@ -123,20 +123,20 @@ climniche_table <- function(x, scope = c("current", "all")) {
     ),
     definition = c(
       paste(
-        "Distance between current and future conditions in the fitted",
-        "sensitivity weighted climatic space."
+        "Distance between current and future conditions under the fitted",
+        "climatic metric."
       ),
       paste(
         "Signed change in distance from the current realised climatic",
         "niche centre."
       ),
       paste(
-        "Non radial component of climatic displacement derived from",
-        "Climatic Displacement and Niche Distance Shift."
+        "Non radial component of Climatic Displacement not captured by",
+        "Niche Distance Shift."
       ),
       paste(
-        "Positive excess beyond the chosen weighted quantile of current",
-        "reference cell distances from the realised niche centre."
+        "Positive excess of future niche distance beyond the empirical",
+        "radial boundary of the current realised climatic niche."
       )
     ),
     stringsAsFactors = FALSE

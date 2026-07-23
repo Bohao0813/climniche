@@ -26,7 +26,7 @@ navbar:
           href: articles/climniche-examples.html
         - text: Exposure through time
           href: articles/climniche-through-time.html
-        - text: Ecological exposure screening
+        - text: Ecological screening of climate exposure
           href: articles/climniche-priority.html
         - text: Spatial climatic contributions
           href: articles/climniche-contributions.html
@@ -66,7 +66,7 @@ reference:
       - climniche_change_rate
       - climniche_series_report
       - write_climniche_series_report
-  - title: Ecological exposure screening
+  - title: Ecological screening of climate exposure
     contents:
       - climniche_priority
       - plot_climniche_priority

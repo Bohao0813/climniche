@@ -11,13 +11,13 @@ boundary_exceedance(
 )
 }
 \arguments{
-\item{psi_future}{Future niche potential.}
+\item{psi_future}{Future squared niche distance.}
 
 \item{boundary_value}{Empirical boundary of the current realised niche in
-potential units.}
+squared-distance units.}
 
 \item{scale}{\code{"radial"} returns exceedance beyond the niche boundary distance;
-\code{"potential"} returns exceedance beyond squared niche potential.}
+\code{"potential"} returns exceedance in squared-distance units.}
 }
 \value{
 Numeric vector.

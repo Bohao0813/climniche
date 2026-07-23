@@ -22,7 +22,7 @@
 #'   greater exposure and `"minimize"` to screen for lower exposure.
 #'
 #' @return A `climniche_priority` object containing the two decision criteria,
-#'   Pareto ranks, Pareto Depth Score (`pareto_depth_score`) and, for spatial
+#'   Pareto ranks, Pareto depth score (`pareto_depth_score`) and, for spatial
 #'   fits, map layers. `relative_priority` is retained as a compatibility alias
 #'   for `pareto_depth_score`.
 #'
@@ -46,16 +46,17 @@
 #' Only one exposure quantity is used at a time. This avoids counting Climatic
 #' Displacement, Niche Distance Shift and Climatic Reconfiguration as independent
 #' objectives even though their values satisfy the fitted geometric identity.
-#' When the second criterion represents ecological value, maximising both
-#' objectives screens for valuable sites under greater climatic concern.
-#' Minimising exposure while maximising ecological value screens for climatic
-#' persistence opportunities. The two directions answer different ecological
-#' questions; neither is a complete conservation plan.
+#' When the second criterion represents ecological value, maximising a
+#' positive Niche Distance Shift identifies cells where high ecological value
+#' coincides with movement away from the realised niche centre. Minimising
+#' Climatic Displacement identifies cells where high ecological value
+#' coincides with less local climatic change. The two directions answer
+#' different screening questions; neither is a complete conservation ranking.
 #'
 #' `summary()` reports the first-front fraction and the Spearman correlation
-#' between exposure and the preference-oriented second criterion. These
-#' describe how strongly the two objectives separate the ranked cells; they
-#' are not inferential tests.
+#' between the preference-oriented forms of the two objectives. These describe
+#' how strongly the objectives separate the ranked cells; they are not
+#' inferential tests.
 #'
 #' @references Tracey JA, Rochester CJ, Hathaway SA, et al. (2018).
 #'   Prioritizing conserved areas threatened by wildfire and fragmentation for
@@ -330,11 +331,7 @@ print.climniche_priority <- function(x, ...) {
 
   labels <- c(
     climate_change_amount = "Climatic Displacement",
-    niche_distance_change = if (positive_only) {
-      "Outward Niche Distance Shift"
-    } else {
-      "Niche Distance Shift"
-    },
+    niche_distance_change = "Niche Distance Shift",
     climate_reconfiguration = "Climatic Reconfiguration",
     niche_boundary_exceedance = "Niche Boundary Exceedance"
   )
@@ -644,7 +641,7 @@ plot.climniche_priority <- function(x, ...) {
       subtitle = .priority_plane_subtitle(x),
       x = x$criterion_label,
       y = x$exposure_label,
-      colour = "Pareto Depth Score"
+      colour = "Pareto depth score"
     ) +
     .climniche_theme(base_size = 8.5) +
     ggplot2::theme(
@@ -675,7 +672,7 @@ plot.climniche_priority <- function(x, ...) {
   if (map_value %in% c("pareto_depth_score", "relative_priority")) {
     colours <- .priority_colours(x$exposure_direction %||% "maximize")
     scale_limits <- c(0, 1)
-    legend_title <- "Pareto Depth Score"
+    legend_title <- "Pareto depth score"
   } else {
     colours <- rev(.priority_colours(
       x$exposure_direction %||% "maximize"

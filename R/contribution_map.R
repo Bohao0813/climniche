@@ -1,7 +1,7 @@
 #' Summarise dominant climatic contributions by cell
 #'
 #' Identifies the climate variable with the largest absolute contribution to
-#' the change in niche potential at each evaluated cell.
+#' future minus current squared niche distance at each evaluated cell.
 #'
 #' @param x A fitted `climniche_fit` object.
 #' @param scope `"current"` retains cells with positive current reference
@@ -11,7 +11,10 @@
 #'   variable, signed contribution and dominance share for each cell. `summary`
 #'   contains mean contribution shares and signed contributions by variable,
 #'   together with the fraction of non-zero analysis weight for which each
-#'   variable is uniquely dominant. Spatial fits also return raster layers.
+#'   variable is uniquely dominant. `squared_niche_distance_change` is the
+#'   row sum of the signed variable contributions. The legacy field
+#'   `niche_potential_change` is retained as an exact alias. Spatial fits also
+#'   return raster layers.
 #'
 #' @details
 #' Let \eqn{V_{ij}} be the contribution returned by
@@ -22,8 +25,8 @@
 #' absolute contributions are reported as `"Tied"` rather than being assigned
 #' according to column order.
 #'
-#' Contributions sum exactly to future minus current niche potential. Because
-#' niche potential is squared niche distance, this total is also
+#' Contributions sum exactly to future minus current squared niche distance.
+#' This total is also
 #' \eqn{(r_{1i} - r_{0i})(r_{1i} + r_{0i})}. The terms therefore attribute the
 #' squared-distance change underlying Niche Distance Shift. For a non-diagonal
 #' metric matrix, each variable term includes its part of the cross-variable
@@ -94,7 +97,7 @@ climniche_dominant_contribution <- function(
   dominant_share <- rep(NA_real_, nrow(values))
   dominant_share[defined] <- maximum_absolute[defined] /
     total_absolute[defined]
-  niche_potential_change <- rowSums(values)
+  squared_niche_distance_change <- rowSums(values)
 
   cell <- if (!is.null(x$cell_index) &&
               length(x$cell_index) == nrow(values)) {
@@ -112,7 +115,8 @@ climniche_dominant_contribution <- function(
     dominant_share = dominant_share,
     tied = tied,
     total_absolute_contribution = total_absolute,
-    niche_potential_change = niche_potential_change,
+    squared_niche_distance_change = squared_niche_distance_change,
+    niche_potential_change = squared_niche_distance_change,
     stringsAsFactors = FALSE
   )
 
@@ -182,7 +186,8 @@ climniche_dominant_contribution <- function(
     dominant_variable = dominant_id,
     dominant_share = dominant_share,
     dominant_contribution = dominant_contribution,
-    niche_potential_change = niche_potential_change
+    squared_niche_distance_change = squared_niche_distance_change,
+    niche_potential_change = squared_niche_distance_change
   )
   raster_values <- lapply(raster_values, function(value) {
     value[!included] <- NA_real_

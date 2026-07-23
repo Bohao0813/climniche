@@ -2,7 +2,7 @@
 % Please edit documentation in R/dynamic_plot.R
 \name{plot_climniche_departure_map}
 \alias{plot_climniche_departure_map}
-\title{Map dynamic niche boundary departure}
+\title{Map Niche Boundary Exceedance through time}
 \usage{
 plot_climniche_departure_map(
   x,
@@ -24,7 +24,10 @@ plot_climniche_departure_map(
 \arguments{
 \item{x}{A spatial \code{climniche_series} object.}
 
-\item{metric}{Dynamic result to map.}
+\item{metric}{Temporal result field to map. Available fields are persistent
+exceedance onset (\code{first_persistent_departure}), time weighted exceedance
+fraction (\code{departure_time_fraction}), mean or maximum relative exceedance,
+and climate model agreement.}
 
 \item{model, scenario, time}{Optional projection selectors. A selector is
 required when more than one relevant value is present.}
@@ -45,5 +48,5 @@ that would repeat the map title.}
 A ggplot object.
 }
 \description{
-Map dynamic niche boundary departure
+Map Niche Boundary Exceedance through time
 }

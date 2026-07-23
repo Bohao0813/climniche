@@ -209,13 +209,14 @@
   out
 }
 
-#' Niche potential
+#' Squared niche distance
 #'
 #' @param x Climate matrix in the fitted climate space.
 #' @param center Realised niche centre.
 #' @param A Niche metric matrix.
 #'
-#' @return Numeric vector of quadratic niche displacement values.
+#' @return Numeric vector of squared distances from the realised niche centre
+#'   in the fitted climatic space.
 #' @export
 niche_potential <- function(x, center, A) {
   x <- .as_numeric_matrix(x, "x")
@@ -233,9 +234,9 @@ niche_potential <- function(x, center, A) {
 
 #' Niche radius
 #'
-#' @param psi Numeric niche-potential values.
+#' @param psi Numeric squared niche distance values.
 #'
-#' @return Numeric vector in sensitivity weighted climate distance units.
+#' @return Numeric vector in the distance units of the fitted climatic metric.
 #' @export
 niche_radius <- function(psi) {
   sqrt(pmax(0, psi))
@@ -268,11 +269,11 @@ niche_radius <- function(psi) {
 
 #' Niche Boundary Exceedance
 #'
-#' @param psi_future Future niche potential.
+#' @param psi_future Future squared niche distance.
 #' @param boundary_value Empirical boundary of the current realised niche in
-#'   potential units.
+#'   squared-distance units.
 #' @param scale `"radial"` returns exceedance beyond the niche boundary distance;
-#'   `"potential"` returns exceedance beyond squared niche potential.
+#'   `"potential"` returns exceedance in squared-distance units.
 #'
 #' @return Numeric vector.
 #'
@@ -299,8 +300,8 @@ boundary_exceedance <- function(psi_future, boundary_value,
 
 #' Niche percentile shift
 #'
-#' @param psi_current Current niche potential for all cells.
-#' @param psi_future Future niche potential for all cells.
+#' @param psi_current Current squared niche distance for all cells.
+#' @param psi_future Future squared niche distance for all cells.
 #' @param occupied Current reference weights or indices used to define the
 #'   reference CDF.
 #'
@@ -317,14 +318,14 @@ niche_percentile <- function(psi_current, psi_future, occupied) {
   data.frame(current = current, future = future, delta = future - current)
 }
 
-#' Climatic variable contribution to change in niche potential
+#' Climatic variable contribution to squared niche distance change
 #'
 #' @param current Current climate matrix in the fitted climate space.
 #' @param future Future climate matrix in the fitted climate space.
 #' @param center Realised niche centre.
 #' @param A Niche metric matrix.
 #'
-#' @return Matrix whose rows sum to the change in niche potential.
+#' @return Matrix whose rows sum to future minus current squared niche distance.
 #'
 #' @details
 #' For centred current and future climatic vectors \eqn{z_{0i}} and

@@ -213,8 +213,8 @@ climniche_summary_figure_data <- function(x, scope = c("current", "all"),
     abs_mean_contribution = abs(as.numeric(vals)),
     mean_absolute_share = as.numeric(mean_absolute_share),
     direction = ifelse(vals >= 0,
-                       "positive niche potential contribution",
-                       "negative niche potential contribution"),
+                       "positive squared-distance contribution",
+                       "negative squared-distance contribution"),
     stringsAsFactors = FALSE
   )
   variables <- variables[order(variables$mean_absolute_share,
@@ -434,7 +434,7 @@ plot_climniche_summary_figure <- function(x, scope = c("current", "all"),
       labels = function(z) paste0(round(100 * z), "%")
     ) +
     ggplot2::labs(
-      title = "(c) Contributions to niche potential change",
+      title = "(c) Contributions to squared niche distance change",
       subtitle = direction_subtitle,
       x = "Mean absolute contribution share",
       y = NULL

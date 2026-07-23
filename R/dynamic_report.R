@@ -21,12 +21,12 @@
 .dynamic_definitions <- function() {
   data.frame(
     name = c(
-      "Weighted Exposed Fraction",
-      "Conditional Relative Boundary Exceedance",
-      "Range Mean Relative Boundary Exceedance",
-      "First Projected Persistent Departure",
-      "Boundary Departure Time Fraction",
-      "Cumulative Relative Boundary Exceedance",
+      "Weighted Niche Boundary Exceedance Fraction",
+      "Conditional Relative Niche Boundary Exceedance",
+      "Range Mean Relative Niche Boundary Exceedance",
+      "Persistent Niche Boundary Exceedance Onset",
+      "Time Weighted Niche Boundary Exceedance Fraction",
+      "Cumulative Relative Niche Boundary Exceedance",
       "Climate Model Agreement",
       "Maximum Interval Increase Rate"
     ),
@@ -41,27 +41,33 @@
       "maximum_increase_rate"
     ),
     definition = c(
-      "Fraction of the summary weight beyond the empirical niche boundary.",
       paste(
-        "Mean boundary exceedance among exposed cells, divided by the",
-        "fitted boundary distance."
+        "Fraction of total summary weight assigned to cells whose Niche",
+        "Boundary Exceedance is greater than the selected tolerance."
       ),
       paste(
-        "Mean relative boundary exceedance across all cells included in",
-        "the range summary."
-      ),
-      "First sampled projection in a run meeting the persistence setting.",
-      paste(
-        "Fraction of the sampled time interval beyond the empirical niche",
-        "boundary."
+        "Weighted mean Niche Boundary Exceedance divided by the fitted",
+        "boundary distance among cells above the selected tolerance."
       ),
       paste(
-        "Trapezoidal time integral of relative boundary exceedance in the",
-        "reported time units."
+        "Weighted mean relative Niche Boundary Exceedance across all cells",
+        "after values at or below the selected tolerance are set to zero."
+      ),
+      paste(
+        "First sampled projection in a run above the selected boundary",
+        "tolerance that meets the persistence setting."
+      ),
+      paste(
+        "Trapezoidal time mean of the indicator for Niche Boundary",
+        "Exceedance above the selected tolerance."
+      ),
+      paste(
+        "Trapezoidal time integral of relative Niche Boundary Exceedance",
+        "in the reported time units."
       ),
       paste(
         "Proportion of at least two supplied climate models projecting",
-        "positive boundary exceedance."
+        "Niche Boundary Exceedance above the selected tolerance."
       ),
       paste(
         "Largest positive finite difference in a range summary divided by",
@@ -78,11 +84,11 @@
   }
   if ("metric" %in% names(data)) {
     metric_labels <- c(
-      exposed_fraction = "Weighted Exposed Fraction",
+      exposed_fraction = "Weighted Niche Boundary Exceedance Fraction",
       conditional_relative_exceedance =
-        "Conditional Relative Boundary Exceedance",
+        "Conditional Relative Niche Boundary Exceedance",
       range_wide_relative_exceedance =
-        "Range Mean Relative Boundary Exceedance",
+        "Range Mean Relative Niche Boundary Exceedance",
       mean_niche_boundary_exceedance = "Mean Niche Boundary Exceedance"
     )
     matched_metric <- match(data$metric, names(metric_labels))
@@ -100,23 +106,25 @@
     n_cells = "Cells",
     n_models = "Climate Models",
     n_projections = "Projections",
-    aggregation_weight_sum = "Weight",
+    aggregation_weight_sum = "Total Summary Weight",
     boundary_distance = "Niche Boundary Distance",
     boundary_quantile = "Niche Boundary Quantile",
     boundary_exceedance_tolerance = "Boundary Tolerance",
-    exposed_fraction = "Weighted Exposed Fraction",
+    exposed_fraction = "Weighted Niche Boundary Exceedance Fraction",
     conditional_relative_exceedance =
-      "Conditional Relative Boundary Exceedance",
+      "Conditional Relative Niche Boundary Exceedance",
     range_wide_relative_exceedance =
-      "Range Mean Relative Boundary Exceedance",
+      "Range Mean Relative Niche Boundary Exceedance",
     mean_niche_boundary_exceedance = "Mean Niche Boundary Exceedance",
     proportion_with_persistent_departure =
-      "Fraction With Persistent Departure",
+      "Fraction With Persistent Niche Boundary Exceedance",
     median_first_persistent_departure =
-      "Median First Projected Persistent Departure",
-    mean_departure_time_fraction = "Mean Boundary Departure Time Fraction",
-    mean_relative_exceedance = "Mean Relative Boundary Exceedance",
-    proportion_with_reentry = "Fraction With Re-entry",
+      "Median Persistent Niche Boundary Exceedance Onset",
+    mean_departure_time_fraction =
+      "Mean Time Weighted Niche Boundary Exceedance Fraction",
+    mean_relative_exceedance = "Mean Relative Niche Boundary Exceedance",
+    proportion_with_reentry =
+      "Fraction With Subsequent Return Below Niche Boundary",
     metric = "Metric",
     first_time = "First Projection Time",
     last_time = "Last Projection Time",
@@ -234,7 +242,7 @@
 #' @param scope,aggregation_weight,area_weight,boundary_exceedance_tolerance
 #'   Range-summary settings.
 #' @param persistence Consecutive projection count used to identify persistent
-#'   boundary departure.
+#'   Niche Boundary Exceedance.
 #' @param agreement_interval Central interval used for model agreement.
 #'
 #' @return A `climniche_series_report` object.
@@ -355,7 +363,7 @@ print.climniche_series_report <- function(x, ...) {
   print(.series_display_table(x$settings), row.names = FALSE)
   cat("\nRange through time\n")
   print(.series_display_table(x$range_summary), row.names = FALSE)
-  cat("\nDynamic boundary departure\n")
+  cat("\nNiche Boundary Exceedance through time\n")
   print(.series_display_table(x$departure_summary), row.names = FALSE)
   cat("\nMaximum interval increases\n")
   print(.series_display_table(x$change_rate), row.names = FALSE)
@@ -416,7 +424,7 @@ write_climniche_series_report <- function(report, file) {
     format_table(report$range_summary),
     "```",
     "",
-    "## Dynamic Boundary Departure",
+    "## Niche Boundary Exceedance Through Time",
     "```text",
     format_table(report$departure_summary),
     "```",
@@ -444,7 +452,7 @@ write_climniche_series_report <- function(report, file) {
     format_table(report$metric_definitions),
     "```",
     "",
-    "## Dynamic Summary Definitions",
+    "## Temporal Summary Definitions",
     "```text",
     format_table(report$dynamic_definitions),
     "```"

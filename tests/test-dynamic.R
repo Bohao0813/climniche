@@ -3,6 +3,41 @@ if (!exists("fit_climniche", mode = "function") &&
   library(climniche)
 }
 
+dynamic_internal <- function(name) {
+  if (exists(name, mode = "function")) {
+    return(get(name, mode = "function"))
+  }
+  getFromNamespace(name, "climniche")
+}
+
+dynamic_definitions <- dynamic_internal(".dynamic_definitions")()
+stopifnot(identical(
+  dynamic_definitions$name[seq_len(3)],
+  c(
+    "Weighted Niche Boundary Exceedance Fraction",
+    "Conditional Relative Niche Boundary Exceedance",
+    "Range Mean Relative Niche Boundary Exceedance"
+  )
+))
+stopifnot(identical(
+  dynamic_definitions$name[4:6],
+  c(
+    "Persistent Niche Boundary Exceedance Onset",
+    "Time Weighted Niche Boundary Exceedance Fraction",
+    "Cumulative Relative Niche Boundary Exceedance"
+  )
+))
+stopifnot(all(grepl(
+  "tolerance",
+  dynamic_definitions$definition[c(1:5, 7)],
+  ignore.case = TRUE
+)))
+stopifnot(!any(grepl(
+  "departure|habitat",
+  dynamic_definitions$name,
+  ignore.case = TRUE
+)))
+
 set.seed(81)
 dynamic_current <- matrix(rnorm(720), ncol = 6)
 colnames(dynamic_current) <- paste0("climate_", seq_len(6))
@@ -172,8 +207,8 @@ stopifnot(all(zero_range$exposed_fraction == 0))
 stopifnot(all(zero_range$conditional_relative_exceedance == 0))
 stopifnot(all(zero_range$range_wide_relative_exceedance == 0))
 
-# Persistent departure is tied to projection times, and re-entry is counted
-# when a qualifying run ends.
+# Persistent exceedance is tied to projection times, and a subsequent return
+# below the boundary is counted when a qualifying run ends.
 departure_series <- dynamic_series
 departure_values <- c(0, 0.2, 0.3, 0)
 for (i in seq_along(departure_series$fits)) {
@@ -275,6 +310,18 @@ if (requireNamespace("ggplot2", quietly = TRUE)) {
   time_plot <- plot_climniche_time(dynamic_series)
   stopifnot(inherits(time_plot, "ggplot"))
   stopifnot(is.null(time_plot$scales$get_scales("fill")))
+  stopifnot(identical(
+    time_plot$labels$y,
+    "Range Mean Relative Niche Boundary Exceedance"
+  ))
+  fraction_plot <- plot_climniche_time(
+    dynamic_series,
+    metric = "exposed_fraction"
+  )
+  stopifnot(identical(
+    fraction_plot$labels$y,
+    "Weighted Niche Boundary Exceedance Fraction"
+  ))
 }
 
 if (requireNamespace("raster", quietly = TRUE)) {

@@ -2,7 +2,7 @@
 % Please edit documentation in R/core.R
 \name{niche_potential}
 \alias{niche_potential}
-\title{Niche potential}
+\title{Squared niche distance}
 \usage{
 niche_potential(x, center, A)
 }
@@ -14,8 +14,9 @@ niche_potential(x, center, A)
 \item{A}{Niche metric matrix.}
 }
 \value{
-Numeric vector of quadratic niche displacement values.
+Numeric vector of squared distances from the realised niche centre
+in the fitted climatic space.
 }
 \description{
-Niche potential
+Squared niche distance
 }

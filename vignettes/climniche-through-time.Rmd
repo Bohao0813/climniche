@@ -24,18 +24,19 @@ change_rate <- read.csv(
 )
 ```
 
-A single future period cannot show whether climatic exposure expands gradually
-across current habitat or intensifies within places that were already exposed.
-This example follows European anchovy (*Engraulis encrasicolus*) in the
-Mediterranean Sea at 2030, 2050, 2070 and 2090 under Bio-ORACLE SSP2-4.5.
+A single future projection cannot distinguish whether Niche Boundary
+Exceedance spreads to additional cells or grows within cells already beyond
+the boundary. This example follows European anchovy (*Engraulis encrasicolus*)
+in the Mediterranean Sea at 2030, 2050, 2070 and 2090 under Bio-ORACLE
+SSP2-4.5.
 
 ## Fit one climatic reference
 
-The analysis uses the six Bio-ORACLE variables and the continuous anchovy
+The analysis uses the six Bio-ORACLE variables and the continuous anchovy SDM
 suitability layer prepared in the
 [Mediterranean example](climniche-examples.html). The current realised
-climatic niche is fitted once. Its centre, sensitivity weighted metric and
-empirical boundary are then held fixed across all four projections.
+climatic niche is fitted once. Its centre, climatic weighting matrix and
+empirical radial boundary are then held fixed across all four projections.
 
 ```{r series-fit, eval = FALSE}
 projection_years <- c(2030, 2050, 2070, 2090)
@@ -65,11 +66,11 @@ the same variables, names, resolution and cell alignment.
 
 ## Range-level exposure
 
-The temporal summaries are derived from Niche Boundary Exceedance. They do not
-add further cell-level exposure metrics. Let \(E_{it}\) denote Niche Boundary
-Exceedance for cell \(i\) at time \(t\), \(B\) the fitted niche boundary
-distance and \(w_i\) the product of current suitability weight and cell area.
-For the zero boundary tolerance used here,
+The temporal summaries are derived from Niche Boundary Exceedance; they are not
+additional cell-level exposure metrics. Let \(E_{it}\) denote Niche Boundary
+Exceedance for cell \(i\) at time \(t\), \(B\) the fitted radial boundary
+distance and \(w_i\) the product of current SDM suitability and cell area.
+With `boundary_exceedance_tolerance = 0`,
 
 $$
 F_t =
@@ -77,7 +78,7 @@ F_t =
      {\sum_i w_i}
 $$
 
-is the fraction of weighted current habitat beyond the niche boundary,
+is the Weighted Niche Boundary Exceedance Fraction,
 
 $$
 S_t =
@@ -85,7 +86,7 @@ S_t =
      {\sum_i w_i I(E_{it} > 0)}
 $$
 
-is mean relative exceedance among exposed habitat, and
+is Conditional Relative Niche Boundary Exceedance, and
 
 $$
 M_t =
@@ -94,7 +95,8 @@ M_t =
 = F_t S_t
 $$
 
-is range-wide relative exceedance.
+is Range Mean Relative Niche Boundary Exceedance. Here, \(I(\cdot)\) is the
+indicator function.
 
 ```{r range-code, eval = FALSE}
 range_summary <- climniche_range_summary(
@@ -117,15 +119,15 @@ subset(
 ```{r range-table, echo = FALSE}
 range_table <- data.frame(
   `Projection year` = range_summary[["time"]],
-  `Current habitat beyond boundary` = paste0(
+  `Weighted boundary exceedance fraction` = paste0(
     round(100 * range_summary[["exposed_fraction"]], 1),
     "%"
   ),
-  `Relative exceedance among exposed habitat` = paste0(
+  `Conditional relative Niche Boundary Exceedance` = paste0(
     round(100 * range_summary[["conditional_relative_exceedance"]], 1),
     "%"
   ),
-  `Range-wide relative exceedance` = paste0(
+  `Range mean relative Niche Boundary Exceedance` = paste0(
     round(100 * range_summary[["range_wide_relative_exceedance"]], 1),
     "%"
   ),
@@ -172,13 +174,13 @@ patchwork::wrap_plots(
 knitr::include_graphics("figures/anchovy-climniche-through-time.png")
 ```
 
-Weighted habitat beyond the boundary increases from 7.7% in 2030 to 78.9% in
-2090. Conditional relative exceedance falls from 27.6% to 12.5% over the same
-period. This combination is consistent with many newly exposed cells lying
-just beyond the boundary. Range-wide relative exceedance nevertheless rises
-from 2.1% to 9.9%.
+The suitability- and area-weighted fraction beyond the boundary increases from
+7.7% in 2030 to 78.9% in 2090. Conditional Relative Niche Boundary Exceedance
+falls from 27.6% to 12.5% over the same period. This combination is consistent
+with the addition of cells with relatively small exceedance. Range Mean
+Relative Niche Boundary Exceedance rises from 2.1% to 9.9%.
 
-## Persistent boundary exceedance
+## Persistent Niche Boundary Exceedance
 
 Here, persistence requires positive Niche Boundary Exceedance in at least two
 consecutive projections. The onset is the first sampled year in a qualifying
@@ -201,7 +203,7 @@ rate <- climniche_change_rate(
 
 ```{r departure-summary, echo = FALSE}
 departure_table <- data.frame(
-  `Persistent boundary exceedance` = paste0(
+  `Persistent boundary exceedance fraction` = paste0(
     round(
       100 * departure_summary[["proportion_with_persistent_departure"]],
       1
@@ -209,11 +211,11 @@ departure_table <- data.frame(
     "%"
   ),
   `Median onset` = departure_summary[["median_first_persistent_departure"]],
-  `Mean time beyond boundary` = paste0(
+  `Mean time weighted exceedance fraction` = paste0(
     round(100 * departure_summary[["mean_departure_time_fraction"]], 1),
     "%"
   ),
-  `Re-entry` = paste0(
+  `Subsequent return below boundary` = paste0(
     round(100 * departure_summary[["proportion_with_reentry"]], 1),
     "%"
   ),
@@ -234,7 +236,7 @@ onset_map <- plot_climniche_departure_map(
   degree_labels = "hemisphere"
 )
 
-duration_map <- plot_climniche_departure_map(
+time_weighted_map <- plot_climniche_departure_map(
   series,
   metric = "departure_time_fraction",
   scope = "current",
@@ -244,21 +246,22 @@ duration_map <- plot_climniche_departure_map(
   degree_labels = "hemisphere"
 )
 
-patchwork::wrap_plots(onset_map, duration_map, nrow = 1)
+patchwork::wrap_plots(onset_map, time_weighted_map, nrow = 1)
 ```
 
 ```{r departure-map-output, echo = FALSE, out.width = "100%"}
 knitr::include_graphics("figures/anchovy-climniche-time-maps.png")
 ```
 
-By 2090, 28.4% of weighted current habitat has persistent boundary exceedance
-across at least two sampled projections, with a median onset in 2070. The
-earliest persistent exceedance occurs mainly in the Aegean, while later onset
-extends through parts of the western and south-central Mediterranean. No
-re-entry is identified in this four-period series.
+Cells with persistent Niche Boundary Exceedance in at least two consecutive
+sampled projections account for 28.4% of the current reference after weighting
+by suitability and cell area. Median onset is 2070. The earliest persistent
+exceedance occurs mainly in the Aegean, while later onset extends through parts
+of the western and south-central Mediterranean. No sampled return below the
+boundary follows a persistent exceedance run in this four-period series.
 
-The largest increase in range-wide relative exceedance occurs between 2070 and
-2090:
+The largest increase in Range Mean Relative Niche Boundary Exceedance occurs
+between 2070 and 2090:
 
 ```{r rate-table, echo = FALSE}
 rate_row <- subset(
@@ -268,7 +271,7 @@ rate_row <- subset(
 rate_table <- data.frame(
   `Interval start` = rate_row[["interval_start"]],
   `Interval end` = rate_row[["interval_end"]],
-  `Increase in range-wide exposure` = paste0(
+  `Increase in range mean relative exceedance` = paste0(
     round(100 * rate_row[["maximum_interval_increase"]], 1),
     " percentage points"
   ),
@@ -281,7 +284,8 @@ knitr::kable(rate_table, row.names = FALSE)
 ## Report
 
 `climniche_series_report()` collects the fixed niche reference, projections,
-range summaries, persistent boundary exceedance summary and interval changes.
+range summaries, temporal Niche Boundary Exceedance summaries and interval
+changes.
 
 ```{r series-report, eval = FALSE}
 series_report <- climniche_series_report(

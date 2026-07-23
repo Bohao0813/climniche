@@ -116,34 +116,34 @@ legacy_signature <- climniche_priority(
 )
 stopifnot(identical(legacy_signature$exposure_direction, "maximize"))
 
-# Reversing the exposure direction identifies low-exposure Pareto fronts.
-persistence_value <- seq_len(nrow(priority_fit$current))
-persistence <- climniche_priority(
+# Reversing the exposure direction identifies low-displacement Pareto fronts.
+ecological_value <- seq_len(nrow(priority_fit$current))
+low_displacement <- climniche_priority(
   priority_fit,
   exposure = "climate_change_amount",
-  criterion = persistence_value,
+  criterion = ecological_value,
   criterion_name = "Habitat value",
   scope = "current",
   positive_only = FALSE,
   exposure_direction = "minimize"
 )
-persistence_rows <- persistence$table$included
-stopifnot(identical(persistence$exposure_direction, "minimize"))
+low_displacement_rows <- low_displacement$table$included
+stopifnot(identical(low_displacement$exposure_direction, "minimize"))
 stopifnot(identical(
-  persistence$table$pareto_rank[persistence_rows],
+  low_displacement$table$pareto_rank[low_displacement_rows],
   pareto_rank_2d(
-    persistence_value[persistence_rows],
-    -priority_fit$climate_change_amount[persistence_rows]
+    ecological_value[low_displacement_rows],
+    -priority_fit$climate_change_amount[low_displacement_rows]
   )
 ))
-persistence_summary <- summary(persistence)
+low_displacement_summary <- summary(low_displacement)
 expected_correlation <- stats::cor(
-  -priority_fit$climate_change_amount[persistence_rows],
-  persistence_value[persistence_rows],
+  -priority_fit$climate_change_amount[low_displacement_rows],
+  ecological_value[low_displacement_rows],
   method = "spearman"
 )
 stopifnot(isTRUE(all.equal(
-  persistence_summary$diagnostics$objective_rank_correlation,
+  low_displacement_summary$diagnostics$objective_rank_correlation,
   expected_correlation,
   tolerance = 0
 )))

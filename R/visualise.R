@@ -712,8 +712,11 @@ plot_climniche_variable_contribution <- function(x, occupied_only = TRUE,
                                           "FALSE" = "#4c78a8")) +
     ggplot2::labs(
       x = NULL,
-      y = "Mean contribution to niche potential change",
-      title = .plot_title(title, "Contributions to niche potential change")
+      y = "Mean contribution to squared niche distance change",
+      title = .plot_title(
+        title,
+        "Contributions to squared niche distance change"
+      )
     ) +
     ggplot2::theme_classic(base_size = 8.5) +
     ggplot2::theme(

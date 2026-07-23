@@ -55,7 +55,7 @@ greater exposure and \code{"minimize"} to screen for lower exposure.}
 }
 \value{
 A \code{climniche_priority} object containing the two decision criteria,
-Pareto ranks, Pareto Depth Score (\code{pareto_depth_score}) and, for spatial
+Pareto ranks, Pareto depth score (\code{pareto_depth_score}) and, for spatial
 fits, map layers. \code{relative_priority} is retained as a compatibility alias
 for \code{pareto_depth_score}.
 
@@ -85,16 +85,17 @@ does not distinguish cells and ranking is determined by exposure alone.
 Only one exposure quantity is used at a time. This avoids counting Climatic
 Displacement, Niche Distance Shift and Climatic Reconfiguration as independent
 objectives even though their values satisfy the fitted geometric identity.
-When the second criterion represents ecological value, maximising both
-objectives screens for valuable sites under greater climatic concern.
-Minimising exposure while maximising ecological value screens for climatic
-persistence opportunities. The two directions answer different ecological
-questions; neither is a complete conservation plan.
+When the second criterion represents ecological value, maximising a
+positive Niche Distance Shift identifies cells where high ecological value
+coincides with movement away from the realised niche centre. Minimising
+Climatic Displacement identifies cells where high ecological value
+coincides with less local climatic change. The two directions answer
+different screening questions; neither is a complete conservation ranking.
 
 \code{summary()} reports the first-front fraction and the Spearman correlation
-between exposure and the preference-oriented second criterion. These
-describe how strongly the two objectives separate the ranked cells; they
-are not inferential tests.
+between the preference-oriented forms of the two objectives. These describe
+how strongly the objectives separate the ranked cells; they are not
+inferential tests.
 }
 \examples{
 sim <- simulate_climniche(n = 500, p = 6, seed = 18)

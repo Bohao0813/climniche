@@ -1,8 +1,8 @@
 # Mediterranean anchovy case study
 
 `mediterranean_anchovy_case_study.R` generates the fitted case study and its
-main figures. `mediterranean_anchovy_priority.R` compares ecological exposure
-concern with climatic persistence opportunity.
+main figures. `mediterranean_anchovy_priority.R` compares larger positive Niche
+Distance Shift with lower Climatic Displacement.
 `mediterranean_anchovy_contributions.R` maps the fitted climatic
 contributions. `mediterranean_anchovy_time_series.R` evaluates SSP2-4.5 at
 2030, 2050, 2070 and 2090 against one fixed current niche reference. Run the

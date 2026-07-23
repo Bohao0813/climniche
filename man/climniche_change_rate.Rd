@@ -2,7 +2,7 @@
 % Please edit documentation in R/departure.R
 \name{climniche_change_rate}
 \alias{climniche_change_rate}
-\title{Summarise interval changes in range level niche boundary exceedance}
+\title{Summarise interval changes in range summaries of Niche Boundary Exceedance}
 \usage{
 climniche_change_rate(
   x,
@@ -25,7 +25,7 @@ climniche_change_rate(
 A data frame with one row per model and scenario.
 }
 \description{
-Summarise interval changes in range level niche boundary exceedance
+Summarise interval changes in range summaries of Niche Boundary Exceedance
 }
 \details{
 For a selected range summary \eqn{X_t}, interval rates are

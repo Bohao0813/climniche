@@ -106,12 +106,19 @@ Fit niche relative climate exposure from matrices
 \details{
 Let current and future climatic conditions at cell \eqn{i} be \eqn{c_i} and
 \eqn{f_i}. Let \eqn{\mu} be the centre of the current realised climatic niche,
-and let \eqn{d_A(x, y)} be the sensitivity weighted distance under weighting
-matrix \eqn{A}. The four metrics are:
+and let \eqn{d_A(x, y)} be the climatic distance under weighting matrix
+\eqn{A}. The four metrics are:
 
+Climatic Displacement:
 \deqn{D_i = d_A(f_i, c_i)}
+
+Niche Distance Shift:
 \deqn{R_i = d_A(f_i, \mu) - d_A(c_i, \mu)}
+
+Climatic Reconfiguration:
 \deqn{C_i = \sqrt{\max(0, D_i^2 - R_i^2)}}
+
+Niche Boundary Exceedance:
 \deqn{E_i = \max(0, d_A(f_i, \mu) - B_q)}
 
 where \eqn{B_q} is the \eqn{q}-th weighted quantile of current reference cell
@@ -123,8 +130,9 @@ In the transformed climatic space, let \eqn{r_{0i}} and \eqn{r_{1i}} be the
 current and future distances from the niche centre, and let \eqn{\theta_i}
 be the angle between their centred vectors. Then
 \deqn{C_i^2 = 2 r_{0i} r_{1i} (1 - \cos(\theta_i)).}
-Climatic Reconfiguration is therefore a distance scaled angular change. It
-is not a strict orthogonal projection or an independently fitted process.
+Climatic Reconfiguration therefore combines angular change with current and
+future niche distances. It is calculated from Climatic Displacement and
+Niche Distance Shift rather than fitted independently.
 }
 \section{Metric fields}{
 

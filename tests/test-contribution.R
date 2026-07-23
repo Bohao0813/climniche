@@ -124,10 +124,14 @@ fit_full <- fit_climniche(
 )
 full_contribution <- climniche_dominant_contribution(fit_full, scope = "all")
 stopifnot(isTRUE(all.equal(
-  full_contribution$table$niche_potential_change,
+  full_contribution$table$squared_niche_distance_change,
   fit_full$psi_future - fit_full$psi_current,
   tolerance = 1e-12
 )))
+stopifnot(identical(
+  full_contribution$table$squared_niche_distance_change,
+  full_contribution$table$niche_potential_change
+))
 
 zero_fit <- fit_climniche(
   current,
@@ -184,6 +188,14 @@ if (requireNamespace("terra", quietly = TRUE)) {
   )[, 1L]
   stopifnot(all(is.na(dominant_values[c(3, 6)])))
   stopifnot(all(is.finite(dominant_values[c(1, 2, 4, 5)])))
+  stopifnot(identical(
+    terra::values(
+      spatial_contribution$rasters$squared_niche_distance_change
+    )[, 1L],
+    terra::values(
+      spatial_contribution$rasters$niche_potential_change
+    )[, 1L]
+  ))
 
   if (requireNamespace("ggplot2", quietly = TRUE)) {
     variable_map <- plot_climniche_dominant_contribution(

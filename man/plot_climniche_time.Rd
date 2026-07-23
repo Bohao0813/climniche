@@ -2,7 +2,7 @@
 % Please edit documentation in R/dynamic_plot.R
 \name{plot_climniche_time}
 \alias{plot_climniche_time}
-\title{Plot range wide niche boundary exceedance through time}
+\title{Plot range summaries of Niche Boundary Exceedance through time}
 \usage{
 plot_climniche_time(
   x,
@@ -21,7 +21,9 @@ plot_climniche_time(
 \arguments{
 \item{x}{A \code{climniche_series} object.}
 
-\item{metric}{Range summary to display.}
+\item{metric}{Range summary field to display: \code{exposed_fraction},
+\code{conditional_relative_exceedance}, \code{range_wide_relative_exceedance} or
+\code{mean_niche_boundary_exceedance}.}
 
 \item{scope, aggregation_weight, area_weight, boundary_exceedance_tolerance}{Arguments passed to \code{\link[=climniche_range_summary]{climniche_range_summary()}}.}
 
@@ -38,5 +40,5 @@ ensemble median.}
 A ggplot object.
 }
 \description{
-Plot range wide niche boundary exceedance through time
+Plot range summaries of Niche Boundary Exceedance through time
 }

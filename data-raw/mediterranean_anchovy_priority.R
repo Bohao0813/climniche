@@ -18,21 +18,21 @@ fit$rasters <- list(
   )
 )
 
-# Current habitat of high suitability with a larger outward niche shift.
-exposure_concern <- climniche_priority(
+# Higher SDM suitability with a larger positive niche shift.
+positive_shift <- climniche_priority(
   fit,
   exposure = "niche_distance_change",
-  criterion_name = "Current habitat suitability",
+  criterion_name = "Current SDM suitability",
   scope = "current",
   positive_only = TRUE,
   exposure_direction = "maximize"
 )
 
-# Current habitat of high suitability with less climatic displacement.
-persistence_opportunity <- climniche_priority(
+# Higher SDM suitability with less climatic displacement.
+low_displacement <- climniche_priority(
   fit,
   exposure = "climate_change_amount",
-  criterion_name = "Current habitat suitability",
+  criterion_name = "Current SDM suitability",
   scope = "current",
   positive_only = FALSE,
   exposure_direction = "minimize"
@@ -54,10 +54,10 @@ priority_summary <- function(x, profile) {
 }
 
 case_summary <- rbind(
-  priority_summary(exposure_concern, "Exposure concern"),
+  priority_summary(positive_shift, "Positive Niche Distance Shift"),
   priority_summary(
-    persistence_opportunity,
-    "Climatic persistence opportunity"
+    low_displacement,
+    "Low Climatic Displacement"
   )
 )
 write.csv(
@@ -83,10 +83,10 @@ world <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
 world <- st_transform(world, 4326)
 world <- suppressWarnings(st_crop(world, med_bbox))
 
-concern_colours <- c(
+positive_shift_colours <- c(
   "#f6f2e8", "#f2ce85", "#e49a48", "#c75b4d", "#7d2431"
 )
-persistence_colours <- c(
+low_displacement_colours <- c(
   "#f2f5f4", "#c9dfda", "#82b8ae", "#3a8078", "#104a46"
 )
 
@@ -119,7 +119,7 @@ priority_map <- function(x, colours, title) {
     scale_fill_gradientn(
       colours = colours,
       limits = c(0, 1),
-      name = "Pareto Depth Score"
+      name = "Pareto depth score"
     ) +
     scale_x_continuous(
       breaks = c(-5, 10, 25),
@@ -153,57 +153,59 @@ priority_map <- function(x, colours, title) {
     )
 }
 
-concern_plane <- plot_climniche_priority(
-  exposure_concern,
+positive_shift_plane <- plot_climniche_priority(
+  positive_shift,
   type = "plane"
 ) +
   labs(
-    title = "(a) Exposure concern: decision plane",
-    subtitle = "Preference: higher suitability and larger outward niche shift"
+    title = "(a) Positive Niche Distance Shift: decision plane",
+    subtitle = "Higher suitability\nLarger positive Niche Distance Shift"
   ) +
   theme(legend.position = "none")
 
-concern_map <- priority_map(
-  exposure_concern,
-  concern_colours,
-  "(b) Exposure concern: spatial pattern"
+positive_shift_map <- priority_map(
+  positive_shift,
+  positive_shift_colours,
+  "(b) Positive Niche Distance Shift: Pareto depth"
 )
 
-persistence_plane <- plot_climniche_priority(
-  persistence_opportunity,
+low_displacement_plane <- plot_climniche_priority(
+  low_displacement,
   type = "plane"
 ) +
   labs(
-    title = "(c) Climatic persistence: decision plane",
-    subtitle = "Preference: higher suitability and lower displacement"
+    title = "(c) Low Climatic Displacement: decision plane",
+    subtitle = "Higher suitability\nSmaller Climatic Displacement"
   ) +
   theme(legend.position = "none")
 
-persistence_map <- priority_map(
-  persistence_opportunity,
-  persistence_colours,
-  "(d) Climatic persistence: spatial pattern"
+low_displacement_map <- priority_map(
+  low_displacement,
+  low_displacement_colours,
+  "(d) Low Climatic Displacement: Pareto depth"
 )
 
 row_design <- "
 AB
 #C
 "
-concern_row <- concern_plane + concern_map + guide_area() +
+positive_shift_row <-
+  positive_shift_plane + positive_shift_map + guide_area() +
   plot_layout(
     design = row_design,
     widths = c(0.85, 1.35),
     heights = c(1, 0.13),
     guides = "collect"
   )
-persistence_row <- persistence_plane + persistence_map + guide_area() +
+low_displacement_row <-
+  low_displacement_plane + low_displacement_map + guide_area() +
   plot_layout(
     design = row_design,
     widths = c(0.85, 1.35),
     heights = c(1, 0.13),
     guides = "collect"
   )
-figure <- concern_row / persistence_row
+figure <- positive_shift_row / low_displacement_row
 
 figure_file <- file.path(
   "vignettes", "figures", "anchovy-climniche-priority"

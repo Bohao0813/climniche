@@ -11,10 +11,10 @@ Description: Quantifies projected climate exposure relative to a species'
     reference. The package reports Climatic Displacement, Niche Distance Shift,
     Climatic Reconfiguration and Niche Boundary Exceedance for single
     projections, ordered time series and climate model ensembles. A
-    two-objective Pareto screening contrasts ecological value under greater
-    exposure with ecological value associated with lower climatic change.
-    Cell-level terms decompose change in niche potential among fitted climate
-    variables.
+    two-objective Pareto screening compares one climatic quantity with an
+    ecological or management criterion without collapsing them into a weighted
+    score. Cell-level terms decompose change in squared niche distance among
+    fitted climate variables.
 License: MIT + file LICENSE
 URL: https://github.com/Bohao0813/climniche,
     https://bohao0813.github.io/climniche/

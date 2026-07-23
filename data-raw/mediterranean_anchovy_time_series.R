@@ -212,9 +212,9 @@ extent_plot <- plot_climniche_time(
   show_models = FALSE
 ) +
   labs(
-    title = "(a) Habitat exposed",
+    title = "(a) Boundary exceedance fraction",
     x = "Projection year",
-    y = "Weighted current habitat\nbeyond niche boundary"
+    y = "Weighted reference fraction\nbeyond radial niche boundary"
   ) +
   scale_x_continuous(breaks = years) +
   black_theme
@@ -224,11 +224,11 @@ severity_plot <- plot_climniche_time(
   metric = "conditional_relative_exceedance",
   area_weight = TRUE,
   show_models = FALSE
-  ) +
+) +
   labs(
-    title = "(b) Conditional exceedance",
+    title = "(b) Conditional relative exceedance",
     x = "Projection year",
-    y = "Mean relative boundary exceedance\namong exposed habitat"
+    y = "Conditional mean relative\nNiche Boundary Exceedance"
   ) +
   scale_x_continuous(breaks = years) +
   scale_y_continuous(
@@ -244,9 +244,9 @@ range_plot <- plot_climniche_time(
   show_models = FALSE
 ) +
   labs(
-    title = "(c) Range-wide exposure",
+    title = "(c) Range mean relative exceedance",
     x = "Projection year",
-    y = "Range-wide relative exceedance"
+    y = "Range mean relative\nNiche Boundary Exceedance"
   ) +
   scale_x_continuous(breaks = years) +
   scale_y_continuous(
@@ -300,7 +300,10 @@ first_values[reference_cells] <- ifelse(
 first_data <- as.data.frame(first_raster, xy = TRUE, na.rm = FALSE)[, 1:2]
 first_data$departure <- factor(
   first_values,
-  levels = c(as.character(onset_years), "No persistent exceedance")
+  levels = c(
+    as.character(onset_years),
+    "No persistent exceedance"
+  )
 )
 first_data <- first_data[!is.na(first_data$departure), ]
 
@@ -371,7 +374,7 @@ first_map <- ggplot() +
     name = "Projection year"
   ) +
   labs(
-    title = "(a) Onset of persistent boundary exceedance",
+    title = "(a) Persistent boundary exceedance onset",
     x = NULL,
     y = NULL
   ) +
@@ -395,10 +398,10 @@ fraction_map <- ggplot() +
     limits = c(0, 1),
     breaks = seq(0, 1, by = 0.25),
     labels = function(x) paste0(round(100 * x), "%"),
-    name = "Time proportion"
+    name = "Time weighted fraction"
   ) +
   labs(
-    title = "(b) Time beyond the niche boundary",
+    title = "(b) Time weighted exceedance fraction",
     x = NULL,
     y = NULL
   ) +

@@ -23,7 +23,7 @@ climniche_series_report(
 \item{scope, aggregation_weight, area_weight, boundary_exceedance_tolerance}{Range-summary settings.}
 
 \item{persistence}{Consecutive projection count used to identify persistent
-boundary departure.}
+Niche Boundary Exceedance.}
 
 \item{agreement_interval}{Central interval used for model agreement.}
 }
