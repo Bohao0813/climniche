@@ -233,3 +233,7 @@ summary_figure
 ```{r summary-figure-output, echo = FALSE, out.width = "95%"}
 knitr::include_graphics("figures/anchovy-climniche-summary.png")
 ```
+
+The [exposure through time example](climniche-through-time.html) extends this
+fit to four SSP2-4.5 projection years while retaining the same current niche
+reference.

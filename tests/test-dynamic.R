@@ -126,6 +126,36 @@ stopifnot(isTRUE(all.equal(
     range_summary$conditional_relative_exceedance,
   tolerance = 1e-12
 )))
+
+# The Mediterranean time-series tables retain the same range decomposition.
+case_path <- system.file(
+  "extdata",
+  "mediterranean_anchovy",
+  package = "climniche"
+)
+case_range <- utils::read.csv(file.path(
+  case_path,
+  "anchovy_climniche_time_range_summary.csv"
+))
+case_departure <- utils::read.csv(file.path(
+  case_path,
+  "anchovy_climniche_time_departure_summary.csv"
+))
+stopifnot(identical(
+  as.integer(case_range$time),
+  c(2030L, 2050L, 2070L, 2090L)
+))
+stopifnot(isTRUE(all.equal(
+  case_range$range_wide_relative_exceedance,
+  case_range$exposed_fraction *
+    case_range$conditional_relative_exceedance,
+  tolerance = 1e-12
+)))
+stopifnot(
+  nrow(case_departure) == 1L,
+  case_departure$proportion_with_persistent_departure >= 0,
+  case_departure$proportion_with_persistent_departure <= 1
+)
 weighted_range <- climniche_range_summary(
   dynamic_series,
   aggregation_weight = seq_len(nrow(dynamic_current))
@@ -244,6 +274,7 @@ unlink(report_file)
 if (requireNamespace("ggplot2", quietly = TRUE)) {
   time_plot <- plot_climniche_time(dynamic_series)
   stopifnot(inherits(time_plot, "ggplot"))
+  stopifnot(is.null(time_plot$scales$get_scales("fill")))
 }
 
 if (requireNamespace("raster", quietly = TRUE)) {

@@ -1,0 +1,4 @@
+"model","scenario","scope","metric","n_projections","first_time","last_time","total_change","maximum_interval_increase","maximum_increase_rate","interval_start","interval_end","time_unit"
+NA,"SSP2-4.5","current","exposed_fraction",4,2030,2090,0.712404854163952,0.505134229865444,0.0252567114932722,2070,2090,"supplied time units"
+NA,"SSP2-4.5","current","range_wide_relative_exceedance",4,2030,2090,0.0773578117173959,0.0552062408281373,0.00276031204140686,2070,2090,"supplied time units"
+NA,"SSP2-4.5","current","mean_niche_boundary_exceedance",4,2030,2090,0.494240684579847,0.352713832698071,0.0176356916349035,2070,2090,"supplied time units"

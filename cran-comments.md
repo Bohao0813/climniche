@@ -7,7 +7,7 @@
 
 0 errors | 0 warnings | 0 notes
 
-Version 0.3.3 is the first CRAN update since 0.0.1. It adds continuous
+Version 0.3.6 is the first CRAN update since 0.0.1. It adds continuous
 reference weights, configurable niche descriptors, climate variable
 preprocessing, raster and terra workflows, fixed reference projections,
 ordered time series, climate model ensembles, and report and figure methods.

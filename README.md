@@ -157,6 +157,9 @@ variable and its share within the selected reference area.
 
 The [European anchovy example](https://bohao0813.github.io/climniche/articles/climniche-examples.html)
 applies the four metrics in the Mediterranean Sea. The
+[exposure through time example](https://bohao0813.github.io/climniche/articles/climniche-through-time.html)
+follows range-level exposure and persistent niche boundary exceedance from
+2030 to 2090. The
 [ecological screening example](https://bohao0813.github.io/climniche/articles/climniche-priority.html)
 contrasts exposure concern with climatic persistence opportunity.
 The [climatic contribution example](https://bohao0813.github.io/climniche/articles/climniche-contributions.html)

@@ -161,12 +161,10 @@ plot_climniche_time <- function(
       size = 1.35
     ) +
     ggplot2::scale_colour_manual(values = colours) +
-    ggplot2::scale_fill_manual(values = colours) +
     ggplot2::labs(
       x = "Projection Time",
       y = .series_plot_labels(metric),
       colour = if (multiple_scenarios) "Scenario" else NULL,
-      fill = if (multiple_scenarios) "Scenario" else NULL,
       title = title
     ) +
     .climniche_theme(base_size = base_size) +
@@ -178,6 +176,13 @@ plot_climniche_time <- function(
       ),
       panel.grid.minor = ggplot2::element_blank()
     )
+  if (multiple_models) {
+    p <- p +
+      ggplot2::scale_fill_manual(values = colours) +
+      ggplot2::labs(
+        fill = if (multiple_scenarios) "Scenario" else NULL
+      )
+  }
   if (identical(metric, "exposed_fraction")) {
     p <- p + ggplot2::scale_y_continuous(
       limits = c(0, 1),

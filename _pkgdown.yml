@@ -24,6 +24,8 @@ navbar:
       menu:
         - text: Mediterranean example
           href: articles/climniche-examples.html
+        - text: Exposure through time
+          href: articles/climniche-through-time.html
         - text: Ecological exposure screening
           href: articles/climniche-priority.html
         - text: Spatial climatic contributions
@@ -107,5 +109,6 @@ articles:
     navbar: ~
     contents:
       - climniche-examples
+      - climniche-through-time
       - climniche-priority
       - climniche-contributions

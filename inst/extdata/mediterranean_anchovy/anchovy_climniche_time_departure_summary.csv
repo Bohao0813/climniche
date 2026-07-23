@@ -1,0 +1,2 @@
+"model","scenario","n","aggregation_weight_sum","proportion_with_persistent_departure","median_first_persistent_departure","mean_departure_time_fraction","mean_relative_exceedance","proportion_with_reentry","time_unit"
+NA,"SSP2-4.5",13591,223929.571056595,0.28388865893452,2070,0.270004546135804,0.0423949054642595,0,"supplied time units"

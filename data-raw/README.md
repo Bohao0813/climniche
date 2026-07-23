@@ -4,10 +4,13 @@
 main figures. `mediterranean_anchovy_priority.R` compares ecological exposure
 concern with climatic persistence opportunity.
 `mediterranean_anchovy_contributions.R` maps the fitted climatic
-contributions. Run the scripts from the package root.
+contributions. `mediterranean_anchovy_time_series.R` evaluates SSP2-4.5 at
+2030, 2050, 2070 and 2090 against one fixed current niche reference. Run the
+scripts from the package root.
 
-The script downloads OBIS occurrence records and Bio-ORACLE v3 environmental
-layers. It expects the IHO Mediterranean Sea boundary (Marine Regions MRGID
+The main case-study script downloads OBIS occurrence records and Bio-ORACLE v3
+environmental layers. The time-series script reuses its fitted suitability
+surface. Both expect the IHO Mediterranean Sea boundary (Marine Regions MRGID
 1905) outside the package tree at:
 
 ```text

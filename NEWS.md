@@ -1,3 +1,10 @@
+# climniche 0.3.6
+
+* Added a Bio-ORACLE SSP2-4.5 European anchovy time-series example with
+  range-level exposure trajectories, persistent boundary exceedance maps and
+  the series-report workflow.
+* Removed an unused fill scale from single-model time plots.
+
 # climniche 0.3.5
 
 * Reframed Pareto output as ecological screening of climate exposure.
