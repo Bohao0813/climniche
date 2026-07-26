@@ -60,13 +60,13 @@ raster.}
 
 \item{center}{Optional realised niche centre in the fitted climatic space.}
 
-\item{sensitivity}{Optional non-negative variable sensitivity weights.}
+\item{sensitivity}{Optional non-negative climatic metric weights.}
 
 \item{A}{Optional climatic weighting matrix.}
 
 \item{metric}{Method used to build \code{A} when it is not supplied.}
 
-\item{boundary}{Weighted quantile defining the empirical niche boundary.}
+\item{boundary}{Weighted quantile defining the empirical radial boundary.}
 
 \item{scale}{If \code{TRUE}, standardise retained variables using current climate.}
 
@@ -76,8 +76,8 @@ current-climate variables.}
 \item{preprocess_correlation}{Maximum absolute correlation retained during
 preprocessing.}
 
-\item{preprocess_min_sd}{Minimum current-climate standard deviation retained
-during preprocessing.}
+\item{preprocess_min_sd}{Minimum current-climate standard deviation as a
+fraction of the largest finite current standard deviation.}
 
 \item{global_mean, global_sd}{Optional centring and scaling values.}
 
@@ -99,7 +99,7 @@ scenarios, or their combinations.
 }
 \details{
 The current niche centre, climatic weighting matrix, standardisation and
-empirical boundary are held fixed. For spatial inputs, this reference is
+empirical radial boundary are held fixed. For spatial inputs, this reference is
 estimated from finite current cells within \code{domain}, independently of
 missing values in future projections. Future comparisons use the common set
 of finite cells across all projections. All projections also use one Niche

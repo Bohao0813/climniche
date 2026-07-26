@@ -15,8 +15,8 @@
 #' @param scope `"current"` ranks cells with positive current reference weight;
 #'   `"all"` ranks every evaluated cell with finite criteria.
 #' @param positive_only If `TRUE`, only cells with a positive value of the
-#'   selected exposure quantity are ranked. Set to `FALSE` to retain zero and
-#'   negative values.
+#'   selected exposure quantity are ranked. The default, `NULL`, uses `TRUE`
+#'   when exposure is maximised and `FALSE` when it is minimised.
 #' @param exposure_direction Whether larger or smaller exposure values are
 #'   preferred in the Pareto comparison. Use `"maximize"` to screen for
 #'   greater exposure and `"minimize"` to screen for lower exposure.
@@ -42,10 +42,14 @@
 #'
 #' When current reference weights are constant, the default second criterion
 #' does not distinguish cells and ranking is determined by exposure alone.
+#' When the weights vary, the default is a within-reference screening rather
+#' than a comparison with independent ecological evidence. Supply `criterion`
+#' for the latter use.
 #'
 #' Only one exposure quantity is used at a time. This avoids counting Climatic
-#' Displacement, Niche Distance Shift and Climatic Reconfiguration as independent
-#' objectives even though their values satisfy the fitted geometric identity.
+#' Displacement, Niche Distance Shift and Climatic Reconfiguration as
+#' independent objectives even though their values satisfy the fitted
+#' geometric identity.
 #' When the second criterion represents ecological value, maximising a
 #' positive Niche Distance Shift identifies cells where high ecological value
 #' coincides with movement away from the realised niche centre. Minimising
@@ -95,7 +99,7 @@ climniche_priority <- function(
     criterion_name = NULL,
     criterion_direction = c("maximize", "minimize"),
     scope = c("current", "all"),
-    positive_only = TRUE,
+    positive_only = NULL,
     exposure_direction = c("maximize", "minimize")) {
   if (!inherits(x, "climniche_fit")) {
     stop("x must be a fitted climniche object.", call. = FALSE)
@@ -104,7 +108,11 @@ climniche_priority <- function(
   criterion_direction <- match.arg(criterion_direction)
   exposure_direction <- match.arg(exposure_direction)
   scope <- match.arg(scope)
-  positive_only <- .check_flag(positive_only, "positive_only")
+  if (is.null(positive_only)) {
+    positive_only <- identical(exposure_direction, "maximize")
+  } else {
+    positive_only <- .check_flag(positive_only, "positive_only")
+  }
   if (!is.null(criterion_name) &&
       (!is.character(criterion_name) || length(criterion_name) != 1L ||
        is.na(criterion_name) || !nzchar(criterion_name))) {

@@ -447,7 +447,7 @@ write_climniche_series_report <- function(report, file) {
     },
     if (!is.null(report$model_agreement_summary)) "```" else NULL,
     if (!is.null(report$model_agreement_summary)) "" else NULL,
-    "## Metric Definitions",
+    "## Reported Quantity Definitions",
     "```text",
     format_table(report$metric_definitions),
     "```",

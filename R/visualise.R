@@ -619,7 +619,7 @@
 #' @param metrics Character vector of reported quantity field names.
 #' @param ncol Number of map columns when patchwork is available.
 #' @param legend_title Shared legend title. The default suppresses repeated
-#'   metric names because each panel is titled.
+#'   quantity names because each panel is titled.
 #' @param ... Map options passed to `plot_climniche_map()`. Commonly used
 #'   arguments are `occupied`, `occupied_only`, `occupied_threshold`, `extent`,
 #'   `degree_labels`, `study_region`, `legend_position`, `limits`, `breaks`,
@@ -643,7 +643,7 @@ plot_climniche_maps <- function(
   )
   metrics <- vapply(metrics, .metric_key, character(1))
   if (!length(metrics) || any(!metrics %in% names(titles))) {
-    stop("metrics must contain reported metric field names or their legacy aliases.",
+    stop("metrics must contain reported quantity fields or their legacy aliases.",
          call. = FALSE)
   }
   ncol <- .check_finite_scalar(ncol, "ncol")

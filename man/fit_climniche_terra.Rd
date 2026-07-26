@@ -18,11 +18,11 @@ fit_climniche_terra(
   metric = c("diag", "factor"),
   boundary = 0.95,
   scale = TRUE,
+  global_mean = NULL,
+  global_sd = NULL,
   preprocess = TRUE,
   preprocess_correlation = 0.95,
   preprocess_min_sd = 1e-08,
-  global_mean = NULL,
-  global_sd = NULL,
   tolerance = NULL,
   tolerance_quantile = 0.1,
   boundary_exceedance_tolerance = 0
@@ -36,7 +36,8 @@ geometry and variables as \code{current}. Named layers are matched before
 fitting.}
 
 \item{occupied}{Optional one layer SpatRaster with binary or continuous
-occurrence, range, or SDM suitability values.}
+occurrence, range, or SDM suitability values. Continuous values are
+retained on their supplied numerical scale.}
 
 \item{occupied_threshold}{Values at or below this threshold receive zero
 reference weight. Values above it keep their original value.}
@@ -46,41 +47,34 @@ analysed.}
 
 \item{domain_threshold}{Values greater than this threshold define the domain.}
 
-\item{cnfa}{Optional CENFA \code{cnfa} object. Its \code{mf} and \code{sf} components are
-used when \code{center}, \code{sensitivity}, or \code{A} are not supplied; \code{metric = "factor"} requires \code{co} and \code{eig}. The object and climatic inputs must use
-the same variables and standardisation.}
+\item{cnfa}{Optional CENFA \code{cnfa} object or compatible object. Its \code{mf} and
+\code{sf} components are used when \code{center}, \code{sensitivity}, or \code{A} are not
+supplied; \code{metric = "factor"} requires \code{co} and \code{eig}. The object and
+climatic inputs must use the same variables and standardisation.}
 
 \item{center}{Optional realised niche centre on the scale used for distance
-calculations. With \code{scale = TRUE}, supply a centre in the standardized
+calculations. With \code{scale = TRUE}, supply a centre in the standardised
 climatic space. If omitted, the centre is the weighted mean of current
 reference rows.}
 
-\item{sensitivity}{Optional non-negative variable weights. Used to build a
-diagonal metric when \code{A} is not supplied.}
+\item{sensitivity}{Optional non-negative climatic metric weights. These
+define relative contributions to distance and are not physiological
+sensitivity estimates unless supplied from an independent analysis.}
 
 \item{A}{Optional square metric matrix defined for the fitted climatic
 space. When supplied, it overrides \code{sensitivity}, \code{cnfa}, and \code{metric} for
 distance calculations.}
 
 \item{metric}{Method used to build \code{A} when \code{A} is missing. \code{"diag"} uses
-variable-level sensitivity weights. \code{"factor"} constructs a factor-weighted
+variable-level climatic metric weights. \code{"factor"} constructs a weighted
 metric from the \code{co} and \code{eig} components of a compatible CENFA object.}
 
-\item{boundary}{Quantile used to define the empirical boundary of the current
-realised niche. Must be between 0 and 1.}
+\item{boundary}{Weighted quantile used to define the empirical radial
+boundary of the current reference niche. Must be between 0 and 1.}
 
 \item{scale}{Logical. If \code{TRUE}, current and future values are centred and
 scaled with the current-layer mean and standard deviation before distances
 are calculated.}
-
-\item{preprocess}{Logical. If \code{TRUE}, remove near-zero variance variables
-and highly correlated variables before metric fitting.}
-
-\item{preprocess_correlation}{Maximum absolute pairwise correlation retained
-among current climate variables during preprocessing.}
-
-\item{preprocess_min_sd}{Minimum current-climate standard deviation retained
-during preprocessing.}
 
 \item{global_mean}{Optional means used for centering when \code{scale = TRUE}. If
 omitted, column means of \code{current} are used.}
@@ -89,14 +83,24 @@ omitted, column means of \code{current} are used.}
 \code{scale = TRUE} and this argument is omitted, column standard deviations of
 \code{current} are used.}
 
+\item{preprocess}{Logical. If \code{TRUE}, remove near-zero variance variables
+and highly correlated variables before metric fitting.}
+
+\item{preprocess_correlation}{Maximum absolute pairwise correlation retained
+among current climate variables during preprocessing.}
+
+\item{preprocess_min_sd}{Minimum current-climate standard deviation as a
+fraction of the largest finite current standard deviation. Variables at or
+below this value are removed during preprocessing.}
+
 \item{tolerance}{Optional tolerance around zero for Niche Distance Shift. If
 \code{NULL}, the fitted object uses \code{tolerance_quantile}.}
 
 \item{tolerance_quantile}{Quantile of absolute Niche Distance Shift used to
 set \code{tolerance} when \code{tolerance = NULL}.}
 
-\item{boundary_exceedance_tolerance}{Tolerance used to label whether Niche
-Boundary Exceedance is greater than zero for descriptor summaries.}
+\item{boundary_exceedance_tolerance}{Tolerance used to label Niche Boundary
+Exceedance in descriptor summaries.}
 }
 \value{
 An object of class \code{climniche_fit} with SpatRaster outputs stored in
@@ -107,7 +111,8 @@ Fit climniche to terra raster data
 }
 \details{
 \code{fit_climniche_terra()} is the SpatRaster workflow for users working with
-\code{terra}. It extracts aligned cell values, applies \code{domain} and \code{occupied}
-rasters, calls the matrix workflow, and writes the fitted quantities back to
-SpatRaster outputs.
+\code{terra}. It fits the current reference from finite current cells within
+\code{domain}, then evaluates cells with finite current and future values. Future
+missing values therefore do not alter the fitted current reference. Reported
+quantities are written back to SpatRaster outputs.
 }

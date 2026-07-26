@@ -48,10 +48,12 @@ Project climatic conditions onto a fitted niche reference
 Let \eqn{A} be the fitted weighting matrix and let \eqn{\mu} be the realised
 niche centre. In the transformed climatic space, write the current and
 future centred vectors as \eqn{z_0} and \eqn{z_1}, with lengths \eqn{r_0}
-and \eqn{r_1} and angle \eqn{\theta}. Climatic Reconfiguration satisfies
+and \eqn{r_1}. When both lengths are positive, let \eqn{\theta} be the angle
+between those vectors. Climatic Reconfiguration satisfies
 \deqn{C_i^2 = 2 r_{0i} r_{1i} (1 - \cos(\theta_i)).}
-It therefore combines angular change with current and future niche
-distances and is calculated rather than fitted independently.
+It therefore depends on angular change and current and future niche
+distances. It is derived from Climatic Displacement and Niche Distance
+Shift, not fitted as an independent process.
 }
 \examples{
 sim <- simulate_climniche(n = 200, p = 6, seed = 4)

@@ -21,7 +21,7 @@ plot_climniche_maps(
 \item{ncol}{Number of map columns when patchwork is available.}
 
 \item{legend_title}{Shared legend title. The default suppresses repeated
-metric names because each panel is titled.}
+quantity names because each panel is titled.}
 
 \item{...}{Map options passed to \code{plot_climniche_map()}. Commonly used
 arguments are \code{occupied}, \code{occupied_only}, \code{occupied_threshold}, \code{extent},

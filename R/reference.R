@@ -1,7 +1,7 @@
 #' Fit a current climatic niche reference
 #'
 #' Estimates the preprocessing, standardisation, realised niche centre,
-#' climatic weighting matrix and empirical niche boundary once. The resulting
+#' climatic weighting matrix and empirical radial boundary once. The resulting
 #' object can be reused with [project_climniche()] for several future periods or
 #' climate models.
 #'
@@ -12,18 +12,18 @@
 #' @param occupied_threshold Optional cutoff for numeric reference weights.
 #' @param cnfa Optional compatible CENFA object.
 #' @param center Optional realised niche centre in the fitted climatic space.
-#' @param sensitivity Optional non-negative variable sensitivity weights.
+#' @param sensitivity Optional non-negative climatic metric weights.
 #' @param A Optional climatic weighting matrix.
 #' @param metric Method used to build `A` when it is not supplied.
-#' @param boundary Weighted quantile defining the empirical niche boundary.
+#' @param boundary Weighted quantile defining the empirical radial boundary.
 #' @param scale If `TRUE`, standardise retained variables using current-climate
 #'   means and standard deviations.
 #' @param preprocess If `TRUE`, remove near-zero variance and highly correlated
 #'   variables before fitting.
 #' @param preprocess_correlation Maximum absolute correlation retained during
 #'   preprocessing.
-#' @param preprocess_min_sd Minimum current-climate standard deviation retained
-#'   during preprocessing.
+#' @param preprocess_min_sd Minimum current-climate standard deviation as a
+#'   fraction of the largest finite current standard deviation.
 #' @param global_mean,global_sd Optional centring and scaling values.
 #'
 #' @return A `climniche_reference` object.
@@ -31,7 +31,7 @@
 #' @details
 #' The reference object fixes the climatic space used for all subsequent
 #' projections. Future conditions do not alter the centre, weighting matrix,
-#' standardisation or empirical boundary.
+#' standardisation or empirical radial boundary.
 #'
 #' @examples
 #' sim <- simulate_climniche(n = 200, p = 6, seed = 4)
@@ -141,10 +141,12 @@ fit_climniche_reference <- function(
 #' Let \eqn{A} be the fitted weighting matrix and let \eqn{\mu} be the realised
 #' niche centre. In the transformed climatic space, write the current and
 #' future centred vectors as \eqn{z_0} and \eqn{z_1}, with lengths \eqn{r_0}
-#' and \eqn{r_1} and angle \eqn{\theta}. Climatic Reconfiguration satisfies
+#' and \eqn{r_1}. When both lengths are positive, let \eqn{\theta} be the angle
+#' between those vectors. Climatic Reconfiguration satisfies
 #' \deqn{C_i^2 = 2 r_{0i} r_{1i} (1 - \cos(\theta_i)).}
-#' It therefore combines angular change with current and future niche
-#' distances and is calculated rather than fitted independently.
+#' It therefore depends on angular change and current and future niche
+#' distances. It is derived from Climatic Displacement and Niche Distance
+#' Shift, not fitted as an independent process.
 #'
 #' @examples
 #' sim <- simulate_climniche(n = 200, p = 6, seed = 4)
@@ -340,10 +342,10 @@ project_climniche <- function(reference, future, current = NULL,
   }
   weight_names <- names(weights)
   if (.names_are_complete(weight_names) && .names_are_complete(row_names)) {
-    if (!setequal(weight_names, row_names)) {
-      return(rep(1, n))
-    }
-    return(unname(weights[match(row_names, weight_names)]))
+    matched <- match(row_names, weight_names)
+    out <- rep(1, n)
+    out[!is.na(matched)] <- weights[matched[!is.na(matched)]]
+    return(unname(out))
   }
   if (reuse_reference && length(weights) == n) {
     return(unname(weights))

@@ -129,6 +129,7 @@ low_displacement <- climniche_priority(
 )
 low_displacement_rows <- low_displacement$table$included
 stopifnot(identical(low_displacement$exposure_direction, "minimize"))
+stopifnot(identical(low_displacement$positive_only, FALSE))
 stopifnot(identical(
   low_displacement$table$pareto_rank[low_displacement_rows],
   pareto_rank_2d(
@@ -147,6 +148,18 @@ stopifnot(isTRUE(all.equal(
   expected_correlation,
   tolerance = 0
 )))
+
+automatic_minimum <- climniche_priority(
+  priority_fit,
+  exposure = "niche_distance_change",
+  criterion = ecological_value,
+  criterion_name = "Habitat value",
+  scope = "current",
+  exposure_direction = "minimize"
+)
+stopifnot(identical(automatic_minimum$positive_only, FALSE))
+stopifnot(sum(automatic_minimum$table$included) ==
+            sum(priority_fit$occupied_weight > 0))
 
 boundary_priority <- climniche_priority(
   priority_fit,

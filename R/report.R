@@ -123,20 +123,20 @@ climniche_table <- function(x, scope = c("current", "all")) {
     ),
     definition = c(
       paste(
-        "Distance between current and future conditions under the fitted",
-        "climatic metric."
+        "Distance between current and future conditions at the same cell",
+        "under the fitted climatic metric."
       ),
       paste(
         "Signed change in distance from the current realised climatic",
         "niche centre."
       ),
       paste(
-        "Non radial component of Climatic Displacement not captured by",
+        "Non-radial component of Climatic Displacement not captured by",
         "Niche Distance Shift."
       ),
       paste(
         "Positive excess of future niche distance beyond the empirical",
-        "radial boundary of the current realised climatic niche."
+        "weighted radial boundary of the current realised climatic niche."
       )
     ),
     stringsAsFactors = FALSE
@@ -398,16 +398,16 @@ climniche_report <- function(x, species = NULL, scope = c("current", "all"),
 
   direction <- if (summ$mean_niche_distance_change > 0) {
     paste(
-      "positive, indicating average movement farther from the current",
+      "positive; future conditions are farther, on average, from the current",
       "realised climatic niche centre"
     )
   } else if (summ$mean_niche_distance_change < 0) {
     paste(
-      "negative, indicating average movement closer to the current",
+      "negative; future conditions are closer, on average, to the current",
       "realised climatic niche centre"
     )
   } else {
-    "near zero on average"
+    "zero on average"
   }
 
   exceedance_unit <- if (scope == "current") {
@@ -465,6 +465,12 @@ climniche_report <- function(x, species = NULL, scope = c("current", "all"),
   out
 }
 
+.report_weight_display <- function(x) {
+  out <- x[, c("variable", "sensitivity_weight"), drop = FALSE]
+  names(out) <- c("Climate variable", "Climatic metric weight")
+  out
+}
+
 #' @export
 print.climniche_report <- function(x, ...) {
   title <- if (is.null(x$species)) {
@@ -486,12 +492,12 @@ print.climniche_report <- function(x, ...) {
     cat("- ", line, "\n", sep = "")
   }
 
-  cat("\nMetric summary\n")
+  cat("\nReported quantity summary\n")
   print(x$metric_summary, row.names = FALSE)
 
   if (nrow(x$metric_weights)) {
-    cat("\nSensitivity weights\n")
-    print(x$metric_weights, row.names = FALSE)
+    cat("\nClimatic metric weights\n")
+    print(.report_weight_display(x$metric_weights), row.names = FALSE)
   }
 
   cat("\nTop variable contributions\n")
@@ -527,7 +533,7 @@ write_climniche_report <- function(report, file) {
     "## Interpretation",
     paste0("- ", report$interpretation),
     "",
-    "## Metric definitions",
+    "## Reported quantity definitions",
     "```text",
     fmt_row(report$metric_definitions),
     "```",
@@ -542,14 +548,18 @@ write_climniche_report <- function(report, file) {
     fmt_row(report$descriptor_settings),
     "```",
     "",
-    "## Metric summary",
+    "## Reported quantity summary",
     "```text",
     fmt_row(report$metric_summary),
     "```",
     "",
-    if (nrow(report$metric_weights)) "## Sensitivity weights" else NULL,
+    if (nrow(report$metric_weights)) "## Climatic metric weights" else NULL,
     if (nrow(report$metric_weights)) "```text" else NULL,
-    if (nrow(report$metric_weights)) fmt_row(report$metric_weights) else NULL,
+    if (nrow(report$metric_weights)) {
+      fmt_row(.report_weight_display(report$metric_weights))
+    } else {
+      NULL
+    },
     if (nrow(report$metric_weights)) "```" else NULL,
     if (nrow(report$metric_weights)) "" else NULL,
     "## Top Variable Contributions",
@@ -559,9 +569,8 @@ write_climniche_report <- function(report, file) {
     "",
     "## Notes",
     paste(
-      "The report describes climatic exposure relative to the current",
-      "realised climatic niche represented by the supplied occurrence, range",
-      "or suitability weights."
+      "Results are conditional on the supplied current reference weights.",
+      "With occupied = NULL, all current analysis rows define the reference."
     )
   )
   writeLines(lines, con = file)

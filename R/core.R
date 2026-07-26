@@ -6,31 +6,33 @@
 #'   fitting.
 #' @param occupied NULL, logical vector, row indices, or a numeric vector with
 #'   one value per row. Numeric vectors of length `nrow(current)` are treated as
-#'   continuous reference weights, including SDM suitability values.
+#'   continuous reference weights, including SDM suitability values. With
+#'   `NULL`, every current row receives weight 1.
 #' @param occupied_threshold Threshold used when `occupied` is a numeric vector
 #'   with one value per row.
-#' @param cnfa Optional CENFA `cnfa` object. When supplied, its `mf` and `sf`
-#'   slots are used unless `center`, `sensitivity`, or `A` are provided.
+#' @param cnfa Optional CENFA `cnfa` object or compatible list. Its `mf`
+#'   component can supply the centre, `sf` can supply diagonal climatic
+#'   weights, and a factor metric requires `co` and `eig`.
 #' @param center Optional realised niche centre in the fitted climate space.
-#' @param sensitivity Optional climate-variable sensitivity weights.
-#' @param A Optional niche metric matrix.
+#' @param sensitivity Optional non-negative climatic metric weights.
+#' @param A Optional climatic metric matrix.
 #' @param metric `"diag"` or `"factor"`. Used only when `A` is missing.
-#' @param boundary Quantile for the empirical occupied niche boundary.
+#' @param boundary Quantile for the empirical radial reference boundary.
 #' @param scale Logical. If TRUE, center and scale current and future values
 #'   using means and standard deviations of current values.
 #' @param preprocess Logical. If TRUE, remove near-zero variance variables and
 #'   highly correlated variables before scaling and metric fitting.
 #' @param preprocess_correlation Maximum absolute current-climate correlation
 #'   retained during preprocessing.
-#' @param preprocess_min_sd Minimum current-climate standard deviation retained
-#'   during preprocessing.
+#' @param preprocess_min_sd Minimum current-climate standard deviation as a
+#'   fraction of the largest finite current standard deviation.
 #' @param global_mean Optional means used for centering.
 #' @param global_sd Optional standard deviations used for scaling.
 #' @param tolerance Optional Niche Distance Shift tolerance.
 #' @param tolerance_quantile Quantile of absolute Niche Distance Shift used
 #'   when `tolerance = NULL`.
 #' @param boundary_exceedance_tolerance Tolerance for deciding whether future
-#'   climate exceeds the empirical niche boundary.
+#'   climate exceeds the empirical radial boundary.
 #'
 #' @return An object of class `climniche_fit`.
 #' @noRd
@@ -57,6 +59,30 @@
   aligned <- .align_climate_pair(current, future)
   current <- aligned$current
   future <- aligned$future
+  cnfa_center_used <- !is.null(cnfa) && is.null(center) &&
+    !is.null(.extract_slot(cnfa, "mf"))
+  cnfa_metric_used <- !is.null(cnfa) && is.null(A) && (
+    identical(metric, "factor") ||
+      (identical(metric, "diag") && is.null(sensitivity) &&
+         !is.null(.extract_slot(cnfa, "sf")))
+  )
+  cnfa_used <- cnfa_center_used || cnfa_metric_used
+  if (cnfa_used && preprocess) {
+    stop(
+      "preprocess must be FALSE when fitted CENFA components are used; ",
+      "select variables before fitting CENFA.",
+      call. = FALSE
+    )
+  }
+  if (cnfa_used && scale &&
+      (is.null(global_mean) || is.null(global_sd))) {
+    stop(
+      "When fitted CENFA components are used with scale = TRUE, ",
+      "global_mean and global_sd must reproduce the CENFA standardisation. ",
+      "Otherwise provide already standardised inputs and set scale = FALSE.",
+      call. = FALSE
+    )
+  }
 
   occupied_weight <- .reference_weights(
     occupied,

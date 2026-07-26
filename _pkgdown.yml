@@ -22,6 +22,8 @@ navbar:
     examples:
       text: Examples
       menu:
+        - text: Niche relative geometry
+          href: articles/climniche-method.html
         - text: Mediterranean example
           href: articles/climniche-examples.html
         - text: Exposure through time
@@ -42,7 +44,7 @@ navbar:
       aria-label: GitHub
 home:
   title: climniche
-  description: Niche relative decomposition of projected climate exposure.
+  description: Site-level climate exposure relative to a current realised climatic niche.
 authors:
   Bohao He:
     href: https://github.com/Bohao0813
@@ -80,6 +82,8 @@ reference:
       - climniche_report
       - climniche_summary
       - print.climniche_summary
+      - summary.climniche_fit
+      - plot.climniche_fit
       - climniche_table
       - write_climniche_report
   - title: Reported quantities
@@ -108,6 +112,7 @@ articles:
   - title: Examples
     navbar: ~
     contents:
+      - climniche-method
       - climniche-examples
       - climniche-through-time
       - climniche-priority

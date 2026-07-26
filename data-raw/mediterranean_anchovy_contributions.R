@@ -7,9 +7,8 @@ library(terra)
 
 sf_use_s2(FALSE)
 
-run_dir <- file.path(
-  "output", "mediterranean_anchovy", "20260619_zscore_example"
-)
+case_run <- Sys.getenv("CLIMNICHE_CASE_RUN", "20260619_zscore_example")
+run_dir <- file.path("output", "mediterranean_anchovy", case_run)
 fit <- readRDS(file.path(run_dir, "anchovy_climniche_fit.rds"))
 
 # Restore a live raster template for the saved fit.
@@ -40,10 +39,7 @@ write.csv(
   row.names = FALSE
 )
 
-region_file <- file.path(
-  "..", "..", "data-raw", "marine_regions",
-  "mediterranean_iho_mrgid1905.gpkg"
-)
+region_file <- file.path("data-raw", "mediterranean_iho_mrgid1905.geojson")
 mediterranean <- st_read(region_file, quiet = TRUE)
 mediterranean <- st_transform(mediterranean, 4326)
 mediterranean <- st_make_valid(mediterranean)

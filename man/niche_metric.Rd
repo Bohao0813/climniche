@@ -2,29 +2,29 @@
 % Please edit documentation in R/metric.R
 \name{niche_metric}
 \alias{niche_metric}
-\title{Build a climatic sensitivity metric}
+\title{Build a climatic weighting metric}
 \usage{
 niche_metric(sensitivity = NULL, cnfa = NULL, type = c("diag", "factor"))
 }
 \arguments{
-\item{sensitivity}{Numeric vector of climate variable sensitivity weights,
-used by the diagonal metric. For a factor metric, complete names can be
-used to order the CNFA loading rows.}
+\item{sensitivity}{Numeric vector of climatic metric weights used by the
+diagonal metric. For a factor metric, complete names can be used to order
+the CNFA loading rows.}
 
 \item{cnfa}{Optional CENFA \code{cnfa} object or compatible list. A diagonal
 metric can use \code{sf}; a factor metric requires \code{co} and \code{eig}.}
 
-\item{type}{Metric type. \code{"diag"} uses variable-level sensitivity weights.
+\item{type}{Metric type. \code{"diag"} uses variable-level climatic weights.
 \code{"factor"} uses a factor metric when CNFA factor coordinates are available.}
 }
 \value{
 A positive semi-definite matrix.
 }
 \description{
-Build a climatic sensitivity metric
+Build a climatic weighting metric
 }
 \details{
-For sensitivity weights \eqn{s_j}, the diagonal metric is
+For climatic weights \eqn{s_j}, the diagonal metric is
 \deqn{A = \mathrm{diag}(s / \bar{s}).}
 For a CNFA loading matrix \eqn{U} and factor eigenvalues \eqn{\rho}, the
 factor metric is
@@ -33,6 +33,11 @@ The factor metric is constructed from \code{co} and \code{eig}; a separate
 \code{sensitivity} vector is not combined with it. This quadratic metric is a
 climniche construction from CENFA components, not a metric returned by
 CENFA itself.
+
+The argument name \code{sensitivity} is retained for API compatibility. Its
+values define the relative scale of climatic distance; they are not
+physiological sensitivity estimates unless supplied from an independent
+analysis.
 }
 \examples{
 niche_metric(c(temperature = 2, salinity = 1, oxygen = 0.5))

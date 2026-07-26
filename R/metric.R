@@ -1,17 +1,17 @@
-#' Build a climatic sensitivity metric
+#' Build a climatic weighting metric
 #'
-#' @param sensitivity Numeric vector of climate variable sensitivity weights,
-#'   used by the diagonal metric. For a factor metric, complete names can be
-#'   used to order the CNFA loading rows.
+#' @param sensitivity Numeric vector of climatic metric weights used by the
+#'   diagonal metric. For a factor metric, complete names can be used to order
+#'   the CNFA loading rows.
 #' @param cnfa Optional CENFA `cnfa` object or compatible list. A diagonal
 #'   metric can use `sf`; a factor metric requires `co` and `eig`.
-#' @param type Metric type. `"diag"` uses variable-level sensitivity weights.
+#' @param type Metric type. `"diag"` uses variable-level climatic weights.
 #'   `"factor"` uses a factor metric when CNFA factor coordinates are available.
 #'
 #' @return A positive semi-definite matrix.
 #'
 #' @details
-#' For sensitivity weights \eqn{s_j}, the diagonal metric is
+#' For climatic weights \eqn{s_j}, the diagonal metric is
 #' \deqn{A = \mathrm{diag}(s / \bar{s}).}
 #' For a CNFA loading matrix \eqn{U} and factor eigenvalues \eqn{\rho}, the
 #' factor metric is
@@ -20,6 +20,11 @@
 #' `sensitivity` vector is not combined with it. This quadratic metric is a
 #' climniche construction from CENFA components, not a metric returned by
 #' CENFA itself.
+#'
+#' The argument name `sensitivity` is retained for API compatibility. Its
+#' values define the relative scale of climatic distance; they are not
+#' physiological sensitivity estimates unless supplied from an independent
+#' analysis.
 #'
 #' @examples
 #' niche_metric(c(temperature = 2, salinity = 1, oxygen = 0.5))

@@ -1,3 +1,20 @@
+# climniche 0.3.7
+
+* Clarified the mathematical relation among Climatic Displacement, Niche
+  Distance Shift and the derived Climatic Reconfiguration term, and separated
+  that geometry from the future-state Niche Boundary Exceedance statistic.
+* Corrected the upper endpoint of weighted niche percentiles and projected
+  small numerical negative eigenvalues to the nearest positive semidefinite
+  climatic metric.
+* Fitted spatial current references before applying future missing-value masks
+  and preserved named reference weights when projecting subsets of cells.
+* Required fitted CENFA components to use their original variables and
+  standardisation.
+* Made `summary.climniche_fit()` reference-weighted by default and aligned the
+  default Pareto filter with the selected exposure direction.
+* Added executable controlled-geometry and Mediterranean input examples, plus
+  a documented IHO Mediterranean boundary for rebuilding the case study.
+
 # climniche 0.3.6
 
 * Added a Bio-ORACLE SSP2-4.5 European anchovy time-series example with
@@ -63,7 +80,7 @@
   requested factor metric now stops when its CNFA components are incomplete.
 * Corrected weighted summaries and plots, single-layer raster handling,
   non-finite raster masks, spatial layer names and original raster cell indices.
-* Added executable examples, a table of case-study sensitivity weights and
+* Added executable examples, a table of case-study climatic metric weights and
   extended tests for alignment, weighting and invalid inputs.
 * Kept manuscript PDF figures in the repository while excluding them from the
   source package built for CRAN.
@@ -83,8 +100,8 @@
 
 # climniche 0.3.0
 
-* Focused fitted objects, reports and figures on the four continuous exposure
-  metrics and the two descriptor fields.
+* Focused fitted objects, reports and figures on the four continuous reported
+  quantities and the two descriptor fields.
 * Added `plot_climniche_summary_figure()` and
   `climniche_summary_figure_data()`.
 * Added map controls for binary and continuous SDM reference rasters, study
@@ -108,7 +125,7 @@
 # climniche 0.1.1
 
 * Continuous SDM suitability inputs are now used as reference weights in the
-  fitted niche centre, empirical niche boundary, niche percentiles and
+  fitted niche centre, empirical radial boundary, niche percentiles and
   current-scope summaries.
 * `occupied_threshold` removes low reference weights while preserving the
   original continuous values above the threshold.

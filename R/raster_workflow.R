@@ -37,8 +37,7 @@
 
   x0 <- .raster_values_matrix(current)
   x1 <- .raster_values_matrix(future)
-  complete <- rowSums(!is.finite(x0)) == 0L &
-    rowSums(!is.finite(x1)) == 0L
+  current_complete <- rowSums(!is.finite(x0)) == 0L
   if (!is.null(domain)) {
     if (!methods::is(domain, "Raster")) {
       stop("domain must be NULL or a RasterLayer.", call. = FALSE)
@@ -52,15 +51,17 @@
            call. = FALSE)
     }
     dom <- raster::getValues(domain)
-    complete <- complete & is.finite(dom) & dom > domain_threshold
+    current_complete <- current_complete & is.finite(dom) &
+      dom > domain_threshold
   }
+  complete <- current_complete & rowSums(!is.finite(x1)) == 0L
   if (!any(complete)) {
     stop("No analysable cells remain after applying environmental and domain masks.",
          call. = FALSE)
   }
 
   if (is.null(occupied)) {
-    occupied_weight <- NULL
+    occupied_values <- NULL
   } else {
     if (!methods::is(occupied, "Raster")) {
       stop("occupied must be NULL or a RasterLayer.", call. = FALSE)
@@ -72,74 +73,55 @@
                                stopiffalse = FALSE)) {
       stop("occupied raster must match current raster geometry.", call. = FALSE)
     }
-    occ <- raster::getValues(occupied)
-    occupied_weight <- occ[complete]
+    occupied_values <- raster::getValues(occupied)
   }
 
-  fit <- .fit_climniche_matrix(
-    current = x0[complete, , drop = FALSE],
-    future = x1[complete, , drop = FALSE],
-    occupied = occupied_weight,
-    occupied_threshold = occupied_threshold,
-    ...
+  dots <- list(...)
+  reference_fit <- do.call(
+    .fit_climniche_matrix,
+    c(
+      list(
+        current = x0[current_complete, , drop = FALSE],
+        future = x0[current_complete, , drop = FALSE],
+        occupied = if (is.null(occupied_values)) {
+          NULL
+        } else {
+          occupied_values[current_complete]
+        },
+        occupied_threshold = occupied_threshold
+      ),
+      dots
+    )
   )
+  reference <- .reference_from_fit(reference_fit)
+  descriptor_names <- c(
+    "tolerance", "tolerance_quantile",
+    "boundary_exceedance_tolerance"
+  )
+  projection_args <- c(
+    list(
+      reference = reference,
+      current = x0[complete, , drop = FALSE],
+      future = x1[complete, , drop = FALSE],
+      occupied = if (is.null(occupied_values)) {
+        NULL
+      } else {
+        occupied_values[complete]
+      },
+      occupied_threshold = occupied_threshold
+    ),
+    dots[intersect(names(dots), descriptor_names)]
+  )
+  fit <- do.call(project_climniche, projection_args)
 
-  fit$rasters <- list(
-    climate_change_amount = .values_to_raster(current, fit$climate_change_amount,
-                                              complete),
-    niche_distance_change = .values_to_raster(current, fit$niche_distance_change,
-                                             complete),
-    climate_reconfiguration = .values_to_raster(
-      current,
-      fit$climate_reconfiguration,
-      complete
-    ),
-    composition_change = .values_to_raster(
-      current,
-      fit$composition_change,
-      complete
-    ),
-    change_alignment = .values_to_raster(
-      current,
-      fit$change_alignment,
-      complete
-    ),
-    niche_boundary_exceedance = .values_to_raster(
-      current,
-      fit$niche_boundary_exceedance,
-      complete
-    ),
-    outside_niche_exceedance = .values_to_raster(
-      current,
-      fit$outside_niche_exceedance,
-      complete
-    ),
-    radial_direction = .values_to_raster(
-      current,
-      as.integer(fit$radial_direction),
-      complete
-    ),
-    boundary_status = .values_to_raster(
-      current,
-      as.integer(fit$boundary_status),
-      complete
-    )
+  fit <- .attach_series_spatial_outputs(
+    fit = fit,
+    template = current,
+    complete = complete,
+    type = "raster"
   )
-  fit$descriptor_lookup <- list(
-    radial_direction = data.frame(
-      id = seq_along(levels(fit$radial_direction)),
-      level = levels(fit$radial_direction)
-    ),
-    boundary_status = data.frame(
-      id = seq_along(levels(fit$boundary_status)),
-      level = levels(fit$boundary_status)
-    )
-  )
-  for (nm in names(fit$rasters)) {
-    names(fit$rasters[[nm]]) <- nm
-  }
-  fit$cell_index <- which(complete)
-  fit$raster_complete <- complete
+  fit$reference_cell_index <- which(current_complete)
+  fit$reference_raster_complete <- current_complete
   fit
 }
 
@@ -203,8 +185,7 @@
 
   x0 <- terra::values(current, mat = TRUE)
   x1 <- terra::values(future, mat = TRUE)
-  complete <- rowSums(!is.finite(x0)) == 0L &
-    rowSums(!is.finite(x1)) == 0L
+  current_complete <- rowSums(!is.finite(x0)) == 0L
   if (!is.null(domain)) {
     if (!methods::is(domain, "SpatRaster")) {
       stop("domain must be NULL or a terra SpatRaster.", call. = FALSE)
@@ -217,15 +198,17 @@
            call. = FALSE)
     }
     dom <- terra::values(domain)[, 1]
-    complete <- complete & is.finite(dom) & dom > domain_threshold
+    current_complete <- current_complete & is.finite(dom) &
+      dom > domain_threshold
   }
+  complete <- current_complete & rowSums(!is.finite(x1)) == 0L
   if (!any(complete)) {
     stop("No analysable cells remain after applying environmental and domain masks.",
          call. = FALSE)
   }
 
   if (is.null(occupied)) {
-    occupied_weight <- NULL
+    occupied_values <- NULL
   } else {
     if (!methods::is(occupied, "SpatRaster")) {
       stop("occupied must be NULL or a terra SpatRaster.", call. = FALSE)
@@ -237,62 +220,55 @@
       stop("occupied raster must match current raster geometry.",
            call. = FALSE)
     }
-    occ <- terra::values(occupied)[, 1]
-    occupied_weight <- occ[complete]
+    occupied_values <- terra::values(occupied)[, 1]
   }
 
-  fit <- .fit_climniche_matrix(
-    current = x0[complete, , drop = FALSE],
-    future = x1[complete, , drop = FALSE],
-    occupied = occupied_weight,
-    occupied_threshold = occupied_threshold,
-    ...
+  dots <- list(...)
+  reference_fit <- do.call(
+    .fit_climniche_matrix,
+    c(
+      list(
+        current = x0[current_complete, , drop = FALSE],
+        future = x0[current_complete, , drop = FALSE],
+        occupied = if (is.null(occupied_values)) {
+          NULL
+        } else {
+          occupied_values[current_complete]
+        },
+        occupied_threshold = occupied_threshold
+      ),
+      dots
+    )
   )
+  reference <- .reference_from_fit(reference_fit)
+  descriptor_names <- c(
+    "tolerance", "tolerance_quantile",
+    "boundary_exceedance_tolerance"
+  )
+  projection_args <- c(
+    list(
+      reference = reference,
+      current = x0[complete, , drop = FALSE],
+      future = x1[complete, , drop = FALSE],
+      occupied = if (is.null(occupied_values)) {
+        NULL
+      } else {
+        occupied_values[complete]
+      },
+      occupied_threshold = occupied_threshold
+    ),
+    dots[intersect(names(dots), descriptor_names)]
+  )
+  fit <- do.call(project_climniche, projection_args)
 
-  fit$rasters <- list(
-    climate_change_amount = .values_to_spatraster(
-      current, fit$climate_change_amount, complete
-    ),
-    niche_distance_change = .values_to_spatraster(
-      current, fit$niche_distance_change, complete
-    ),
-    climate_reconfiguration = .values_to_spatraster(
-      current, fit$climate_reconfiguration, complete
-    ),
-    composition_change = .values_to_spatraster(
-      current, fit$composition_change, complete
-    ),
-    change_alignment = .values_to_spatraster(
-      current, fit$change_alignment, complete
-    ),
-    niche_boundary_exceedance = .values_to_spatraster(
-      current, fit$niche_boundary_exceedance, complete
-    ),
-    outside_niche_exceedance = .values_to_spatraster(
-      current, fit$outside_niche_exceedance, complete
-    ),
-    radial_direction = .values_to_spatraster(
-      current, as.integer(fit$radial_direction), complete
-    ),
-    boundary_status = .values_to_spatraster(
-      current, as.integer(fit$boundary_status), complete
-    )
+  fit <- .attach_series_spatial_outputs(
+    fit = fit,
+    template = current,
+    complete = complete,
+    type = "terra"
   )
-  fit$descriptor_lookup <- list(
-    radial_direction = data.frame(
-      id = seq_along(levels(fit$radial_direction)),
-      level = levels(fit$radial_direction)
-    ),
-    boundary_status = data.frame(
-      id = seq_along(levels(fit$boundary_status)),
-      level = levels(fit$boundary_status)
-    )
-  )
-  for (nm in names(fit$rasters)) {
-    names(fit$rasters[[nm]]) <- nm
-  }
-  fit$cell_index <- which(complete)
-  fit$raster_complete <- complete
+  fit$reference_cell_index <- which(current_complete)
+  fit$reference_raster_complete <- current_complete
   fit
 }
 

@@ -77,7 +77,113 @@ stopifnot(isTRUE(all.equal(
 )))
 stopifnot(mean(toward$niche_distance_change) < mean(away$niche_distance_change))
 stopifnot(sum(away$niche_boundary_exceedance > 0) >=
-            sum(toward$niche_boundary_exceedance > 0))
+             sum(toward$niche_boundary_exceedance > 0))
+
+# Controlled paths distinguish radial, directional and boundary terms.
+geometry_current <- matrix(
+  rep(c(1, 0), 5),
+  ncol = 2,
+  byrow = TRUE,
+  dimnames = list(
+    c("unchanged", "toward", "away", "around", "cross_centre"),
+    c("climate_1", "climate_2")
+  )
+)
+geometry_future <- rbind(
+  unchanged = c(1, 0),
+  toward = c(0, 0),
+  away = c(2, 0),
+  around = c(0, 1),
+  cross_centre = c(-1, 0)
+)
+colnames(geometry_future) <- colnames(geometry_current)
+geometry_fit <- fit_climniche(
+  geometry_current,
+  geometry_future,
+  occupied = rep(1, nrow(geometry_current)),
+  center = c(0, 0),
+  A = diag(2),
+  boundary = 0.95,
+  scale = FALSE,
+  preprocess = FALSE,
+  tolerance = 0
+)
+stopifnot(isTRUE(all.equal(
+  unname(geometry_fit$climate_change_amount),
+  c(0, 1, 1, sqrt(2), 2),
+  tolerance = 1e-12
+)))
+stopifnot(isTRUE(all.equal(
+  unname(geometry_fit$niche_distance_change),
+  c(0, -1, 1, 0, 0),
+  tolerance = 1e-12
+)))
+stopifnot(isTRUE(all.equal(
+  unname(geometry_fit$climate_reconfiguration),
+  c(0, 0, 0, sqrt(2), 2),
+  tolerance = 1e-12
+)))
+stopifnot(isTRUE(all.equal(
+  unname(geometry_fit$niche_boundary_exceedance),
+  c(0, 0, 1, 0, 0),
+  tolerance = 1e-12
+)))
+
+# Exceedance is a future radial state, not a crossing indicator.
+baseline_fit <- fit_climniche(
+  sim$current,
+  sim$current,
+  occupied = sim$occupied,
+  sensitivity = sim$sensitivity,
+  boundary = 0.95
+)
+stopifnot(all(baseline_fit$climate_change_amount == 0))
+stopifnot(any(
+  baseline_fit$niche_boundary_exceedance[baseline_fit$occupied] > 0
+))
+
+# Weighted percentiles include the upper endpoint and tied reference values.
+percentile_endpoints <- niche_percentile(
+  psi_current = c(1, 2, 3),
+  psi_future = c(1, 2, 3),
+  occupied = c(1, 1, 1)
+)
+stopifnot(isTRUE(all.equal(
+  percentile_endpoints$current,
+  c(1 / 3, 2 / 3, 1),
+  tolerance = 1e-12
+)))
+percentile_ties <- niche_percentile(
+  psi_current = c(1, 2, 2, 3),
+  psi_future = c(2, 3, 1, 2),
+  occupied = c(1, 2, 3, 4)
+)
+stopifnot(isTRUE(all.equal(
+  percentile_ties$future,
+  c(0.6, 1, 0.1, 0.6),
+  tolerance = 1e-12
+)))
+single_percentile <- niche_percentile(1, 1, occupied = 2)
+stopifnot(identical(single_percentile$current, 1))
+stopifnot(identical(single_percentile$future, 1))
+
+# Numerical negative eigenvalues within tolerance are projected to zero.
+near_psd_fit <- fit_climniche(
+  current = matrix(c(0, 0), nrow = 1),
+  future = matrix(c(0, 1), nrow = 1),
+  occupied = 1,
+  center = c(0, 0),
+  A = diag(c(1, -1e-9)),
+  scale = FALSE,
+  preprocess = FALSE
+)
+stopifnot(min(eigen(near_psd_fit$A, symmetric = TRUE)$values) >= -1e-14)
+stopifnot(isTRUE(all.equal(
+  near_psd_fit$climate_change_amount^2,
+  near_psd_fit$niche_distance_change^2 +
+    near_psd_fit$climate_reconfiguration^2,
+  tolerance = 1e-12
+)))
 
 tab <- climniche_table(away)
 stopifnot(all(c("occupied_weight", "climate_reconfiguration",
@@ -176,7 +282,43 @@ length_n_weight_fit <- fit_climniche(
 )
 expected_length_n_center <- colSums(simple_current * c(1, 2, 3, 4)) / 10
 stopifnot(isTRUE(all.equal(unname(length_n_weight_fit$center),
-                           expected_length_n_center)))
+                            expected_length_n_center)))
+
+summary_future <- simple_current
+summary_future[, 1] <- summary_future[, 1] + c(0, 1, 2, 3)
+summary_weight <- c(100, 1, 0, 0)
+summary_fit <- fit_climniche(
+  simple_current,
+  summary_future,
+  occupied = summary_weight,
+  sensitivity = c(1, 1),
+  scale = FALSE,
+  preprocess = FALSE
+)
+summary_current <- summary(summary_fit)
+summary_all <- summary(summary_fit, scope = "all")
+expected_weighted_amount <- sum(
+  summary_fit$climate_change_amount * summary_weight
+) / sum(summary_weight)
+stopifnot(identical(summary_current$scope, "current"))
+stopifnot(identical(summary_all$scope, "all"))
+stopifnot(isTRUE(all.equal(
+  as.numeric(summary_current$climate_change_amount["Mean"]),
+  expected_weighted_amount,
+  tolerance = 1e-12
+)))
+stopifnot(!isTRUE(all.equal(
+  as.numeric(summary_current$climate_change_amount["Mean"]),
+  as.numeric(summary_all$climate_change_amount["Mean"])
+)))
+plot_file <- tempfile(fileext = ".pdf")
+grDevices::pdf(plot_file)
+plotted_current <- plot(summary_fit, type = "amount")
+plotted_all <- plot(summary_fit, type = "reconfiguration", scope = "all")
+grDevices::dev.off()
+unlink(plot_file)
+stopifnot(inherits(plotted_current, "climniche_fit"))
+stopifnot(inherits(plotted_all, "climniche_fit"))
 
 negative_weight <- try(fit_climniche(
   simple_current,
@@ -220,6 +362,17 @@ stopifnot(isTRUE(all.equal(
   pre_fit$niche_distance_change^2 + pre_fit$climate_reconfiguration^2,
   tolerance = 1e-7
 )))
+pre_fit_rescaled <- fit_climniche(
+  pre_current * 1000,
+  pre_future * 1000,
+  occupied = rep(1, 6),
+  sensitivity = c(1, 1, 1, 1),
+  preprocess_correlation = 0.95
+)
+stopifnot(identical(
+  pre_fit$preprocessing$retained_variables,
+  pre_fit_rescaled$preprocessing$retained_variables
+))
 
 pre_off <- fit_climniche(
   pre_current,
@@ -253,10 +406,31 @@ pre_cnfa <- fit_climniche(
   occupied = rep(1, 6),
   cnfa = cnfa_like,
   metric = "factor",
-  preprocess_correlation = 0.95
+  scale = FALSE,
+  preprocess = FALSE
 )
 stopifnot(inherits(pre_cnfa, "climniche_fit"))
-stopifnot(ncol(pre_cnfa$current) == 2L)
+stopifnot(ncol(pre_cnfa$current) == 4L)
+
+bad_cnfa_preprocess <- try(fit_climniche(
+  pre_current,
+  pre_future,
+  occupied = rep(1, 6),
+  cnfa = cnfa_like,
+  metric = "factor",
+  scale = FALSE
+), silent = TRUE)
+stopifnot(inherits(bad_cnfa_preprocess, "try-error"))
+
+bad_cnfa_scale <- try(fit_climniche(
+  pre_current,
+  pre_future,
+  occupied = rep(1, 6),
+  cnfa = cnfa_like,
+  metric = "factor",
+  preprocess = FALSE
+), silent = TRUE)
+stopifnot(inherits(bad_cnfa_scale, "try-error"))
 
 A_full <- diag(seq(1, 1.5, length.out = ncol(sim$current)))
 A_full[1, 2] <- A_full[2, 1] <- 0.25
@@ -427,6 +601,32 @@ if (requireNamespace("raster", quietly = TRUE)) {
   stopifnot(isTRUE(all.equal(sort(unique(rf_domain$occupied_weight[rf_domain$occupied])),
                              c(0.7, 1))))
 
+  # Future missing values do not alter the current reference centre.
+  reference_current <- raster::raster(
+    nrows = 2, ncols = 2, xmn = 0, xmx = 2, ymn = 0, ymx = 2
+  )
+  raster::values(reference_current) <- c(1, 2, 3, 100)
+  reference_future <- reference_current + 1
+  reference_future_values <- raster::getValues(reference_future)
+  reference_future_values[4] <- NA_real_
+  raster::values(reference_future) <- reference_future_values
+  reference_weight <- reference_current
+  raster::values(reference_weight) <- c(1, 0, 0, 100)
+  reference_fit <- fit_climniche_raster(
+    reference_current,
+    reference_future,
+    occupied = reference_weight,
+    scale = FALSE,
+    preprocess = FALSE
+  )
+  stopifnot(isTRUE(all.equal(
+    unname(reference_fit$center),
+    (1 + 100 * 100) / 101,
+    tolerance = 1e-12
+  )))
+  stopifnot(identical(reference_fit$cell_index, 1:3))
+  stopifnot(identical(reference_fit$reference_cell_index, 1:4))
+
   if (requireNamespace("ggplot2", quietly = TRUE)) {
     p_map_new <- plot_climniche_map(rf, metric = "niche_boundary_exceedance",
                                     occupied = occ, occupied_only = TRUE,
@@ -550,6 +750,32 @@ if (requireNamespace("terra", quietly = TRUE)) {
   stopifnot(length(tf_domain$occupied) == 8)
   stopifnot(isTRUE(all.equal(sort(unique(tf_domain$occupied_weight[tf_domain$occupied])),
                              c(0.7, 1))))
+
+  # Future missing values do not alter the current reference centre.
+  reference_current <- terra::rast(
+    nrows = 2, ncols = 2, xmin = 0, xmax = 2, ymin = 0, ymax = 2
+  )
+  terra::values(reference_current) <- c(1, 2, 3, 100)
+  reference_future <- reference_current + 1
+  reference_future_values <- terra::values(reference_future)[, 1]
+  reference_future_values[4] <- NA_real_
+  terra::values(reference_future) <- reference_future_values
+  reference_weight <- reference_current
+  terra::values(reference_weight) <- c(1, 0, 0, 100)
+  reference_fit <- fit_climniche_terra(
+    reference_current,
+    reference_future,
+    occupied = reference_weight,
+    scale = FALSE,
+    preprocess = FALSE
+  )
+  stopifnot(isTRUE(all.equal(
+    unname(reference_fit$center),
+    (1 + 100 * 100) / 101,
+    tolerance = 1e-12
+  )))
+  stopifnot(identical(reference_fit$cell_index, 1:3))
+  stopifnot(identical(reference_fit$reference_cell_index, 1:4))
 
   if (requireNamespace("ggplot2", quietly = TRUE)) {
     p_map_new <- plot_climniche_map(tf, metric = "niche_boundary_exceedance",

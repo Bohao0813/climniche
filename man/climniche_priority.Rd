@@ -14,7 +14,7 @@ climniche_priority(
   criterion_name = NULL,
   criterion_direction = c("maximize", "minimize"),
   scope = c("current", "all"),
-  positive_only = TRUE,
+  positive_only = NULL,
   exposure_direction = c("maximize", "minimize")
 )
 
@@ -42,8 +42,8 @@ preferred.}
 \code{"all"} ranks every evaluated cell with finite criteria.}
 
 \item{positive_only}{If \code{TRUE}, only cells with a positive value of the
-selected exposure quantity are ranked. Set to \code{FALSE} to retain zero and
-negative values.}
+selected exposure quantity are ranked. The default, \code{NULL}, uses \code{TRUE}
+when exposure is maximised and \code{FALSE} when it is minimised.}
 
 \item{exposure_direction}{Whether larger or smaller exposure values are
 preferred in the Pareto comparison. Use \code{"maximize"} to screen for
@@ -81,10 +81,14 @@ weights.
 
 When current reference weights are constant, the default second criterion
 does not distinguish cells and ranking is determined by exposure alone.
+When the weights vary, the default is a within-reference screening rather
+than a comparison with independent ecological evidence. Supply \code{criterion}
+for the latter use.
 
 Only one exposure quantity is used at a time. This avoids counting Climatic
-Displacement, Niche Distance Shift and Climatic Reconfiguration as independent
-objectives even though their values satisfy the fitted geometric identity.
+Displacement, Niche Distance Shift and Climatic Reconfiguration as
+independent objectives even though their values satisfy the fitted
+geometric identity.
 When the second criterion represents ecological value, maximising a
 positive Niche Distance Shift identifies cells where high ecological value
 coincides with movement away from the realised niche centre. Minimising

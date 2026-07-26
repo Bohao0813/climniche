@@ -17,9 +17,9 @@ returns their Pareto fronts.
 
 ## Pareto screening
 
-Each screen pairs one climniche exposure metric with one ecological criterion.
-A cell has Pareto rank 1 when no other retained cell is at least as preferred
-on both objectives and strictly preferred on one. Successive fronts describe
+Each screen pairs one climniche quantity with one ecological criterion. A cell
+has Pareto rank 1 when no other retained cell is at least as preferred on both
+objectives and strictly preferred on one. Successive fronts describe
 increasing Pareto depth. The Pareto depth score rescales these fronts from zero
 to one, with one assigned to the non-dominated front.
 
@@ -31,7 +31,9 @@ conservation ranking.
 
 The spatial fit is taken from the
 [European anchovy example](climniche-examples.html). Current SDM suitability
-provides the ecological criterion for both screens.
+provides the second criterion for both screens. Because this suitability
+surface also defines the fitted reference niche, the result is a
+within-reference spatial screening, not an independent conservation priority.
 
 **Positive Niche Distance Shift screen** combines high current suitability with
 a larger positive Niche Distance Shift. Positive values represent movement
@@ -39,7 +41,7 @@ away from the realised niche centre.
 
 ```{r positive-shift-code, eval = FALSE}
 positive_shift <- climniche_priority(
-  fit,
+  spatial_fit,
   exposure = "niche_distance_change",
   criterion_name = "Current SDM suitability",
   scope = "current",
@@ -54,7 +56,7 @@ coincides with comparatively less local climatic change.
 
 ```{r low-displacement-code, eval = FALSE}
 low_displacement <- climniche_priority(
-  fit,
+  spatial_fit,
   exposure = "climate_change_amount",
   criterion_name = "Current SDM suitability",
   scope = "current",
@@ -114,10 +116,9 @@ front. Panels (b) and (d) map the depth of each retained cell relative to its
 own screen. Pareto depth scores are therefore interpreted within a screen, not
 compared between the two maps.
 
-Suitability is used here because it defines the current anchovy reference. A
-study can instead supply abundance, habitat condition, irreplaceability,
-restoration benefit or management cost through `criterion`, with the preferred
-direction set by `criterion_direction`.
+An independent abundance, habitat-condition, irreplaceability, restoration or
+management-cost layer can instead be supplied through `criterion`, with the
+preferred direction set by `criterion_direction`.
 
 The Pareto procedure follows the spatial multi-criteria application of
 [Tracey et al. (2018)](https://doi.org/10.1371/journal.pone.0200203). Lower

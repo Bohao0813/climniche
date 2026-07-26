@@ -1,0 +1,144 @@
+---
+title: "Niche relative geometry"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Niche relative geometry}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.align = "center")
+```
+
+## Estimand
+
+`climniche` describes projected climatic change at a site relative to a fixed
+current niche reference. Let $c_i$ and $f_i$ be current and future climate,
+$\mu$ the weighted centre of the current reference, and $d_A$ the distance
+under positive semidefinite climatic weighting matrix $A$:
+
+$$
+d_A(x,y)=\sqrt{(x-y)^\mathsf{T}A(x-y)}.
+$$
+
+$$
+\begin{aligned}
+D_i &= d_A(f_i,c_i),\\
+R_i &= d_A(f_i,\mu)-d_A(c_i,\mu),\\
+C_i &= \sqrt{\max(0,D_i^2-R_i^2)},\\
+E_i &= \max(0,d_A(f_i,\mu)-B_q).
+\end{aligned}
+$$
+
+Climatic Displacement ($D_i$) measures local current-to-future change. Niche
+Distance Shift ($R_i$) records whether future conditions lie closer to or
+farther from the reference centre. Climatic Reconfiguration ($C_i$) is the
+derived non-radial component. If $r_{0i}$ and $r_{1i}$ are current and future
+distances from the centre and, when both are positive, $\theta_i$ is the angle
+between their centred vectors, then
+
+$$
+C_i^2=2r_{0i}r_{1i}\{1-\cos(\theta_i)\}.
+$$
+
+This identity does not make $C_i$ a strict orthogonal projection or an
+independent ecological process. Niche Boundary Exceedance ($E_i$) is a
+separate future-state comparison with the weighted empirical radial boundary
+$B_q$.
+
+## Controlled paths
+
+Five paths isolate the terms in two climatic dimensions. Each site starts at
+$(1,0)$, one unit from a fixed centre at $(0,0)$.
+
+```{r}
+library(climniche)
+
+current <- matrix(
+  rep(c(1, 0), 5),
+  ncol = 2,
+  byrow = TRUE,
+  dimnames = list(
+    c("unchanged", "toward", "away", "reoriented", "crossed centre"),
+    c("climate 1", "climate 2")
+  )
+)
+future <- rbind(
+  unchanged = c(1, 0),
+  toward = c(0, 0),
+  away = c(2, 0),
+  reoriented = c(0, 1),
+  `crossed centre` = c(-1, 0)
+)
+colnames(future) <- colnames(current)
+
+geometry_fit <- fit_climniche(
+  current = current,
+  future = future,
+  occupied = rep(1, nrow(current)),
+  center = c(0, 0),
+  A = diag(2),
+  scale = FALSE,
+  preprocess = FALSE,
+  boundary = 0.95,
+  tolerance = 0
+)
+```
+
+```{r}
+geometry_table <- data.frame(
+  path = rownames(current),
+  `Climatic Displacement` = geometry_fit[["climate_change_amount"]],
+  `Niche Distance Shift` = geometry_fit[["niche_distance_change"]],
+  `Climatic Reconfiguration` =
+    geometry_fit[["climate_reconfiguration"]],
+  `Niche Boundary Exceedance` =
+    geometry_fit[["niche_boundary_exceedance"]],
+  check.names = FALSE
+)
+
+knitr::kable(geometry_table, digits = 3)
+```
+
+The toward and away paths have equal Climatic Displacement but opposite Niche
+Distance Shift. Reorientation changes direction without changing radial
+distance. Crossing the centre also changes the direction of the
+centre-referenced vector, which is why Climatic Reconfiguration is positive
+even in one climatic dimension. Only the away path exceeds the fitted radial
+boundary.
+
+```{r}
+identity_error <- with(
+  geometry_fit,
+  climate_change_amount^2 -
+    niche_distance_change^2 -
+    climate_reconfiguration^2
+)
+max(abs(identity_error))
+```
+
+## Relation to other outputs
+
+The quantities answer a different question from an SDM projection. An SDM
+estimates change in a fitted suitability response, whereas `climniche`
+describes change in the climatic space used to define the current reference.
+
+| Output | Quantity described | Niche relative direction |
+|:--|:--|:--|
+| Standardised current-to-future distance | Magnitude of local climatic change | No |
+| Climate-niche factor analysis departure | Magnitude in a fitted climate sensitivity space | Not in the original formulation |
+| Projected SDM suitability change | Change in the fitted suitability response | Model dependent |
+| `climniche` | Local displacement, signed centre-relative shift and empirical radial boundary exceedance | Yes |
+
+Rinnan and Lawler (2019) identified the missing toward-or-away interpretation
+as a direction for further development in climate-niche factor analysis.
+`climniche` addresses that specific gap at the cell level. The reference centre
+and boundary remain empirical summaries of the supplied current distribution;
+they are not physiological limits or a fundamental niche.
+
+## Reference
+
+Rinnan DS, Lawler J (2019). Climate-niche factor analysis: a spatial approach
+to quantifying species vulnerability to climate change. *Ecography* 42:
+1494-1503. [doi:10.1111/ecog.03937](https://doi.org/10.1111/ecog.03937).

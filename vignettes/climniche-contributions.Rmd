@@ -11,20 +11,22 @@ vignette: >
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.align = "center")
 ```
 
-The four exposure metrics describe the magnitude and niche relative geometry
-of projected climatic change. The contribution terms partition the change in
-squared distance from the realised niche centre among the fitted climate
-variables at each cell.
+Climatic Displacement and Niche Distance Shift describe the magnitude and
+centre-relative direction of projected climatic change. Climatic
+Reconfiguration is derived from that geometry, while Niche Boundary
+Exceedance is a separate radial boundary comparison. The contribution terms
+partition the change in squared distance from the realised niche centre among
+the fitted climate variables at each cell.
 
 ## Cell level contributions
 
-The object `fit` is the European anchovy fit constructed in the
+The object `spatial_fit` is the European anchovy fit constructed in the
 [Mediterranean example](climniche-examples.html). Contributions are restricted
-to cells with positive current SDM suitability.
+to cells with positive current reference weight.
 
 ```{r contribution-code, eval = FALSE}
 contribution <- climniche_dominant_contribution(
-  fit,
+  spatial_fit,
   scope = "current"
 )
 

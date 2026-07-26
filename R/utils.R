@@ -295,7 +295,7 @@
   ref <- ref[ord]
   w <- w[ord]
   cum <- cumsum(w) / sum(w)
-  idx <- findInterval(values, ref, rightmost.closed = TRUE)
+  idx <- findInterval(values, ref)
   out <- ifelse(idx > 0, cum[idx], 0)
   out[!is.finite(values)] <- NA_real_
   out
@@ -390,7 +390,8 @@
     stop(arg, " must be symmetric.", call. = FALSE)
   }
   A <- (A + t(A)) / 2
-  ev <- eigen(A, symmetric = TRUE, only.values = TRUE)$values
+  decomposition <- eigen(A, symmetric = TRUE)
+  ev <- decomposition$values
   ev_tol <- tol * max(1, max(abs(ev)))
   if (min(ev) < -ev_tol) {
     stop(arg, " must be positive semidefinite.", call. = FALSE)
@@ -398,6 +399,14 @@
   if (max(ev) <= ev_tol) {
     stop(arg, " must contain at least one positive dimension.",
          call. = FALSE)
+  }
+  if (any(ev < 0)) {
+    dim_names <- dimnames(A)
+    ev[ev < 0] <- 0
+    A <- sweep(decomposition$vectors, 2L, ev, "*") %*%
+      t(decomposition$vectors)
+    A <- (A + t(A)) / 2
+    dimnames(A) <- dim_names
   }
   A
 }
@@ -448,7 +457,11 @@
   settings$min_sd <- min_sd
 
   sd_current <- apply(current, 2L, stats::sd)
-  keep <- is.finite(sd_current) & sd_current > min_sd
+  finite_sd <- sd_current[is.finite(sd_current)]
+  sd_reference <- if (length(finite_sd)) max(finite_sd) else 0
+  effective_min_sd <- min_sd * sd_reference
+  settings$effective_min_sd <- effective_min_sd
+  keep <- is.finite(sd_current) & sd_current > effective_min_sd
   removed <- data.frame(
     variable = variable[!keep],
     reason = rep("near-zero current variance", sum(!keep)),

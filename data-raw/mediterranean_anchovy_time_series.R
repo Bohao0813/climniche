@@ -10,15 +10,12 @@ suppressPackageStartupMessages({
 
 sf::sf_use_s2(FALSE)
 
-run_dir <- file.path(
-  "output", "mediterranean_anchovy", "20260619_zscore_example"
-)
+case_run <- Sys.getenv("CLIMNICHE_CASE_RUN", "20260619_zscore_example")
+run_dir <- file.path("output", "mediterranean_anchovy", case_run)
 case_dir <- file.path("inst", "extdata", "mediterranean_anchovy")
 input_root <- file.path("..", "..", "data-raw")
 biooracle_dir <- file.path(input_root, "biooracle_v3")
-region_file <- file.path(
-  input_root, "marine_regions", "mediterranean_iho_mrgid1905.gpkg"
-)
+region_file <- file.path("data-raw", "mediterranean_iho_mrgid1905.geojson")
 dir.create(biooracle_dir, showWarnings = FALSE, recursive = TRUE)
 
 med_boundary <- st_read(region_file, quiet = TRUE)

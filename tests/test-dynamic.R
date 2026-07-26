@@ -64,6 +64,37 @@ stopifnot(isTRUE(all.equal(
   dynamic_weights,
   tolerance = 0
 )))
+subset_rows <- c(3, 10, 40)
+subset_fit <- project_climniche(
+  dynamic_reference,
+  dynamic_future[subset_rows, , drop = FALSE],
+  current = dynamic_current[subset_rows, , drop = FALSE]
+)
+stopifnot(isTRUE(all.equal(
+  subset_fit$occupied_weight,
+  dynamic_weights[subset_rows],
+  tolerance = 0
+)))
+
+mixed_current <- rbind(
+  dynamic_current[subset_rows[1:2], , drop = FALSE],
+  unseen_cell = dynamic_current[50, ]
+)
+mixed_future <- rbind(
+  dynamic_future[subset_rows[1:2], , drop = FALSE],
+  unseen_cell = dynamic_future[50, ]
+)
+mixed_fit <- project_climniche(
+  dynamic_reference,
+  mixed_future,
+  current = mixed_current
+)
+stopifnot(isTRUE(all.equal(
+  mixed_fit$occupied_weight,
+  c(dynamic_weights[subset_rows[1:2]], 1),
+  tolerance = 0
+)))
+
 new_current <- dynamic_current
 new_future <- dynamic_future
 rownames(new_current) <- paste0("new_cell_", seq_len(nrow(new_current)))

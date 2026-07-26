@@ -471,7 +471,7 @@ plot_climniche_summary_figure <- function(x, scope = c("current", "all"),
       labels = function(z) paste0(round(100 * z), "%")
     ) +
     ggplot2::labs(
-      title = "(d) Metric distributions",
+    title = "(d) Quantity distributions",
       x = NULL,
       y = "Weighted percentage"
     ) +

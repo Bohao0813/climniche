@@ -35,13 +35,13 @@ Rows are cells or sites and columns are climatic variables.}
 
 \item{center}{Optional realised niche centre in the fitted climatic space.}
 
-\item{sensitivity}{Optional non-negative variable sensitivity weights.}
+\item{sensitivity}{Optional non-negative climatic metric weights.}
 
 \item{A}{Optional climatic weighting matrix.}
 
 \item{metric}{Method used to build \code{A} when it is not supplied.}
 
-\item{boundary}{Weighted quantile defining the empirical niche boundary.}
+\item{boundary}{Weighted quantile defining the empirical radial boundary.}
 
 \item{scale}{If \code{TRUE}, standardise retained variables using current-climate
 means and standard deviations.}
@@ -52,8 +52,8 @@ variables before fitting.}
 \item{preprocess_correlation}{Maximum absolute correlation retained during
 preprocessing.}
 
-\item{preprocess_min_sd}{Minimum current-climate standard deviation retained
-during preprocessing.}
+\item{preprocess_min_sd}{Minimum current-climate standard deviation as a
+fraction of the largest finite current standard deviation.}
 
 \item{global_mean, global_sd}{Optional centring and scaling values.}
 }
@@ -62,14 +62,14 @@ A \code{climniche_reference} object.
 }
 \description{
 Estimates the preprocessing, standardisation, realised niche centre,
-climatic weighting matrix and empirical niche boundary once. The resulting
+climatic weighting matrix and empirical radial boundary once. The resulting
 object can be reused with \code{\link[=project_climniche]{project_climniche()}} for several future periods or
 climate models.
 }
 \details{
 The reference object fixes the climatic space used for all subsequent
 projections. Future conditions do not alter the centre, weighting matrix,
-standardisation or empirical boundary.
+standardisation or empirical radial boundary.
 }
 \examples{
 sim <- simulate_climniche(n = 200, p = 6, seed = 4)

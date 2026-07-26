@@ -21,11 +21,13 @@ input_root <- file.path("..", "..", "data-raw")
 data_dir <- file.path(input_root, "mediterranean_anchovy")
 biooracle_dir <- file.path(input_root, "biooracle_v3")
 region_file <- file.path(
-  input_root,
-  "marine_regions",
-  "mediterranean_iho_mrgid1905.gpkg"
+  "data-raw",
+  "mediterranean_iho_mrgid1905.geojson"
 )
-run_id <- Sys.getenv("CLIMNICHE_RUN_ID", format(Sys.time(), "%Y%m%d_%H%M%S"))
+run_id <- Sys.getenv(
+  "CLIMNICHE_CASE_RUN",
+  format(Sys.time(), "%Y%m%d_%H%M%S")
+)
 out_dir <- file.path("output", "mediterranean_anchovy", run_id)
 
 dir.create(data_dir, showWarnings = FALSE, recursive = TRUE)
@@ -514,6 +516,66 @@ fit <- fit_climniche_terra(
   preprocess_min_sd = climniche_preprocess_min_sd
 )
 saveRDS(fit, file.path(out_dir, "anchovy_climniche_fit.rds"))
+
+sample_evenly <- function(index, n) {
+  position <- unique(round(seq(1, length(index), length.out = min(n, length(index)))))
+  index[position]
+}
+
+# A compact extract keeps the vignette executable without shipping the rasters.
+suitability_values <- terra::values(suitability_r)[fit$cell_index, 1]
+positive_reference <- which(suitability_values > sdm$threshold)
+other_cells <- which(suitability_values <= sdm$threshold)
+sample_rows <- sort(c(
+  sample_evenly(positive_reference, 1200),
+  sample_evenly(other_cells, 800)
+))
+sample_xy <- terra::xyFromCell(
+  suitability_r,
+  fit$cell_index[sample_rows]
+)
+sample_current <- sweep(
+  fit$current[sample_rows, , drop = FALSE],
+  2,
+  fit$standardization$scale,
+  "*"
+)
+sample_current <- sweep(
+  sample_current,
+  2,
+  fit$standardization$center,
+  "+"
+)
+sample_future <- sweep(
+  fit$future[sample_rows, , drop = FALSE],
+  2,
+  fit$standardization$scale,
+  "*"
+)
+sample_future <- sweep(
+  sample_future,
+  2,
+  fit$standardization$center,
+  "+"
+)
+colnames(sample_current) <- paste0(colnames(fit$current), "_current")
+colnames(sample_future) <- paste0(colnames(fit$future), "_future")
+vignette_input <- data.frame(
+  cell = fit$cell_index[sample_rows],
+  longitude = sample_xy[, 1],
+  latitude = sample_xy[, 2],
+  sdm_suitability = suitability_values[sample_rows],
+  sample_current,
+  sample_future,
+  check.names = FALSE
+)
+case_dir <- file.path("inst", "extdata", "mediterranean_anchovy")
+dir.create(case_dir, recursive = TRUE, showWarnings = FALSE)
+utils::write.csv(
+  vignette_input,
+  file.path(case_dir, "anchovy_climniche_input_sample.csv"),
+  row.names = FALSE
+)
 
 sensitivity_table <- data.frame(
   variable = names(fit$sensitivity_weights),

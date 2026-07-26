@@ -21,17 +21,17 @@
 #' @param domain_threshold Threshold used when `domain` is supplied.
 #' @param cnfa Optional compatible CENFA object.
 #' @param center Optional realised niche centre in the fitted climatic space.
-#' @param sensitivity Optional non-negative variable sensitivity weights.
+#' @param sensitivity Optional non-negative climatic metric weights.
 #' @param A Optional climatic weighting matrix.
 #' @param metric Method used to build `A` when it is not supplied.
-#' @param boundary Weighted quantile defining the empirical niche boundary.
+#' @param boundary Weighted quantile defining the empirical radial boundary.
 #' @param scale If `TRUE`, standardise retained variables using current climate.
 #' @param preprocess If `TRUE`, screen near-zero variance and highly correlated
 #'   current-climate variables.
 #' @param preprocess_correlation Maximum absolute correlation retained during
 #'   preprocessing.
-#' @param preprocess_min_sd Minimum current-climate standard deviation retained
-#'   during preprocessing.
+#' @param preprocess_min_sd Minimum current-climate standard deviation as a
+#'   fraction of the largest finite current standard deviation.
 #' @param global_mean,global_sd Optional centring and scaling values.
 #' @param tolerance Optional tolerance around zero for Niche Distance Shift.
 #' @param tolerance_quantile Quantile used when `tolerance = NULL`.
@@ -43,7 +43,7 @@
 #'
 #' @details
 #' The current niche centre, climatic weighting matrix, standardisation and
-#' empirical boundary are held fixed. For spatial inputs, this reference is
+#' empirical radial boundary are held fixed. For spatial inputs, this reference is
 #' estimated from finite current cells within `domain`, independently of
 #' missing values in future projections. Future comparisons use the common set
 #' of finite cells across all projections. All projections also use one Niche

@@ -17,3 +17,5 @@
 ^climniche-Ex\.R$
 ^data-raw$
 ^vignettes/figures/.*[.]pdf$
+^LICENSE[.]md$
+^check-
