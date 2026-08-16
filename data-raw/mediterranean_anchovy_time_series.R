@@ -158,18 +158,15 @@ range_summary <- climniche_range_summary(
   scope = "current",
   area_weight = TRUE
 )
-persistence <- 2L
 departure <- climniche_departure(
   series,
-  scope = "current",
-  persistence = persistence
+  scope = "current"
 )
 series_report <- climniche_series_report(
   series,
   species = "European anchovy",
   scope = "current",
-  area_weight = TRUE,
-  persistence = persistence
+  area_weight = TRUE
 )
 
 write.csv(
@@ -282,24 +279,24 @@ degree_label <- function(x, positive, negative) {
 }
 
 reference_cells <- departure$cell
-first_departure <- as.numeric(departure$first_persistent_departure)
-departure_fraction <- departure$departure_time_fraction
+first_departure <- as.numeric(departure$first_boundary_exceedance)
+departure_fraction <- departure$boundary_exceedance_projection_fraction
 
 first_raster <- suitability
 terra::values(first_raster) <- NA_real_
-onset_years <- years[seq_len(length(years) - persistence + 1L)]
+first_years <- years
 first_values <- rep(NA_character_, terra::ncell(first_raster))
 first_values[reference_cells] <- ifelse(
   is.na(first_departure),
-  "No persistent exceedance",
+  "Not exceeded",
   as.character(first_departure)
 )
 first_data <- as.data.frame(first_raster, xy = TRUE, na.rm = FALSE)[, 1:2]
 first_data$departure <- factor(
   first_values,
   levels = c(
-    as.character(onset_years),
-    "No persistent exceedance"
+    as.character(first_years),
+    "Not exceeded"
   )
 )
 first_data <- first_data[!is.na(first_data$departure), ]
@@ -365,13 +362,14 @@ first_map <- ggplot() +
       "2030" = "#8c2d04",
       "2050" = "#d94801",
       "2070" = "#f16913",
-      "No persistent exceedance" = "#dce8e5"
+      "2090" = "#fdae6b",
+      "Not exceeded" = "#dce8e5"
     ),
     drop = FALSE,
-    name = "Projection year"
+    name = "First projection"
   ) +
   labs(
-    title = "(a) Persistent boundary exceedance onset",
+    title = "(a) First boundary exceedance",
     x = NULL,
     y = NULL
   ) +
@@ -395,10 +393,10 @@ fraction_map <- ggplot() +
     limits = c(0, 1),
     breaks = seq(0, 1, by = 0.25),
     labels = function(x) paste0(round(100 * x), "%"),
-    name = "Time weighted fraction"
+    name = "Projection fraction"
   ) +
   labs(
-    title = "(b) Time weighted exceedance fraction",
+    title = "(b) Boundary exceedance frequency",
     x = NULL,
     y = NULL
   ) +

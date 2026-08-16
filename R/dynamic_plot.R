@@ -258,10 +258,12 @@ plot_climniche_time <- function(
 #' Map Niche Boundary Exceedance through time
 #'
 #' @param x A spatial `climniche_series` object.
-#' @param metric Temporal result field to map. Available fields are persistent
-#'   exceedance onset (`first_persistent_departure`), time weighted exceedance
-#'   fraction (`departure_time_fraction`), mean or maximum relative exceedance,
-#'   and climate model agreement.
+#' @param metric Temporal result field to map. Available fields include first
+#'   sampled boundary exceedance (`first_boundary_exceedance`), the fraction of
+#'   projections beyond the boundary
+#'   (`boundary_exceedance_projection_fraction`), persistent exceedance onset,
+#'   interval-weighted exceedance, relative exceedance and climate model
+#'   agreement.
 #' @param model,scenario,time Optional projection selectors. A selector is
 #'   required when more than one relevant value is present.
 #' @param scope,persistence,boundary_exceedance_tolerance Arguments passed to
@@ -276,7 +278,10 @@ plot_climniche_time <- function(
 #' @export
 plot_climniche_departure_map <- function(
     x,
-    metric = c("first_persistent_departure",
+    metric = c("first_boundary_exceedance",
+               "boundary_exceedance_projection_fraction",
+               "first_persistent_departure",
+               "boundary_exceedance_time_fraction",
                "departure_time_fraction",
                "mean_relative_exceedance",
                "maximum_relative_exceedance",
@@ -340,8 +345,14 @@ plot_climniche_departure_map <- function(
     )
     value <- data[[metric]]
     labels <- c(
+      first_boundary_exceedance =
+        "First Niche Boundary Exceedance",
+      boundary_exceedance_projection_fraction =
+        "Niche Boundary Exceedance Projection Fraction",
       first_persistent_departure =
         "Persistent Niche Boundary Exceedance Onset",
+      boundary_exceedance_time_fraction =
+        "Time Weighted Niche Boundary Exceedance Fraction",
       departure_time_fraction =
         "Time Weighted Niche Boundary Exceedance Fraction",
       mean_relative_exceedance =
@@ -351,14 +362,17 @@ plot_climniche_departure_map <- function(
     )
     default_title <- labels[[metric]]
     default_legend <- labels[[metric]]
-    if (identical(metric, "first_persistent_departure")) {
+    if (metric %in% c("first_boundary_exceedance",
+                      "first_persistent_departure")) {
       if (!is.numeric(x$index$time)) {
-        stop("Persistent exceedance onset maps require numeric projection times.",
+        stop("Boundary exceedance timing maps require numeric projection times.",
              call. = FALSE)
       }
       value <- as.numeric(value)
     }
-    if (identical(metric, "departure_time_fraction") && is.null(limits)) {
+    if (metric %in% c("boundary_exceedance_projection_fraction",
+                      "boundary_exceedance_time_fraction",
+                      "departure_time_fraction") && is.null(limits)) {
       limits <- c(0, 1)
     }
     if (is.null(colours)) {

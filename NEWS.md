@@ -1,3 +1,13 @@
+# climniche 0.3.8
+
+* Separated first observed Niche Boundary Exceedance from persistent
+  exceedance onset. A first exceedance can now occur in the final supplied
+  projection without being treated as missing.
+* Added primary fields for the fraction of supplied projections beyond the
+  niche boundary while retaining the existing temporal field names.
+* Revised the temporal example to map first boundary exceedance across all
+  supplied projection years.
+
 # climniche 0.3.7
 
 * Clarified the mathematical relation among Climatic Displacement, Niche

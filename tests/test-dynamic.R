@@ -20,8 +20,10 @@ stopifnot(identical(
   )
 ))
 stopifnot(identical(
-  dynamic_definitions$name[4:6],
+  dynamic_definitions$name[4:8],
   c(
+    "First Niche Boundary Exceedance",
+    "Niche Boundary Exceedance Projection Fraction",
     "Persistent Niche Boundary Exceedance Onset",
     "Time Weighted Niche Boundary Exceedance Fraction",
     "Cumulative Relative Niche Boundary Exceedance"
@@ -29,7 +31,7 @@ stopifnot(identical(
 ))
 stopifnot(all(grepl(
   "tolerance",
-  dynamic_definitions$definition[c(1:5, 7)],
+  dynamic_definitions$definition[c(1:7, 9)],
   ignore.case = TRUE
 )))
 stopifnot(!any(grepl(
@@ -255,10 +257,47 @@ departure <- climniche_departure(
   boundary_exceedance_tolerance = 0
 )
 departure_cell <- departure[departure$cell == 1, , drop = FALSE]
+stopifnot(identical(as.numeric(departure_cell$first_boundary_exceedance),
+                    2050))
 stopifnot(identical(as.numeric(departure_cell$first_persistent_departure),
                     2050))
+stopifnot(isTRUE(all.equal(
+  departure_cell$boundary_exceedance_projection_fraction,
+  departure_cell$departure_projection_fraction,
+  tolerance = 0
+)))
+stopifnot(isTRUE(all.equal(
+  departure_cell$boundary_exceedance_time_fraction,
+  departure_cell$departure_time_fraction,
+  tolerance = 0
+)))
 stopifnot(identical(departure_cell$reentry_count, 1L))
 stopifnot(isTRUE(departure_cell$reentered))
+
+# First exceedance and persistent onset answer different temporal questions.
+# A final-period exceedance remains visible even when no later projection can
+# confirm persistence.
+final_only_series <- departure_series
+for (i in seq_along(final_only_series$fits)) {
+  final_value <- if (i == length(final_only_series$fits)) 0.4 else 0
+  final_only_series$fits[[i]]$niche_boundary_exceedance[1] <- final_value
+  final_only_series$fits[[i]]$outside_niche_exceedance[1] <- final_value
+}
+final_only <- climniche_departure(
+  final_only_series,
+  scope = "all",
+  persistence = 2,
+  boundary_exceedance_tolerance = 0
+)
+final_only_cell <- final_only[final_only$cell == 1, , drop = FALSE]
+stopifnot(identical(as.numeric(final_only_cell$first_boundary_exceedance),
+                    2090))
+stopifnot(is.na(final_only_cell$first_persistent_departure))
+stopifnot(isTRUE(all.equal(
+  final_only_cell$boundary_exceedance_projection_fraction,
+  0.25,
+  tolerance = 0
+)))
 
 date_series <- departure_series
 date_series$index$time <- as.Date(c(
@@ -271,6 +310,7 @@ date_departure <- climniche_departure(
   boundary_exceedance_tolerance = 0
 )
 stopifnot(inherits(date_departure$first_persistent_departure, "Date"))
+stopifnot(inherits(date_departure$first_boundary_exceedance, "Date"))
 stopifnot(identical(unique(date_departure$time_unit), "days"))
 
 posix_series <- departure_series
@@ -425,7 +465,7 @@ if (requireNamespace("raster", quietly = TRUE)) {
   if (requireNamespace("ggplot2", quietly = TRUE)) {
     departure_map <- plot_climniche_departure_map(
       raster_series,
-      metric = "departure_time_fraction",
+      metric = "boundary_exceedance_projection_fraction",
       scope = "all",
       title = FALSE,
       legend_title = FALSE

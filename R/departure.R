@@ -9,10 +9,11 @@
 #' @param boundary_exceedance_tolerance Optional non-negative boundary
 #'   tolerance. The fitted value is used by default.
 #'
-#' @return A data frame with one row per cell, model and scenario. The main
-#'   temporal fields are persistent exceedance onset
-#'   (`first_persistent_departure`), Time Weighted Niche Boundary Exceedance
-#'   Fraction (`departure_time_fraction`) and relative exceedance summaries.
+#' @return A data frame with one row per cell, model and scenario. Primary
+#'   temporal fields give the first sampled Niche Boundary Exceedance
+#'   (`first_boundary_exceedance`) and the fraction of supplied projections
+#'   beyond the boundary (`boundary_exceedance_projection_fraction`). Persistent
+#'   onset and interval-weighted summaries are also returned.
 #'
 #' @details
 #' At projection time \eqn{t_k}, let \eqn{e_{ik}} be Niche Boundary Exceedance
@@ -81,6 +82,13 @@ climniche_departure <- function(
     } else {
       rep(NA_real_, length(exceedance))
     }
+    first_boundary_index <- which(beyond)[1L]
+    first_boundary_time <- if (length(first_boundary_index) &&
+                               !is.na(first_boundary_index)) {
+      dat$time[first_boundary_index]
+    } else {
+      dat$time[NA_integer_]
+    }
     first_index <- which(persistent)[1L]
     last_index <- utils::tail(which(persistent), 1L)
     first_time <- if (length(first_index) && !is.na(first_index)) {
@@ -98,6 +106,8 @@ climniche_departure <- function(
     } else {
       0L
     }
+    projection_fraction <- mean(beyond)
+    time_fraction <- .time_mean(as.numeric(beyond), time_numeric)
     data.frame(
       cell = dat$cell[1L],
       model = dat$model[1L],
@@ -105,10 +115,13 @@ climniche_departure <- function(
       scope = scope,
       n_projections = nrow(dat),
       persistence = persistence,
+      first_boundary_exceedance = first_boundary_time,
       first_persistent_departure = first_time,
       last_persistent_departure = last_time,
-      departure_projection_fraction = mean(beyond),
-      departure_time_fraction = .time_mean(as.numeric(beyond), time_numeric),
+      boundary_exceedance_projection_fraction = projection_fraction,
+      departure_projection_fraction = projection_fraction,
+      boundary_exceedance_time_fraction = time_fraction,
+      departure_time_fraction = time_fraction,
       persistent_departure_time_fraction =
         .time_mean(as.numeric(persistent), time_numeric),
       mean_relative_exceedance = .time_mean(relative, time_numeric),

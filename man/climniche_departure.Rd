@@ -25,10 +25,11 @@ persistence summaries, not the continuous exceedance values.}
 tolerance. The fitted value is used by default.}
 }
 \value{
-A data frame with one row per cell, model and scenario. The main
-temporal fields are persistent exceedance onset
-(\code{first_persistent_departure}), Time Weighted Niche Boundary Exceedance
-Fraction (\code{departure_time_fraction}) and relative exceedance summaries.
+A data frame with one row per cell, model and scenario. Primary
+temporal fields give the first sampled Niche Boundary Exceedance
+(\code{first_boundary_exceedance}) and the fraction of supplied projections
+beyond the boundary (\code{boundary_exceedance_projection_fraction}). Persistent
+onset and interval-weighted summaries are also returned.
 }
 \description{
 Summarise Niche Boundary Exceedance through time

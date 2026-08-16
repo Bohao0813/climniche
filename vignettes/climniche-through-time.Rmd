@@ -184,17 +184,18 @@ falls from 27.6% to 12.5% over the same period. This combination is consistent
 with the addition of cells with relatively small exceedance. Range Mean
 Relative Niche Boundary Exceedance rises from 2.1% to 9.9%.
 
-## Persistent Niche Boundary Exceedance
+## Timing within the current distribution
 
-Here, persistence requires positive Niche Boundary Exceedance in at least two
-consecutive projections. The onset is the first sampled year in a qualifying
-run; it is not an interpolated date of boundary crossing.
+The first exceedance year identifies the first supplied projection in which a
+cell lies beyond the current niche boundary. The projection fraction records
+how many of the four supplied future periods exceed that boundary. Both
+summaries refer to the sampled projections and do not estimate an intervening
+crossing date.
 
 ```{r departure-code, eval = FALSE}
 departure <- climniche_departure(
   series,
-  scope = "current",
-  persistence = 2
+  scope = "current"
 )
 
 rate <- climniche_change_rate(
@@ -207,20 +208,22 @@ rate <- climniche_change_rate(
 
 ```{r departure-summary, echo = FALSE}
 departure_table <- data.frame(
-  `Persistent boundary exceedance fraction` = paste0(
+  `Boundary exceedance fraction` = paste0(
     round(
-      100 * departure_summary[["proportion_with_persistent_departure"]],
+      100 * departure_summary[["proportion_with_boundary_exceedance"]],
       1
     ),
     "%"
   ),
-  `Median onset` = departure_summary[["median_first_persistent_departure"]],
-  `Mean time weighted exceedance fraction` = paste0(
-    round(100 * departure_summary[["mean_departure_time_fraction"]], 1),
-    "%"
-  ),
-  `Subsequent return below boundary` = paste0(
-    round(100 * departure_summary[["proportion_with_reentry"]], 1),
+  `Median first exceedance` =
+    departure_summary[["median_first_boundary_exceedance"]],
+  `Mean projection fraction` = paste0(
+    round(
+      100 * departure_summary[[
+        "mean_boundary_exceedance_projection_fraction"
+      ]],
+      1
+    ),
     "%"
   ),
   check.names = FALSE
@@ -232,37 +235,32 @@ knitr::kable(departure_table, row.names = FALSE)
 ```{r departure-map-code, eval = FALSE}
 onset_map <- plot_climniche_departure_map(
   series,
-  metric = "first_persistent_departure",
+  metric = "first_boundary_exceedance",
   scope = "current",
-  persistence = 2,
   scenario = "SSP2-4.5",
   study_region = mediterranean_boundary,
   degree_labels = "hemisphere"
 )
 
-time_weighted_map <- plot_climniche_departure_map(
+frequency_map <- plot_climniche_departure_map(
   series,
-  metric = "departure_time_fraction",
+  metric = "boundary_exceedance_projection_fraction",
   scope = "current",
-  persistence = 2,
   scenario = "SSP2-4.5",
   study_region = mediterranean_boundary,
   degree_labels = "hemisphere"
 )
 
-patchwork::wrap_plots(onset_map, time_weighted_map, nrow = 1)
+patchwork::wrap_plots(onset_map, frequency_map, nrow = 1)
 ```
 
 ```{r departure-map-output, echo = FALSE, out.width = "100%"}
 knitr::include_graphics("figures/anchovy-climniche-time-maps.png")
 ```
 
-Cells with persistent Niche Boundary Exceedance in at least two consecutive
-sampled projections account for 28.4% of the current reference after weighting
-by suitability and cell area. Median onset is 2070. The earliest persistent
-exceedance occurs mainly in the Aegean, while later onset extends through parts
-of the western and south-central Mediterranean. No sampled return below the
-boundary follows a persistent exceedance run in this four-period series.
+The map distinguishes early exceedance from cells whose future climate first
+appears beyond the boundary in 2090. The accompanying frequency map shows
+whether exceedance is confined to one projection or recurs across the series.
 
 The largest increase in Range Mean Relative Niche Boundary Exceedance occurs
 between 2070 and 2090:
@@ -296,8 +294,7 @@ series_report <- climniche_series_report(
   series,
   species = "European anchovy",
   scope = "current",
-  area_weight = TRUE,
-  persistence = 2
+  area_weight = TRUE
 )
 
 series_report

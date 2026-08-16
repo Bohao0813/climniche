@@ -6,8 +6,10 @@
 \usage{
 plot_climniche_departure_map(
   x,
-  metric = c("first_persistent_departure", "departure_time_fraction",
-    "mean_relative_exceedance", "maximum_relative_exceedance", "model_agreement"),
+  metric = c("first_boundary_exceedance", "boundary_exceedance_projection_fraction",
+    "first_persistent_departure", "boundary_exceedance_time_fraction",
+    "departure_time_fraction", "mean_relative_exceedance", "maximum_relative_exceedance",
+    "model_agreement"),
   model = NULL,
   scenario = NULL,
   time = NULL,
@@ -24,10 +26,12 @@ plot_climniche_departure_map(
 \arguments{
 \item{x}{A spatial \code{climniche_series} object.}
 
-\item{metric}{Temporal result field to map. Available fields are persistent
-exceedance onset (\code{first_persistent_departure}), time weighted exceedance
-fraction (\code{departure_time_fraction}), mean or maximum relative exceedance,
-and climate model agreement.}
+\item{metric}{Temporal result field to map. Available fields include first
+sampled boundary exceedance (\code{first_boundary_exceedance}), the fraction of
+projections beyond the boundary
+(\code{boundary_exceedance_projection_fraction}), persistent exceedance onset,
+interval-weighted exceedance, relative exceedance and climate model
+agreement.}
 
 \item{model, scenario, time}{Optional projection selectors. A selector is
 required when more than one relevant value is present.}

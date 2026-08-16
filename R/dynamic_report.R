@@ -24,6 +24,8 @@
       "Weighted Niche Boundary Exceedance Fraction",
       "Conditional Relative Niche Boundary Exceedance",
       "Range Mean Relative Niche Boundary Exceedance",
+      "First Niche Boundary Exceedance",
+      "Niche Boundary Exceedance Projection Fraction",
       "Persistent Niche Boundary Exceedance Onset",
       "Time Weighted Niche Boundary Exceedance Fraction",
       "Cumulative Relative Niche Boundary Exceedance",
@@ -34,6 +36,8 @@
       "exposed_fraction",
       "conditional_relative_exceedance",
       "range_wide_relative_exceedance",
+      "first_boundary_exceedance",
+      "boundary_exceedance_projection_fraction",
       "first_persistent_departure",
       "departure_time_fraction",
       "cumulative_relative_exceedance",
@@ -52,6 +56,14 @@
       paste(
         "Weighted mean relative Niche Boundary Exceedance across all cells",
         "after values at or below the selected tolerance are set to zero."
+      ),
+      paste(
+        "First supplied projection with Niche Boundary Exceedance above the",
+        "selected tolerance."
+      ),
+      paste(
+        "Fraction of supplied projections with Niche Boundary Exceedance",
+        "above the selected tolerance."
       ),
       paste(
         "First sampled projection in a run above the selected boundary",
@@ -118,6 +130,12 @@
     mean_niche_boundary_exceedance = "Mean Niche Boundary Exceedance",
     proportion_with_persistent_departure =
       "Fraction With Persistent Niche Boundary Exceedance",
+    proportion_with_boundary_exceedance =
+      "Fraction With Niche Boundary Exceedance",
+    median_first_boundary_exceedance =
+      "Median First Niche Boundary Exceedance",
+    mean_boundary_exceedance_projection_fraction =
+      "Mean Niche Boundary Exceedance Projection Fraction",
     median_first_persistent_departure =
       "Median Persistent Niche Boundary Exceedance Onset",
     mean_departure_time_fraction =
@@ -165,22 +183,43 @@
     ok <- weight > 0
     weight <- weight[ok]
     dat <- dat[ok, , drop = FALSE]
-    first_numeric <- as.numeric(dat$first_persistent_departure)
-    first_ok <- is.finite(first_numeric)
+    first_boundary_numeric <- as.numeric(dat$first_boundary_exceedance)
+    first_boundary_ok <- is.finite(first_boundary_numeric)
+    first_persistent_numeric <- as.numeric(dat$first_persistent_departure)
+    first_persistent_ok <- is.finite(first_persistent_numeric)
     data.frame(
       model = dat$model[1L],
       scenario = dat$scenario[1L],
       n = nrow(dat),
       aggregation_weight_sum = sum(weight),
+      proportion_with_boundary_exceedance =
+        .weighted_mean_vector(
+          as.numeric(!is.na(dat$first_boundary_exceedance)),
+          weight
+        ),
+      median_first_boundary_exceedance = if (any(first_boundary_ok)) {
+        .restore_time_class(.weighted_quantile(
+          first_boundary_numeric[first_boundary_ok],
+          weight[first_boundary_ok],
+          probs = 0.5
+        ), dat$first_boundary_exceedance)
+      } else {
+        NA_real_
+      },
+      mean_boundary_exceedance_projection_fraction =
+        .weighted_mean_vector(
+          dat$boundary_exceedance_projection_fraction,
+          weight
+        ),
       proportion_with_persistent_departure =
         .weighted_mean_vector(
           as.numeric(!is.na(dat$first_persistent_departure)),
           weight
         ),
-      median_first_persistent_departure = if (any(first_ok)) {
+      median_first_persistent_departure = if (any(first_persistent_ok)) {
         .restore_time_class(.weighted_quantile(
-          first_numeric[first_ok],
-          weight[first_ok],
+          first_persistent_numeric[first_persistent_ok],
+          weight[first_persistent_ok],
           probs = 0.5
         ), dat$first_persistent_departure)
       } else {

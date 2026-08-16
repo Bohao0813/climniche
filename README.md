@@ -115,7 +115,7 @@ series <- fit_climniche_series(
 )
 
 climniche_range_summary(series)
-climniche_departure(series)
+departure <- climniche_departure(series)
 plot_climniche_time(series)
 ```
 
@@ -125,6 +125,9 @@ Relative Niche Boundary Exceedance. These are weighted summaries of Niche
 Boundary Exceedance, not additional cell-level exposure metrics.
 Optional aggregation and raster cell area weights remain separate from the
 reference weights used to estimate the realised niche.
+`climniche_departure()` records the first supplied projection beyond the niche
+boundary and the fraction of supplied projections in which exceedance occurs.
+Persistent onset can be requested separately with `persistence`.
 
 ## Ecological screening of climate exposure
 
