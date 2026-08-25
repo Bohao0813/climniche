@@ -2,18 +2,18 @@
 #'
 #' @param sensitivity Numeric vector of climatic metric weights used by the
 #'   diagonal metric. For a factor metric, complete names can be used to order
-#'   the CNFA loading rows.
+#'   the CENFA loading rows.
 #' @param cnfa Optional CENFA `cnfa` object or compatible list. A diagonal
 #'   metric can use `sf`; a factor metric requires `co` and `eig`.
 #' @param type Metric type. `"diag"` uses variable-level climatic weights.
-#'   `"factor"` uses a factor metric when CNFA factor coordinates are available.
+#'   `"factor"` uses a factor metric when CENFA factor coordinates are available.
 #'
 #' @return A positive semi-definite matrix.
 #'
 #' @details
 #' For climatic weights \eqn{s_j}, the diagonal metric is
 #' \deqn{A = \mathrm{diag}(s / \bar{s}).}
-#' For a CNFA loading matrix \eqn{U} and factor eigenvalues \eqn{\rho}, the
+#' For a CENFA loading matrix \eqn{U} and factor eigenvalues \eqn{\rho}, the
 #' factor metric is
 #' \deqn{A = U\,\mathrm{diag}(\rho / \bar{\rho})\,U^{\mathsf{T}}.}
 #' The factor metric is constructed from `co` and `eig`; a separate
@@ -50,46 +50,46 @@ niche_metric <- function(sensitivity = NULL, cnfa = NULL,
     sensitivity_names <- names(sensitivity)
     if (.names_are_partial(sensitivity_names) ||
         .names_are_partial(loading_names)) {
-      stop("Sensitivity and CNFA loading names must be complete or omitted.",
+      stop("Sensitivity and CENFA loading names must be complete or omitted.",
            call. = FALSE)
     }
     if (!is.null(sensitivity) && length(sensitivity) != nrow(U)) {
-      stop("sensitivity must contain one value per CNFA loading row.",
+      stop("sensitivity must contain one value per CENFA loading row.",
            call. = FALSE)
     }
     if (.names_are_complete(sensitivity_names) &&
         .names_are_complete(loading_names)) {
       .check_unique_names(sensitivity_names, "sensitivity names")
-      .check_unique_names(loading_names, "CNFA loading names")
+      .check_unique_names(loading_names, "CENFA loading names")
       if (!setequal(sensitivity_names, loading_names)) {
-        stop("Sensitivity and CNFA loading names must match.", call. = FALSE)
+        stop("Sensitivity and CENFA loading names must match.", call. = FALSE)
       }
       U <- U[match(sensitivity_names, loading_names), , drop = FALSE]
     }
     rho_names <- names(rho)
     factor_names <- colnames(U)
     if (.names_are_partial(rho_names) || .names_are_partial(factor_names)) {
-      stop("CNFA factor names must be complete or omitted.", call. = FALSE)
+      stop("CENFA factor names must be complete or omitted.", call. = FALSE)
     }
     if (.names_are_complete(rho_names) &&
         .names_are_complete(factor_names)) {
-      .check_unique_names(rho_names, "CNFA eigenvalue names")
-      .check_unique_names(factor_names, "CNFA factor names")
+      .check_unique_names(rho_names, "CENFA eigenvalue names")
+      .check_unique_names(factor_names, "CENFA factor names")
       if (!setequal(rho_names, factor_names)) {
-        stop("CNFA factor and eigenvalue names must match.", call. = FALSE)
+        stop("CENFA factor and eigenvalue names must match.", call. = FALSE)
       }
       rho <- rho[match(factor_names, rho_names)]
     }
     rho <- as.numeric(rho)
     if (any(!is.finite(U))) {
-      stop("CNFA factor coordinates must be finite.", call. = FALSE)
+      stop("CENFA factor coordinates must be finite.", call. = FALSE)
     }
     if (any(!is.finite(rho)) || any(rho < 0) || mean(rho) <= 0) {
-      stop("CNFA factor eigenvalues must be finite non-negative values with positive mean.",
+      stop("CENFA factor eigenvalues must be finite non-negative values with positive mean.",
            call. = FALSE)
     }
     if (ncol(U) != length(rho)) {
-      stop("CNFA factor coordinates and eigenvalues have incompatible dimensions.",
+      stop("CENFA factor coordinates and eigenvalues have incompatible dimensions.",
            call. = FALSE)
     }
     rho <- rho / mean(rho)

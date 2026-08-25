@@ -11,7 +11,7 @@ variable_contribution(current, future, center, A)
 
 \item{future}{Future climate matrix in the fitted climate space.}
 
-\item{center}{Realised niche centre.}
+\item{center}{Current niche reference centre.}
 
 \item{A}{Niche metric matrix.}
 }

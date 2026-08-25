@@ -15,8 +15,8 @@ Climatic Displacement and Niche Distance Shift describe the magnitude and
 centre-relative direction of projected climatic change. Climatic
 Reconfiguration is derived from that geometry, while Niche Boundary
 Exceedance is a separate radial boundary comparison. The contribution terms
-partition the change in squared distance from the realised niche centre among
-the fitted climate variables at each cell.
+partition the change in squared distance from the current niche reference
+centre among the fitted climate variables at each cell.
 
 ## Cell level contributions
 

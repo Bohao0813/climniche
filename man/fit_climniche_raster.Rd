@@ -29,9 +29,11 @@ fit_climniche_raster(
 )
 }
 \arguments{
-\item{current}{Raster* object of current climate layers.}
+\item{current}{\code{RasterLayer}, \code{RasterStack} or \code{RasterBrick} object of current
+climate layers.}
 
-\item{future}{Raster* object of future climate layers with the same geometry
+\item{future}{Matching \code{RasterLayer}, \code{RasterStack} or \code{RasterBrick} object
+of future climate layers with the same geometry
 and variables as \code{current}. Named layers are matched before fitting.}
 
 \item{occupied}{Optional RasterLayer with binary or continuous occurrence,
@@ -45,12 +47,12 @@ reference weight. Values above it keep their original value.}
 
 \item{domain_threshold}{Values greater than this threshold define the domain.}
 
-\item{cnfa}{Optional CENFA \code{cnfa} object or compatible object. Its \code{mf} and
-\code{sf} components are used when \code{center}, \code{sensitivity}, or \code{A} are not
-supplied; \code{metric = "factor"} requires \code{co} and \code{eig}. The object and
-climatic inputs must use the same variables and standardisation.}
+\item{cnfa}{Optional compatible CENFA object. Its \code{mf} and \code{sf} components
+can supply the niche centre and diagonal metric weights;
+\code{metric = "factor"} requires \code{co} and \code{eig}. The object and climatic inputs
+must use the same variables and standardisation.}
 
-\item{center}{Optional realised niche centre on the scale used for distance
+\item{center}{Optional current niche centre on the scale used for distance
 calculations. With \code{scale = TRUE}, supply a centre in the standardised
 climatic space. If omitted, the centre is the weighted mean of current
 reference rows.}
@@ -108,7 +110,7 @@ An object of class \code{climniche_fit} with RasterLayer outputs stored in
 Fit climniche to raster data
 }
 \details{
-\code{fit_climniche_raster()} is the Raster* workflow for users working with the
+\code{fit_climniche_raster()} is the spatial workflow for users working with the
 \code{raster} package. It fits the current reference from finite current cells
 within \code{domain}, then evaluates cells with finite current and future values.
 Future missing values therefore do not alter the fitted current reference.

@@ -4,10 +4,10 @@
 
 # climniche
 
-The same magnitude of climatic change can move one site toward a species'
-realised niche centre and another away from it. `climniche` resolves this
-direction at each site and measures excess future distance beyond the current
-empirical radial boundary.
+Current-to-future climatic distance shows how much climate changes at a site,
+but not where projected conditions fall within the climatic niche represented
+by a species' current distribution. `climniche` calculates both the local
+displacement and the niche position reached.
 
 [![R-CMD-check](https://github.com/Bohao0813/climniche/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/Bohao0813/climniche/actions/workflows/R-CMD-check.yaml)
 [![CRAN status](https://www.r-pkg.org/badges/version/climniche)](https://CRAN.R-project.org/package=climniche)
@@ -26,7 +26,7 @@ install.packages("climniche")
 ```
 
 CRAN currently provides version 0.0.1. This website documents development
-version 0.3.7.
+version 0.3.8.
 
 Install the development version from GitHub:
 
@@ -35,37 +35,52 @@ install.packages("remotes")
 remotes::install_github("Bohao0813/climniche")
 ```
 
-## Niche relative geometry
+## Climate exposure relative to the current climatic niche
 
-The fitted object contains a geometric core and a boundary comparison. Field
-names use snake case in R objects; figures and reports use the formal names
-below.
+Non-negative location weights define the current climatic niche reference.
+These weights may come from occurrence records, range maps, binary SDMs or
+continuous suitability maps. At each site, projected climate is compared with
+both the local current climate and the shared niche centre and empirical radial
+boundary. Field names use snake case in R objects; figures and reports use the
+formal names below.
 
 - Climatic Displacement (`climate_change_amount`): distance between current
   and future conditions at the same site under the fitted climatic metric.
 - Niche Distance Shift (`niche_distance_change`): signed change in distance
-  from the current realised climatic niche centre.
+  from the current climatic niche reference centre.
 - Climatic Reconfiguration (`climate_reconfiguration`): non-radial component
   of Climatic Displacement that is not captured by Niche Distance Shift. It is
   derived from those two quantities.
 - Niche Boundary Exceedance (`niche_boundary_exceedance`): positive excess of
   future niche distance beyond the empirical radial boundary of the current
-  realised climatic niche.
+  climatic niche reference.
 
 Climatic Displacement, Niche Distance Shift and Climatic Reconfiguration obey
 the fitted geometric identity $D_i^2 = R_i^2 + C_i^2$. Climatic
 Reconfiguration is therefore not an independent exposure dimension. Niche
 Boundary Exceedance is a future boundary-relative state rather than a change
-in boundary status.
+in boundary status. Locations with similar Climatic Displacement can therefore
+be distinguished by where their projected climates fall within or beyond the
+current niche.
 
-Climate-niche factor analysis quantifies climatic departure but does not
-identify whether projected conditions move toward or away from climatic means,
-a limitation stated by
-[Rinnan and Lawler (2019)](https://doi.org/10.1111/ecog.03937).
-`climniche` adds this signed, site-level direction while retaining local
-climatic displacement and an empirical radial boundary comparison.
-The optional `cnfa` argument reads components from an existing CENFA object or
-a compatible object; `climniche` does not call CENFA functions.
+## Workflow
+
+Every input interface follows the same four steps.
+
+1. Match current and projected climatic variables and locations, then convert
+   species distribution data to non-negative reference weights.
+2. Fit preprocessing and standardisation to current climate, construct the
+   climatic distance and estimate the weighted niche centre and boundary.
+3. Hold that fitted reference fixed while calculating the four reported
+   quantities and climatic-variable contributions for projected conditions.
+4. Return location-level values, weighted summaries, maps and reports from the
+   same fitted niche reference.
+
+`fit_climniche()` accepts numeric matrices and data frames.
+`fit_climniche_raster()` accepts `RasterLayer`, `RasterStack` and `RasterBrick`
+objects, whereas `fit_climniche_terra()` accepts `SpatRaster` objects. A fitted
+reference can also be created with `fit_climniche_reference()` and reused with
+`project_climniche()`.
 
 ## Basic use
 
@@ -95,7 +110,7 @@ occurrence probability. `domain` limits the cells evaluated, while
 
 ## Through time
 
-`fit_climniche_series()` holds the fitted current niche centre, climatic
+`fit_climniche_series()` holds the fitted current niche reference, climatic
 weighting matrix and empirical radial boundary fixed across ordered
 projections. For spatial series, future missing cells do not alter this
 reference; comparisons use cells available in every projection.
@@ -124,7 +139,7 @@ Conditional Relative Niche Boundary Exceedance. Their product is Range Mean
 Relative Niche Boundary Exceedance. These are weighted summaries of Niche
 Boundary Exceedance, not additional cell-level exposure metrics.
 Optional aggregation and raster cell area weights remain separate from the
-reference weights used to estimate the realised niche.
+reference weights used to estimate the current climatic niche reference.
 `climniche_departure()` records the first supplied projection beyond the niche
 boundary and the fraction of supplied projections in which exceedance occurs.
 Persistent onset can be requested separately with `persistence`.

@@ -52,7 +52,7 @@
 #' geometric identity.
 #' When the second criterion represents ecological value, maximising a
 #' positive Niche Distance Shift identifies cells where high ecological value
-#' coincides with movement away from the realised niche centre. Minimising
+#' coincides with movement away from the current niche centre. Minimising
 #' Climatic Displacement identifies cells where high ecological value
 #' coincides with less local climatic change. The two directions answer
 #' different screening questions; neither is a complete conservation ranking.

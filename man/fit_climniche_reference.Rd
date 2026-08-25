@@ -33,7 +33,7 @@ Rows are cells or sites and columns are climatic variables.}
 
 \item{cnfa}{Optional compatible CENFA object.}
 
-\item{center}{Optional realised niche centre in the fitted climatic space.}
+\item{center}{Optional current niche centre in the fitted climatic space.}
 
 \item{sensitivity}{Optional non-negative climatic metric weights.}
 
@@ -61,7 +61,7 @@ fraction of the largest finite current standard deviation.}
 A \code{climniche_reference} object.
 }
 \description{
-Estimates the preprocessing, standardisation, realised niche centre,
+Estimates the preprocessing, standardisation, current niche centre,
 climatic weighting matrix and empirical radial boundary once. The resulting
 object can be reused with \code{\link[=project_climniche]{project_climniche()}} for several future periods or
 climate models.

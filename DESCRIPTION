@@ -1,20 +1,20 @@
 Package: climniche
 Type: Package
-Title: Niche Relative Climate Exposure
+Title: Climate Exposure Relative to a Species' Climatic Niche
 Version: 0.3.8
 Date: 2026-08-16
 Authors@R: c(
     person("Bohao", "He", role = c("aut", "cre"), email = "bohao.he@polimi.it")
     )
-Description: Quantifies projected climatic change relative to a species'
-    current realised climatic niche. A fitted climatic metric gives local
-    current-to-future displacement, signed change in distance from the current
-    reference centre, a derived non-radial reconfiguration term, and future
-    exceedance beyond an empirical weighted radial boundary. Occurrence
-    records, range maps, and binary or continuous species distribution model
-    outputs can define reference weights. Matrix, raster, terra and temporal
-    workflows provide cell-level results, weighted summaries, maps and
-    variable-level attribution of squared niche distance change.
+Description: Quantifies projected climatic change relative to the climatic
+    niche represented by a species' current distribution. A weighted current
+    reference defines the niche centre and empirical radial boundary. Present
+    and projected conditions at each location give local climatic displacement,
+    signed change in niche distance, a derived non-radial reconfiguration term,
+    and exceedance beyond the niche boundary. Occurrence records, range maps,
+    and binary or continuous species distribution model outputs can define
+    reference weights. Matrix and spatial workflows return location-level
+    values, weighted summaries, maps and climatic-variable contributions.
 License: MIT + file LICENSE
 URL: https://github.com/Bohao0813/climniche,
     https://bohao0813.github.io/climniche/

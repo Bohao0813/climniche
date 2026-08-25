@@ -2,7 +2,7 @@
 % Please edit documentation in R/series_fit.R
 \name{fit_climniche_series}
 \alias{fit_climniche_series}
-\title{Fit niche relative climate exposure through time}
+\title{Fit climate exposure through time relative to a fixed climatic niche}
 \usage{
 fit_climniche_series(
   current,
@@ -33,7 +33,7 @@ fit_climniche_series(
 }
 \arguments{
 \item{current}{Current climatic conditions supplied as a numeric matrix,
-data frame, Raster* object or SpatRaster.}
+data frame, \code{RasterLayer}, \code{RasterStack}, \code{RasterBrick} or \code{SpatRaster}.}
 
 \item{future}{A list of future objects matching \code{current}. A three-dimensional
 numeric array may also be supplied, with cells, variables and projections
@@ -58,7 +58,7 @@ raster.}
 
 \item{cnfa}{Optional compatible CENFA object.}
 
-\item{center}{Optional realised niche centre in the fitted climatic space.}
+\item{center}{Optional current niche centre in the fitted climatic space.}
 
 \item{sensitivity}{Optional non-negative climatic metric weights.}
 

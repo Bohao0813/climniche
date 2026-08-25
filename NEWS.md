@@ -1,5 +1,8 @@
 # climniche 0.3.8
 
+* Aligned the README, vignettes, reports and Reference terminology around the
+  current climatic niche reference and the four-step fitting and projection
+  workflow.
 * Separated first observed Niche Boundary Exceedance from persistent
   exceedance onset. A first exceedance can now occur in the final supplied
   projection without being treated as missing.
@@ -64,7 +67,7 @@
 # climniche 0.3.3
 
 * Added `fit_climniche_reference()` and `project_climniche()` to estimate the
-  current realised climatic niche once and reuse it across projections.
+  current climatic niche reference once and reuse it across projections.
 * Added `fit_climniche_series()` for ordered future periods, climate models and
   scenarios. Series share one effective descriptor tolerance. Spatial
   references are fitted independently of future missing cells, while
@@ -82,12 +85,12 @@
 # climniche 0.3.2
 
 * Matched named climate rows, variables, reference weights, centres,
-  sensitivities, metric matrices and compatible CNFA components before fitting.
+  sensitivities, metric matrices and compatible CENFA components before fitting.
 * Made correlation filtering deterministic and used one inverse weighted
   empirical distribution definition for binary and continuous reference
   weights.
 * Added stricter validation for fitted climate spaces and factor metrics. A
-  requested factor metric now stops when its CNFA components are incomplete.
+  requested factor metric now stops when its CENFA components are incomplete.
 * Corrected weighted summaries and plots, single-layer raster handling,
   non-finite raster masks, spatial layer names and original raster cell indices.
 * Added executable examples, a table of case-study climatic metric weights and

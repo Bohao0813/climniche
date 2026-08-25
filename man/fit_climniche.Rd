@@ -2,7 +2,7 @@
 % Please edit documentation in R/aliases.R
 \name{fit_climniche}
 \alias{fit_climniche}
-\title{Fit niche relative climate exposure from matrices}
+\title{Fit climate exposure relative to a climatic niche from matrices}
 \usage{
 fit_climniche(
   current,
@@ -34,8 +34,8 @@ are cells, sites, or samples. Columns are climate variables.}
 same rows and variables as \code{current}. Complete row and variable names are
 matched before fitting.}
 
-\item{occupied}{Reference information used to estimate the current realised
-niche. Use \code{NULL} to give every row weight 1, a logical vector to mark
+\item{occupied}{Reference information used to estimate the current climatic
+niche reference. Use \code{NULL} to give every row weight 1, a logical vector to mark
 reference rows, a numeric vector of length \code{nrow(current)} for continuous
 reference weights, or positive integer row indices for 0/1 reference cells.
 Complete names are matched to the row names of \code{current}. With \code{NULL}, the
@@ -45,12 +45,12 @@ reference is the climatic distribution of all current analysis rows.}
 Values at or below the cutoff are set to 0. Values above it keep their
 original continuous value.}
 
-\item{cnfa}{Optional CENFA \code{cnfa} object or compatible object. Its \code{mf} and
-\code{sf} components are used when \code{center}, \code{sensitivity}, or \code{A} are not
-supplied; \code{metric = "factor"} requires \code{co} and \code{eig}. The object and
-climatic inputs must use the same variables and standardisation.}
+\item{cnfa}{Optional compatible CENFA object. Its \code{mf} and \code{sf} components
+can supply the niche centre and diagonal metric weights;
+\code{metric = "factor"} requires \code{co} and \code{eig}. The object and climatic inputs
+must use the same variables and standardisation.}
 
-\item{center}{Optional realised niche centre on the scale used for distance
+\item{center}{Optional current niche centre on the scale used for distance
 calculations. With \code{scale = TRUE}, supply a centre in the standardised
 climatic space. If omitted, the centre is the weighted mean of current
 reference rows.}
@@ -111,7 +111,7 @@ current niche reference.
 }
 \details{
 Let current and future climatic conditions at cell \eqn{i} be \eqn{c_i} and
-\eqn{f_i}. Let \eqn{\mu} be the centre of the current realised climatic niche,
+\eqn{f_i}. Let \eqn{\mu} be the centre of the current climatic niche reference,
 and let \eqn{d_A(x, y)} be the climatic distance under weighting matrix
 \eqn{A}. Climatic Displacement and Niche Distance Shift form the primary
 geometric pair:
@@ -129,7 +129,7 @@ Niche Boundary Exceedance:
 \deqn{E_i = \max(0, d_A(f_i, \mu) - B_q)}
 
 where \eqn{B_q} is the \eqn{q}-th weighted quantile of current reference cell
-distances from the realised niche centre. Climatic Reconfiguration is
+distances from the reference centre. Climatic Reconfiguration is
 derived from Climatic Displacement and Niche Distance Shift. Niche Boundary
 Exceedance is a separate comparison with the fitted radial boundary.
 }
@@ -171,13 +171,12 @@ object and does not call CENFA package functions.
 
 \section{Choosing a fit function}{
 
-Use \code{fit_climniche()} when current and future climate values have already
-been extracted to matrices or data frames. Use \code{fit_climniche_raster()} for
-objects from the \code{raster} package. Use \code{fit_climniche_terra()} for
-\code{terra::SpatRaster} objects. The three functions calculate the same reported
-quantities; the raster and terra methods add spatial masking and return map layers in
-\code{x$rasters}. Use \code{\link[=fit_climniche_series]{fit_climniche_series()}} for ordered future periods or
-other ordered projections.
+Use \code{fit_climniche()} for matrices or data frames,
+\code{fit_climniche_raster()} for \code{RasterLayer}, \code{RasterStack} or \code{RasterBrick}
+objects, and \code{fit_climniche_terra()} for \code{SpatRaster} objects. All three
+functions calculate the same quantities. The spatial functions add domain
+masking and return map layers in \code{x$rasters}. Use \code{\link[=fit_climniche_series]{fit_climniche_series()}}
+for ordered projections.
 }
 
 \examples{

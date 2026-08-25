@@ -37,7 +37,7 @@ within-reference spatial screening, not an independent conservation priority.
 
 **Positive Niche Distance Shift screen** combines high current suitability with
 a larger positive Niche Distance Shift. Positive values represent movement
-away from the realised niche centre.
+away from the current niche centre.
 
 ```{r positive-shift-code, eval = FALSE}
 positive_shift <- climniche_priority(

@@ -1,11 +1,11 @@
-#' Fit niche relative climate exposure through time
+#' Fit climate exposure through time relative to a fixed climatic niche
 #'
 #' Fits one current climatic niche reference and evaluates an ordered set of
 #' future projections. Projections may represent time periods, climate models,
 #' scenarios, or their combinations.
 #'
 #' @param current Current climatic conditions supplied as a numeric matrix,
-#'   data frame, Raster* object or SpatRaster.
+#'   data frame, `RasterLayer`, `RasterStack`, `RasterBrick` or `SpatRaster`.
 #' @param future A list of future objects matching `current`. A three-dimensional
 #'   numeric array may also be supplied, with cells, variables and projections
 #'   in its three dimensions.
@@ -20,7 +20,7 @@
 #' @param domain Optional one-layer raster limiting a spatial analysis.
 #' @param domain_threshold Threshold used when `domain` is supplied.
 #' @param cnfa Optional compatible CENFA object.
-#' @param center Optional realised niche centre in the fitted climatic space.
+#' @param center Optional current niche centre in the fitted climatic space.
 #' @param sensitivity Optional non-negative climatic metric weights.
 #' @param A Optional climatic weighting matrix.
 #' @param metric Method used to build `A` when it is not supplied.
@@ -363,8 +363,13 @@ fit_climniche_series <- function(
   if (.is_spatraster(current)) {
     return("terra")
   }
-  stop("current must be a matrix, data frame, Raster* object or SpatRaster.",
-       call. = FALSE)
+  stop(
+    paste0(
+      "current must be a matrix, data frame, RasterLayer, RasterStack, ",
+      "RasterBrick or SpatRaster."
+    ),
+    call. = FALSE
+  )
 }
 
 .as_future_list <- function(future, time) {
@@ -613,7 +618,7 @@ climniche_series_table <- function(x, scope = c("current", "all")) {
 
 #' @export
 print.climniche_series <- function(x, ...) {
-  cat("Niche relative climate exposure series\n")
+  cat("Climate exposure relative to the current climatic niche\n")
   cat("Projections:", nrow(x$index), "\n")
   cat("Times:", length(unique(x$index$time)), "\n")
   model_count <- length(unique(x$index$model[!is.na(x$index$model)]))

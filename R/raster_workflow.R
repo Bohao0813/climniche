@@ -1,7 +1,9 @@
-#' Fit climniche to Raster* climate layers
+#' Fit climate exposure from raster climate layers
 #'
-#' @param current Raster* object of current climate layers.
-#' @param future Raster* object of future climate layers with the same geometry
+#' @param current `RasterLayer`, `RasterStack` or `RasterBrick` object of current
+#'   climate layers.
+#' @param future Matching `RasterLayer`, `RasterStack` or `RasterBrick` object
+#'   of future climate layers with the same geometry
 #'   and variables as `current`. Named layers are matched before fitting.
 #' @param occupied Optional RasterLayer indicating current occurrence or range
 #'   cells, or continuous SDM suitability values used as reference weights.
@@ -22,7 +24,10 @@
          call. = FALSE)
   }
   if (!methods::is(current, "Raster") || !methods::is(future, "Raster")) {
-    stop("current and future must be raster Raster* objects.", call. = FALSE)
+    stop(
+      "current and future must be RasterLayer, RasterStack or RasterBrick objects.",
+      call. = FALSE
+    )
   }
   domain_threshold <- .check_finite_scalar(domain_threshold,
                                             "domain_threshold")

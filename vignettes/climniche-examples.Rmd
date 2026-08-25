@@ -92,7 +92,7 @@ climatic_weights <- setNames(
 )
 ```
 
-## Niche relative exposure
+## Climate exposure relative to the current niche
 
 Suitability values at or below the SDM threshold receive zero reference
 weight. Values above the threshold retain their continuous values.
@@ -111,8 +111,8 @@ climniche_summary(anchovy_fit)
 ```
 
 Let current and future climatic conditions at cell $i$ be $c_i$ and
-$f_i$, the current realised niche centre be $\mu$, and the fitted climatic
-distance be $d_A$. The reported quantities are
+$f_i$, the centre of the current climatic niche reference be $\mu$, and the
+fitted climatic distance be $d_A$. The reported quantities are
 
 $$
 \begin{aligned}

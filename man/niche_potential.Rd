@@ -9,12 +9,12 @@ niche_potential(x, center, A)
 \arguments{
 \item{x}{Climate matrix in the fitted climate space.}
 
-\item{center}{Realised niche centre.}
+\item{center}{Current niche reference centre.}
 
 \item{A}{Niche metric matrix.}
 }
 \value{
-Numeric vector of squared distances from the realised niche centre
+Numeric vector of squared distances from the current niche centre
 in the fitted climatic space.
 }
 \description{

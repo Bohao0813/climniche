@@ -1,4 +1,4 @@
-#' Fit niche relative climate exposure
+#' Fit climate exposure relative to a climatic niche
 #'
 #' @param current Numeric matrix or data frame of current climate values.
 #' @param future Numeric matrix or data frame of future climate values, with the
@@ -13,7 +13,7 @@
 #' @param cnfa Optional CENFA `cnfa` object or compatible list. Its `mf`
 #'   component can supply the centre, `sf` can supply diagonal climatic
 #'   weights, and a factor metric requires `co` and `eig`.
-#' @param center Optional realised niche centre in the fitted climate space.
+#' @param center Optional current niche centre in the fitted climate space.
 #' @param sensitivity Optional non-negative climatic metric weights.
 #' @param A Optional climatic metric matrix.
 #' @param metric `"diag"` or `"factor"`. Used only when `A` is missing.
@@ -238,10 +238,10 @@
 #' Squared niche distance
 #'
 #' @param x Climate matrix in the fitted climate space.
-#' @param center Realised niche centre.
+#' @param center Current niche reference centre.
 #' @param A Niche metric matrix.
 #'
-#' @return Numeric vector of squared distances from the realised niche centre
+#' @return Numeric vector of squared distances from the current niche centre
 #'   in the fitted climatic space.
 #' @export
 niche_potential <- function(x, center, A) {
@@ -296,7 +296,7 @@ niche_radius <- function(psi) {
 #' Niche Boundary Exceedance
 #'
 #' @param psi_future Future squared niche distance.
-#' @param boundary_value Empirical boundary of the current realised niche in
+#' @param boundary_value Empirical boundary of the current climatic niche reference in
 #'   squared-distance units.
 #' @param scale `"radial"` returns exceedance beyond the niche boundary distance;
 #'   `"potential"` returns exceedance in squared-distance units.
@@ -348,7 +348,7 @@ niche_percentile <- function(psi_current, psi_future, occupied) {
 #'
 #' @param current Current climate matrix in the fitted climate space.
 #' @param future Future climate matrix in the fitted climate space.
-#' @param center Realised niche centre.
+#' @param center Current niche reference centre.
 #' @param A Niche metric matrix.
 #'
 #' @return Matrix whose rows sum to future minus current squared niche distance.

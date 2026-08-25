@@ -47,12 +47,12 @@ analysed.}
 
 \item{domain_threshold}{Values greater than this threshold define the domain.}
 
-\item{cnfa}{Optional CENFA \code{cnfa} object or compatible object. Its \code{mf} and
-\code{sf} components are used when \code{center}, \code{sensitivity}, or \code{A} are not
-supplied; \code{metric = "factor"} requires \code{co} and \code{eig}. The object and
-climatic inputs must use the same variables and standardisation.}
+\item{cnfa}{Optional compatible CENFA object. Its \code{mf} and \code{sf} components
+can supply the niche centre and diagonal metric weights;
+\code{metric = "factor"} requires \code{co} and \code{eig}. The object and climatic inputs
+must use the same variables and standardisation.}
 
-\item{center}{Optional realised niche centre on the scale used for distance
+\item{center}{Optional current niche centre on the scale used for distance
 calculations. With \code{scale = TRUE}, supply a centre in the standardised
 climatic space. If omitted, the centre is the weighted mean of current
 reference rows.}

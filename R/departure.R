@@ -448,7 +448,7 @@ summary.climniche_series <- function(
 
 #' @export
 print.summary.climniche_series <- function(x, ...) {
-  cat("Niche relative climate exposure through time\n\n")
+  cat("Climate exposure relative to the current climatic niche through time\n\n")
   print(.series_display_table(x$range), row.names = FALSE)
   cat("\nMaximum interval increase\n")
   print(.series_display_table(x$change_rate), row.names = FALSE)

@@ -13,7 +13,7 @@ boundary_exceedance(
 \arguments{
 \item{psi_future}{Future squared niche distance.}
 
-\item{boundary_value}{Empirical boundary of the current realised niche in
+\item{boundary_value}{Empirical boundary of the current climatic niche reference in
 squared-distance units.}
 
 \item{scale}{\code{"radial"} returns exceedance beyond the niche boundary distance;

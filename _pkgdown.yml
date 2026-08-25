@@ -22,7 +22,7 @@ navbar:
     examples:
       text: Examples
       menu:
-        - text: Niche relative geometry
+        - text: Climatic niche geometry and workflow
           href: articles/climniche-method.html
         - text: Mediterranean example
           href: articles/climniche-examples.html
@@ -44,14 +44,14 @@ navbar:
       aria-label: GitHub
 home:
   title: climniche
-  description: Site-level climate exposure relative to a current realised climatic niche.
+  description: Projected climate exposure relative to a species' current climatic niche.
 authors:
   Bohao He:
     href: https://github.com/Bohao0813
 development:
   mode: auto
 reference:
-  - title: Fit niche relative climate exposure
+  - title: Fit climate exposure relative to a climatic niche
     contents:
       - fit_climniche
       - fit_climniche_raster

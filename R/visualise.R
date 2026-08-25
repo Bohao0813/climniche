@@ -48,7 +48,7 @@
 .raster_df <- function(x, value = "value") {
   .need_raster()
   if (raster::nlayers(x) != 1L) {
-    stop("Only one-layer Raster* objects can be plotted.", call. = FALSE)
+    stop("Only one-layer RasterLayer objects can be plotted.", call. = FALSE)
   }
   pts <- raster::rasterToPoints(x)
   pts <- as.data.frame(pts)
@@ -530,7 +530,7 @@
   }
   dat$x_value <- dat$climate_change_amount
   dat$y_value <- dat$niche_distance_change
-  ttl <- .plot_title(title, "Niche relative climate exposure")
+  ttl <- .plot_title(title, "Climate exposure relative to the current niche")
 
   p <- ggplot2::ggplot(dat, ggplot2::aes(x = x_value, y = y_value)) +
     ggplot2::geom_hline(yintercept = 0, colour = "grey45",
@@ -544,7 +544,7 @@
       x = "Climatic Displacement",
       y = "Niche Distance Shift",
       title = ttl,
-      subtitle = "Positive Niche Distance Shift indicates movement away from the realised niche centre"
+      subtitle = "Positive Niche Distance Shift indicates movement away from the current niche centre"
     ) +
     .climniche_theme()
   p <- p + ggplot2::scale_colour_gradientn(

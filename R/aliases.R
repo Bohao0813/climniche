@@ -1,4 +1,4 @@
-#' Fit niche relative climate exposure from matrices
+#' Fit climate exposure relative to a climatic niche from matrices
 #'
 #' Estimates projected climatic change at each site relative to a fitted
 #' current niche reference.
@@ -8,8 +8,8 @@
 #' @param future Numeric matrix or data frame of future climate values with the
 #'   same rows and variables as `current`. Complete row and variable names are
 #'   matched before fitting.
-#' @param occupied Reference information used to estimate the current realised
-#'   niche. Use `NULL` to give every row weight 1, a logical vector to mark
+#' @param occupied Reference information used to estimate the current climatic
+#'   niche reference. Use `NULL` to give every row weight 1, a logical vector to mark
 #'   reference rows, a numeric vector of length `nrow(current)` for continuous
 #'   reference weights, or positive integer row indices for 0/1 reference cells.
 #'   Complete names are matched to the row names of `current`. With `NULL`, the
@@ -17,11 +17,11 @@
 #' @param occupied_threshold Optional cutoff for numeric reference weights.
 #'   Values at or below the cutoff are set to 0. Values above it keep their
 #'   original continuous value.
-#' @param cnfa Optional CENFA `cnfa` object or compatible object. Its `mf` and
-#'   `sf` components are used when `center`, `sensitivity`, or `A` are not
-#'   supplied; `metric = "factor"` requires `co` and `eig`. The object and
-#'   climatic inputs must use the same variables and standardisation.
-#' @param center Optional realised niche centre on the scale used for distance
+#' @param cnfa Optional compatible CENFA object. Its `mf` and `sf` components
+#'   can supply the niche centre and diagonal metric weights;
+#'   `metric = "factor"` requires `co` and `eig`. The object and climatic inputs
+#'   must use the same variables and standardisation.
+#' @param center Optional current niche centre on the scale used for distance
 #'   calculations. With `scale = TRUE`, supply a centre in the standardised
 #'   climatic space. If omitted, the centre is the weighted mean of current
 #'   reference rows.
@@ -64,7 +64,7 @@
 #'
 #' @details
 #' Let current and future climatic conditions at cell \eqn{i} be \eqn{c_i} and
-#' \eqn{f_i}. Let \eqn{\mu} be the centre of the current realised climatic niche,
+#' \eqn{f_i}. Let \eqn{\mu} be the centre of the current climatic niche reference,
 #' and let \eqn{d_A(x, y)} be the climatic distance under weighting matrix
 #' \eqn{A}. Climatic Displacement and Niche Distance Shift form the primary
 #' geometric pair:
@@ -82,7 +82,7 @@
 #' \deqn{E_i = \max(0, d_A(f_i, \mu) - B_q)}
 #'
 #' where \eqn{B_q} is the \eqn{q}-th weighted quantile of current reference cell
-#' distances from the realised niche centre. Climatic Reconfiguration is
+#' distances from the reference centre. Climatic Reconfiguration is
 #' derived from Climatic Displacement and Niche Distance Shift. Niche Boundary
 #' Exceedance is a separate comparison with the fitted radial boundary.
 #'
@@ -115,13 +115,12 @@
 #' object and does not call CENFA package functions.
 #'
 #' @section Choosing a fit function:
-#' Use `fit_climniche()` when current and future climate values have already
-#' been extracted to matrices or data frames. Use `fit_climniche_raster()` for
-#' objects from the `raster` package. Use `fit_climniche_terra()` for
-#' `terra::SpatRaster` objects. The three functions calculate the same reported
-#' quantities; the raster and terra methods add spatial masking and return map layers in
-#' `x$rasters`. Use [fit_climniche_series()] for ordered future periods or
-#' other ordered projections.
+#' Use `fit_climniche()` for matrices or data frames,
+#' `fit_climniche_raster()` for `RasterLayer`, `RasterStack` or `RasterBrick`
+#' objects, and `fit_climniche_terra()` for `SpatRaster` objects. All three
+#' functions calculate the same quantities. The spatial functions add domain
+#' masking and return map layers in `x$rasters`. Use [fit_climniche_series()]
+#' for ordered projections.
 #'
 #' @examples
 #' sim <- simulate_climniche(n = 250, p = 6, seed = 7)
@@ -172,8 +171,10 @@ fit_climniche <- function(current, future, occupied = NULL,
 
 #' Fit climniche to raster data
 #'
-#' @param current Raster* object of current climate layers.
-#' @param future Raster* object of future climate layers with the same geometry
+#' @param current `RasterLayer`, `RasterStack` or `RasterBrick` object of current
+#'   climate layers.
+#' @param future Matching `RasterLayer`, `RasterStack` or `RasterBrick` object
+#'   of future climate layers with the same geometry
 #'   and variables as `current`. Named layers are matched before fitting.
 #' @param occupied Optional RasterLayer with binary or continuous occurrence,
 #'   range, or SDM suitability values. Continuous values are retained on their
@@ -188,7 +189,7 @@ fit_climniche <- function(current, future, occupied = NULL,
 #'   `x$rasters`.
 #'
 #' @details
-#' `fit_climniche_raster()` is the Raster* workflow for users working with the
+#' `fit_climniche_raster()` is the spatial workflow for users working with the
 #' `raster` package. It fits the current reference from finite current cells
 #' within `domain`, then evaluates cells with finite current and future values.
 #' Future missing values therefore do not alter the fitted current reference.

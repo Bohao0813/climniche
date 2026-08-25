@@ -1,8 +1,8 @@
 ---
-title: "Niche relative geometry"
+title: "Climatic niche geometry and workflow"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Niche relative geometry}
+  %\VignetteIndexEntry{Climatic niche geometry and workflow}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -11,16 +11,39 @@ vignette: >
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.align = "center")
 ```
 
-## Estimand
+`climniche` compares current and projected climate at each location with one
+current climatic niche reference. This vignette defines that reference, the
+four reported quantities and the fitting and projection workflow.
 
-`climniche` describes projected climatic change at a site relative to a fixed
-current niche reference. Let $c_i$ and $f_i$ be current and future climate,
-$\mu$ the weighted centre of the current reference, and $d_A$ the distance
-under positive semidefinite climatic weighting matrix $A$:
+## Current climatic niche reference
+
+Let $c_i$ and $f_i$ denote current and projected climate at location $i$. A
+non-negative weight $w_i$ determines how much that location contributes to the
+current climatic niche reference. Its centre is
+
+$$
+\mu=\frac{\sum_i w_i c_i}{\sum_i w_i}.
+$$
+
+Distance is measured under a positive semidefinite climatic metric $A$:
 
 $$
 d_A(x,y)=\sqrt{(x-y)^\mathsf{T}A(x-y)}.
 $$
+
+If $r_{0i}=d_A(c_i,\mu)$, the weighted quantile
+
+$$
+B_q=Q_q^w(r_0)
+$$
+
+defines the empirical radial boundary. The transformation, metric, centre and
+boundary are fitted from current climate and remain fixed when projected
+conditions are evaluated.
+
+## Reported quantities
+
+At each location, `climniche` calculates
 
 $$
 \begin{aligned}
@@ -31,45 +54,81 @@ E_i &= \max(0,d_A(f_i,\mu)-B_q).
 \end{aligned}
 $$
 
-Climatic Displacement ($D_i$) measures local current-to-future change. Niche
-Distance Shift ($R_i$) records whether future conditions lie closer to or
-farther from the reference centre. Climatic Reconfiguration ($C_i$) is the
-derived non-radial component. If $r_{0i}$ and $r_{1i}$ are current and future
-distances from the centre and, when both are positive, $\theta_i$ is the angle
-between their centred vectors, then
+Climatic Displacement ($D_i$) is the magnitude of local climatic change. Niche
+Distance Shift ($R_i$) is negative when projected climate moves towards the
+reference centre and positive when it moves away. Climatic Reconfiguration
+($C_i$) describes displacement that is not expressed as a change in distance
+from the centre. The three quantities satisfy
+$D_i^2=R_i^2+C_i^2$.
+
+If $r_{1i}=d_A(f_i,\mu)$ and $\theta_i$ is the angle between the centred current
+and projected vectors, then
 
 $$
 C_i^2=2r_{0i}r_{1i}\{1-\cos(\theta_i)\}.
 $$
 
-This identity does not make $C_i$ a strict orthogonal projection or an
-independent ecological process. Niche Boundary Exceedance ($E_i$) is a
-separate future-state comparison with the weighted empirical radial boundary
-$B_q$.
+Climatic Reconfiguration is derived from Climatic Displacement and Niche
+Distance Shift. It is not a strict orthogonal projection or an independently
+estimated ecological process. Niche Boundary Exceedance ($E_i$) is separate
+from this decomposition and measures projected distance beyond $B_q$.
 
-## Controlled paths
+## Workflow
 
-Five paths isolate the terms in two climatic dimensions. Each site starts at
-$(1,0)$, one unit from a fixed centre at $(0,0)$.
+Every input interface follows four steps.
+
+1. Match current and projected climatic variables and locations, then convert
+   occurrence, range or SDM data to non-negative reference weights.
+2. Fit preprocessing and standardisation to current climate, construct the
+   climatic metric and estimate the weighted niche centre and boundary.
+3. Hold the fitted reference fixed while calculating the four quantities and
+   climatic-variable contributions for projected conditions.
+4. Return location-level values, weighted summaries, maps and reports from the
+   same fitted reference.
+
+`fit_climniche()` accepts matrices and data frames. `fit_climniche_raster()`
+accepts `RasterLayer`, `RasterStack` and `RasterBrick` objects, whereas
+`fit_climniche_terra()` accepts `SpatRaster` objects. The current reference can
+also be fitted with `fit_climniche_reference()` and reused with
+`project_climniche()`. `fit_climniche_series()` applies one fitted reference to
+an ordered set of projections.
 
 ```{r}
 library(climniche)
 
+sim <- simulate_climniche(n = 200, p = 6, seed = 7)
+fit <- fit_climniche(
+  current = sim[["current"]],
+  future = sim[["future_away"]],
+  occupied = sim[["occupied"]],
+  sensitivity = sim[["sensitivity"]]
+)
+
+head(climniche_table(fit))
+```
+
+## Interpreting equal climatic displacement
+
+Four two-variable examples start one unit from a fixed centre. The towards and
+away examples have the same Climatic Displacement but opposite Niche Distance
+Shift. The fourth example changes climatic configuration while retaining the
+same niche distance.
+
+```{r}
 current <- matrix(
-  rep(c(1, 0), 5),
+  rep(c(1, 0), 4),
   ncol = 2,
   byrow = TRUE,
   dimnames = list(
-    c("unchanged", "toward", "away", "reoriented", "crossed centre"),
+    c("unchanged", "towards centre", "away from centre", "same niche distance"),
     c("climate 1", "climate 2")
   )
 )
 future <- rbind(
   unchanged = c(1, 0),
-  toward = c(0, 0),
-  away = c(2, 0),
-  reoriented = c(0, 1),
-  `crossed centre` = c(-1, 0)
+  `towards centre` = c(0, 0),
+  `away from centre` = c(2, 0),
+  `same niche distance` = c(0, 1)
 )
 colnames(future) <- colnames(current)
 
@@ -84,9 +143,7 @@ geometry_fit <- fit_climniche(
   boundary = 0.95,
   tolerance = 0
 )
-```
 
-```{r}
 geometry_table <- data.frame(
   path = rownames(current),
   `Climatic Displacement` = geometry_fit[["climate_change_amount"]],
@@ -101,12 +158,10 @@ geometry_table <- data.frame(
 knitr::kable(geometry_table, digits = 3)
 ```
 
-The toward and away paths have equal Climatic Displacement but opposite Niche
-Distance Shift. Reorientation changes direction without changing radial
-distance. Crossing the centre also changes the direction of the
-centre-referenced vector, which is why Climatic Reconfiguration is positive
-even in one climatic dimension. Only the away path exceeds the fitted radial
-boundary.
+The towards and away examples both have $D_i=1$, with $R_i=-1$ and $R_i=1$,
+respectively. Moving to $(0,1)$ leaves niche distance unchanged, so $R_i=0$
+and all displacement is represented by Climatic Reconfiguration. Only the away
+example lies beyond the fitted boundary.
 
 ```{r}
 identity_error <- with(
@@ -118,27 +173,11 @@ identity_error <- with(
 max(abs(identity_error))
 ```
 
-## Relation to other outputs
+## Using SDM outputs
 
-The quantities answer a different question from an SDM projection. An SDM
-estimates change in a fitted suitability response, whereas `climniche`
-describes change in the climatic space used to define the current reference.
-
-| Output | Quantity described | Niche relative direction |
-|:--|:--|:--|
-| Standardised current-to-future distance | Magnitude of local climatic change | No |
-| Climate-niche factor analysis departure | Magnitude in a fitted climate sensitivity space | Not in the original formulation |
-| Projected SDM suitability change | Change in the fitted suitability response | Model dependent |
-| `climniche` | Local displacement, signed centre-relative shift and empirical radial boundary exceedance | Yes |
-
-Rinnan and Lawler (2019) identified the missing toward-or-away interpretation
-as a direction for further development in climate-niche factor analysis.
-`climniche` addresses that specific gap at the cell level. The reference centre
-and boundary remain empirical summaries of the supplied current distribution;
-they are not physiological limits or a fundamental niche.
-
-## Reference
-
-Rinnan DS, Lawler J (2019). Climate-niche factor analysis: a spatial approach
-to quantifying species vulnerability to climate change. *Ecography* 42:
-1494-1503. [doi:10.1111/ecog.03937](https://doi.org/10.1111/ecog.03937).
+Binary SDM output can define zero-one reference weights. Continuous suitability
+values can remain continuous; `occupied_threshold` sets values at or below a
+cutoff to zero without converting larger values to one. These weights define
+how current locations contribute to the climatic niche reference. They are not
+a projected suitability response, and the four `climniche` quantities remain
+distances and positions in climatic space.

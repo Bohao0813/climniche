@@ -127,8 +127,8 @@ climniche_table <- function(x, scope = c("current", "all")) {
         "under the fitted climatic metric."
       ),
       paste(
-        "Signed change in distance from the current realised climatic",
-        "niche centre."
+        "Signed change in distance from the current climatic niche",
+        "reference centre."
       ),
       paste(
         "Non-radial component of Climatic Displacement not captured by",
@@ -136,7 +136,7 @@ climniche_table <- function(x, scope = c("current", "all")) {
       ),
       paste(
         "Positive excess of future niche distance beyond the empirical",
-        "weighted radial boundary of the current realised climatic niche."
+        "weighted radial boundary of the current climatic niche reference."
       )
     ),
     stringsAsFactors = FALSE
@@ -399,12 +399,12 @@ climniche_report <- function(x, species = NULL, scope = c("current", "all"),
   direction <- if (summ$mean_niche_distance_change > 0) {
     paste(
       "positive; future conditions are farther, on average, from the current",
-      "realised climatic niche centre"
+      "climatic niche reference centre"
     )
   } else if (summ$mean_niche_distance_change < 0) {
     paste(
       "negative; future conditions are closer, on average, to the current",
-      "realised climatic niche centre"
+      "climatic niche reference centre"
     )
   } else {
     "zero on average"
@@ -517,9 +517,9 @@ write_climniche_report <- function(report, file) {
     stop("report must be produced by climniche_report().", call. = FALSE)
   }
   title <- if (is.null(report$species)) {
-    "Niche relative climate exposure report"
+    "Climate exposure relative to the current climatic niche"
   } else {
-    paste0("Niche relative climate exposure report: ",
+    paste0("Climate exposure relative to the current climatic niche: ",
            report$species)
   }
 

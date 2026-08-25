@@ -238,7 +238,7 @@ factor_metric <- niche_metric(
 stopifnot(identical(dim(factor_metric), c(3L, 3L)))
 stopifnot(identical(rownames(factor_metric), names(sensitivity)))
 
-# A requested factor metric must not change method when CNFA data are missing.
+# A requested factor metric must not change method when CENFA data are missing.
 missing_factor <- try(niche_metric(
   sensitivity = sensitivity,
   type = "factor"

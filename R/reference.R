@@ -1,6 +1,6 @@
 #' Fit a current climatic niche reference
 #'
-#' Estimates the preprocessing, standardisation, realised niche centre,
+#' Estimates the preprocessing, standardisation, current niche centre,
 #' climatic weighting matrix and empirical radial boundary once. The resulting
 #' object can be reused with [project_climniche()] for several future periods or
 #' climate models.
@@ -11,7 +11,7 @@
 #'   [fit_climniche()].
 #' @param occupied_threshold Optional cutoff for numeric reference weights.
 #' @param cnfa Optional compatible CENFA object.
-#' @param center Optional realised niche centre in the fitted climatic space.
+#' @param center Optional current niche centre in the fitted climatic space.
 #' @param sensitivity Optional non-negative climatic metric weights.
 #' @param A Optional climatic weighting matrix.
 #' @param metric Method used to build `A` when it is not supplied.
