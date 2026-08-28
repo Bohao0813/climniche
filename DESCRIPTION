@@ -2,7 +2,7 @@ Package: climniche
 Type: Package
 Title: Climate Exposure Relative to a Species' Climatic Niche
 Version: 0.3.8
-Date: 2026-08-16
+Date: 2026-08-28
 Authors@R: c(
     person("Bohao", "He", role = c("aut", "cre"), email = "bohao.he@polimi.it")
     )

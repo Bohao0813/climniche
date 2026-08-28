@@ -1,0 +1,34 @@
+Package code and original documentation
+---------------------------------------
+
+Copyright (c) 2026 Bohao He.
+License: MIT; see LICENSE.
+
+Mediterranean anchovy case-study materials
+-------------------------------------------
+
+Prepared climate tables and rendered figures use Bio-ORACLE v3 data:
+
+Assis J, Fernandez Bejarano SJ, Salazar VW, et al. (2024). Bio-ORACLE
+v3.0. Pushing marine data layers to the CMIP6 Earth system models of
+climate change research. Global Ecology and Biogeography 33: e13813.
+https://doi.org/10.1111/geb.13813
+
+The Bio-ORACLE metadata record identifies the source data licence as the GNU
+General Public License. The prepared climate values retain the applicable
+source licence and attribution terms.
+
+The fitted species distribution model was derived from occurrence records
+queried from the Ocean Biodiversity Information System (OBIS). Data providers
+retain ownership of their records, and use is subject to the licence attached
+to each source dataset. No unmodified OBIS occurrence records are distributed
+with this package. See https://manual.obis.org/policy.html.
+
+Map boundaries were derived from:
+
+Flanders Marine Institute (2018). IHO Sea Areas, version 3.
+https://doi.org/10.14284/323
+
+No source Marine Regions geometry is distributed with this package. Source
+products remain subject to the Marine Regions terms of use and attribution
+requirements at https://www.marineregions.org/disclaimer.php.

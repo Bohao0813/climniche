@@ -25,9 +25,6 @@ Install the CRAN release:
 install.packages("climniche")
 ```
 
-CRAN currently provides version 0.0.1. This website documents development
-version 0.3.8.
-
 Install the development version from GitHub:
 
 ```r
