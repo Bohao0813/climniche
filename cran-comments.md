@@ -1,7 +1,10 @@
 ## Test environments
 
-* local Windows 11, R 4.6.0 (`R CMD check --as-cran --no-manual`)
-* GitHub Actions, Ubuntu, R release
+* local Windows 11, R 4.6.0 (`R CMD check --as-cran`)
+* GitHub Actions, Ubuntu, R-devel
+* GitHub Actions, Ubuntu, R-release
+* GitHub Actions, Windows, R-release
+* GitHub Actions, macOS, R-release
 
 ## R CMD check results
 
